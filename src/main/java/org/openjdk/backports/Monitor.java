@@ -95,6 +95,11 @@ public class Monitor {
 
     private int getFixReleaseVersion(Issue issue) {
         String fullVersion = getFixVersion(issue);
+
+        if (fullVersion.startsWith("openjdk")) {
+            fullVersion = fullVersion.substring("openjdk".length());
+        }
+
         int dotIdx = fullVersion.indexOf(".");
         if (dotIdx != -1) {
             try {
