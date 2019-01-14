@@ -94,31 +94,33 @@ public class Monitor {
     }
 
     private int getFixReleaseVersion(Issue issue) {
-        String fullVersion = getFixVersion(issue);
+        return extractVersion(getFixVersion(issue));
+    }
 
-        if (fullVersion.startsWith("openjdk")) {
-            fullVersion = fullVersion.substring("openjdk".length());
+    private int extractVersion(String version) {
+        if (version.startsWith("openjdk")) {
+            version = version.substring("openjdk".length());
         }
 
-        int dotIdx = fullVersion.indexOf(".");
+        int dotIdx = version.indexOf(".");
         if (dotIdx != -1) {
             try {
-                return Integer.parseInt(fullVersion.substring(0, dotIdx));
+                return Integer.parseInt(version.substring(0, dotIdx));
             } catch (Exception e) {
                 return -1;
             }
         }
-        int uIdx = fullVersion.indexOf("u");
+        int uIdx = version.indexOf("u");
         if (uIdx != -1) {
             try {
-                return Integer.parseInt(fullVersion.substring(0, uIdx));
+                return Integer.parseInt(version.substring(0, uIdx));
             } catch (Exception e) {
                 return -1;
             }
         }
 
         try {
-            return Integer.parseInt(fullVersion);
+            return Integer.parseInt(version);
         } catch (Exception e) {
             return -1;
         }
@@ -169,6 +171,12 @@ public class Monitor {
     }
 
     private void printIssue(PrintStream pw, Issue issue, IssueRestClient cli) {
+        Set<Integer> affectedReleases = new HashSet<>();
+        for (Version v : issue.getAffectedVersions()) {
+            int ver = extractVersion(v.getName());
+            affectedReleases.add(ver);
+        }
+
         pw.println();
         pw.println(issue.getKey() + ": " + issue.getSummary());
         pw.println();
@@ -215,6 +223,16 @@ public class Monitor {
             throw new IllegalStateException("Cannot parse fix release version: " + getFixVersion(issue));
         }
 
+        if (origRel > 12 && !fixedReleases.contains(12)) {
+            pw.printf("  %8s: ", "12");
+            if (!affectedReleases.contains(12)) {
+                pw.println("Does not affect this version");
+            } else {
+                pw.println("MISSING");
+            }
+            printed = true;
+        }
+
         if (origRel > 11 && !fixedReleases.contains(11)) {
             pw.printf("  %8s: ", "11");
             if (issue.getLabels().contains("jdk11u-fix-yes")) {
@@ -223,6 +241,8 @@ public class Monitor {
                 pw.println("REJECTED: jdk11u-fix-no is set");
             } else if (issue.getLabels().contains("jdk11u-fix-request")) {
                 pw.println("Requested: jdk11u-fix-request is set");
+            } else if (!affectedReleases.contains(11)) {
+                pw.println("Does not affect this version");
             } else {
                 pw.println("MISSING");
             }
@@ -231,7 +251,11 @@ public class Monitor {
 
         if (origRel > 8 && !fixedReleases.contains(8)) {
             pw.printf("  %8s: ", "8");
-            pw.println("MISSING");
+            if (!affectedReleases.contains(11)) {
+                pw.println("Does not affect this version");
+            } else {
+                pw.println("MISSING");
+            }
             printed = true;
         }
 
