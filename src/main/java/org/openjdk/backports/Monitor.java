@@ -39,7 +39,8 @@ public class Monitor {
     public static final String JIRA_URL = "https://bugs.openjdk.java.net/";
 
     public static final String MSG_NOT_AFFECTED = "Not affected";
-    public static final String MSG_MISSING = "MISSING";
+    public static final String MSG_MISSING  = "MISSING";
+    public static final String MSG_APPROVED = "APPROVED";
 
     private final Options options;
 
@@ -69,6 +70,9 @@ public class Monitor {
 
         System.out.println("JDK BACKPORTS MONITORING REPORT");
         System.out.println("=====================================================================================================");
+        System.out.println();
+
+        System.out.println("Search for \"" + MSG_MISSING + "\", \"" + MSG_APPROVED + "\", etc. to discover actionable issues.");
         System.out.println();
 
         System.out.println("Closed bugs with \"redhat-openjdk\" label:");
@@ -244,7 +248,7 @@ public class Monitor {
                     }
                     case 11: {
                         if (issue.getLabels().contains("jdk11u-fix-yes")) {
-                            pw.println("Approved to push: jdk11u-fix-yes is set");
+                            pw.println(MSG_APPROVED + ": jdk11u-fix-yes is set");
                         } else if (issue.getLabels().contains("jdk11u-fix-no")) {
                             pw.println("REJECTED: jdk11u-fix-no is set");
                         } else if (issue.getLabels().contains("jdk11u-fix-request")) {
