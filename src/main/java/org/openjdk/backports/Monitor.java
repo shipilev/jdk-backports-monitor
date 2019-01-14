@@ -38,6 +38,9 @@ import java.util.*;
 public class Monitor {
     public static final String JIRA_URL = "https://bugs.openjdk.java.net/";
 
+    public static final String MSG_NOT_AFFECTED = "Not affected";
+    public static final String MSG_MISSING = "MISSING";
+
     private final Options options;
 
     public Monitor(Options options) {
@@ -188,24 +191,82 @@ public class Monitor {
         pw.println("      Components: " + extractComponents(issue));
         pw.println();
 
+        SortedMap<Integer, List<String>> results = new TreeMap<>();
+
         pw.println("  Original Fix:");
 
         pw.printf("  %8s: %10s, %s, %s%n", getFixVersion(issue), issue.getKey(), getPushURL(issue), getPushDate(issue));
-
-        Set<Integer> fixedReleases = new HashSet<>();
-        boolean printed = false;
+        recordIssue(results, issue);
 
         pw.println();
-        pw.println("  Completed Backports:");
-        Iterable<IssueLink> links = issue.getIssueLinks();
-        for (IssueLink link : links) {
+        pw.println("  Backports and Forwardports:");
+
+        for (IssueLink link : issue.getIssueLinks()) {
             if (link.getIssueLinkType().getName().equals("Backport")) {
                 String linkKey = link.getTargetIssueKey();
                 Issue backport = cli.getIssue(linkKey).claim();
+                recordIssue(results, backport);
+            }
+        }
 
-                fixedReleases.add(getFixReleaseVersion(backport));
+        int origRel = getFixReleaseVersion(issue);
+        int highRel = results.lastKey();
 
-                pw.printf("  %8s: %10s, %s, %s%n", getFixVersion(backport), linkKey, getPushURL(backport), getPushDate(backport));
+        boolean printed = false;
+        for (int release : new int[]{13, 12, 11, 8}) {
+            List<String> lines = results.get(release);
+            if (lines != null) {
+                if (release != origRel) {
+                    Collections.sort(lines, Comparator.reverseOrder());
+
+                    boolean first = true;
+                    for (String line : lines) {
+                        if (first) {
+                            pw.printf("  %8s: ", release);
+                            first = false;
+                        } else {
+                            pw.printf("  %8s  ", "");
+                        }
+                        pw.println(line);
+                        printed = true;
+                    }
+                }
+            } else if (release <= highRel) {
+                pw.printf("  %8s: ", release);
+                switch (release) {
+                    case 8: {
+                        if (!affectedReleases.contains(8)) {
+                            pw.println(MSG_NOT_AFFECTED);
+                        } else {
+                            pw.println(MSG_MISSING);
+                        }
+                        break;
+                    }
+                    case 11: {
+                        if (issue.getLabels().contains("jdk11u-fix-yes")) {
+                            pw.println("Approved to push: jdk11u-fix-yes is set");
+                        } else if (issue.getLabels().contains("jdk11u-fix-no")) {
+                            pw.println("REJECTED: jdk11u-fix-no is set");
+                        } else if (issue.getLabels().contains("jdk11u-fix-request")) {
+                            pw.println("Requested: jdk11u-fix-request is set");
+                        } else if (!affectedReleases.contains(11)) {
+                            pw.println(MSG_NOT_AFFECTED);
+                        } else {
+                            pw.println(MSG_MISSING);
+                        }
+                        break;
+                    }
+                    case 12: {
+                        if (!affectedReleases.contains(12)) {
+                            pw.println(MSG_NOT_AFFECTED);
+                        } else {
+                            pw.println(MSG_MISSING);
+                        }
+                        break;
+                    }
+                    default:
+                        pw.println("Unknown release: " + release);
+                }
                 printed = true;
             }
         }
@@ -214,57 +275,15 @@ public class Monitor {
             pw.println("      None.");
         }
 
-        printed = false;
-        pw.println();
-        pw.println("  Missing/Pending Backports:");
-
-        int origRel = getFixReleaseVersion(issue);
-        if (origRel == -1) {
-            throw new IllegalStateException("Cannot parse fix release version: " + getFixVersion(issue));
-        }
-
-        if (origRel > 12 && !fixedReleases.contains(12)) {
-            pw.printf("  %8s: ", "12");
-            if (!affectedReleases.contains(12)) {
-                pw.println("Does not affect this version");
-            } else {
-                pw.println("MISSING");
-            }
-            printed = true;
-        }
-
-        if (origRel > 11 && !fixedReleases.contains(11)) {
-            pw.printf("  %8s: ", "11");
-            if (issue.getLabels().contains("jdk11u-fix-yes")) {
-                pw.println("Approved to push: jdk11u-fix-yes is set");
-            } else if (issue.getLabels().contains("jdk11u-fix-no")) {
-                pw.println("REJECTED: jdk11u-fix-no is set");
-            } else if (issue.getLabels().contains("jdk11u-fix-request")) {
-                pw.println("Requested: jdk11u-fix-request is set");
-            } else if (!affectedReleases.contains(11)) {
-                pw.println("Does not affect this version");
-            } else {
-                pw.println("MISSING");
-            }
-            printed = true;
-        }
-
-        if (origRel > 8 && !fixedReleases.contains(8)) {
-            pw.printf("  %8s: ", "8");
-            if (!affectedReleases.contains(11)) {
-                pw.println("Does not affect this version");
-            } else {
-                pw.println("MISSING");
-            }
-            printed = true;
-        }
-
-        if (!printed) {
-            pw.println("      None.");
-        }
-
         pw.println();
         pw.println("-----------------------------------------------------------------------------------------------------");
+    }
+
+    private void recordIssue(Map<Integer, List<String>> results, Issue issue) {
+        String line = String.format("%s, %10s, %s, %s", getFixVersion(issue), issue.getKey(), getPushURL(issue), getPushDate(issue));
+        int ver = extractVersion(getFixVersion(issue));
+        List<String> list = results.computeIfAbsent(ver, k -> new ArrayList<>());
+        list.add(line);
     }
 
 }
