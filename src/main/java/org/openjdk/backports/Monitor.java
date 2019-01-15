@@ -93,6 +93,9 @@ public class Monitor {
 
     private String getFixVersion(Issue issue) {
         Iterator<Version> it = issue.getFixVersions().iterator();
+        if (!it.hasNext()) {
+            return "N/A";
+        }
         Version fixVersion = it.next();
         if (it.hasNext()) {
             throw new IllegalStateException("Multiple fix versions");
@@ -189,8 +192,8 @@ public class Monitor {
         pw.println();
         pw.println("  Original Bug:");
         pw.println("      URL: " + JIRA_URL + "browse/" + issue.getKey());
-        pw.println("      Reporter: " + issue.getReporter().getDisplayName());
-        pw.println("      Assignee: " + issue.getAssignee().getDisplayName());
+        pw.println("      Reporter: " + (issue.getReporter() != null ? issue.getReporter().getDisplayName() : "None"));
+        pw.println("      Assignee: " + (issue.getAssignee() != null ? issue.getAssignee().getDisplayName() : "None"));
         pw.println("      Priority: " + issue.getPriority().getName());
         pw.println("      Components: " + extractComponents(issue));
         pw.println();
