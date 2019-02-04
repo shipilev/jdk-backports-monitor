@@ -33,14 +33,20 @@ import com.atlassian.jira.rest.client.internal.async.AsynchronousJiraRestClientF
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 public class Monitor {
     public static final String JIRA_URL = "https://bugs.openjdk.java.net/";
 
     public static final String MSG_NOT_AFFECTED = "Not affected";
+    public static final String MSG_BAKING   = "WAITING for patch to bake a little";
     public static final String MSG_MISSING  = "MISSING";
     public static final String MSG_APPROVED = "APPROVED";
+
+    public static final int BAKE_TIME = 14; // days
 
     private final Options options;
 
@@ -72,7 +78,10 @@ public class Monitor {
         System.out.println("=====================================================================================================");
         System.out.println();
 
-        System.out.println("Search for \"" + MSG_MISSING + "\", \"" + MSG_APPROVED + "\", etc. to discover actionable issues.");
+        System.out.println("Actionable issues, search for these strings:");
+        System.out.println("  \"" + MSG_MISSING + "\"");
+        System.out.println("  \"" + MSG_APPROVED + "\"");
+        System.out.println("  \"" + MSG_BAKING + "\"");
         System.out.println();
 
         System.out.println("Closed bugs with \"redhat-openjdk\" label:");
@@ -80,8 +89,11 @@ public class Monitor {
 
         SearchResult rhIssues = restClient.getSearchClient().searchJql("labels = redhat-openjdk AND (status = Closed OR status = Resolved) AND type != Backport",
                 options.getMaxIssues(), 0, null).claim();
+
+        printDelimiterLine(System.out);
         for (BasicIssue i : rhIssues.getIssues()) {
             printIssue(System.out, cli.getIssue(i.getKey()).claim(), cli);
+            printDelimiterLine(System.out);
         }
 
         try {
@@ -145,13 +157,15 @@ public class Monitor {
         return "N/A";
     }
 
-    private String parseDate(String s) {
+    private long parseDaysAgo(String s) {
         for (String l : s.split("\n")) {
             if (l.startsWith("Date")) {
-                return l.replaceFirst("Date:", "").trim();
+                String d = l.replaceFirst("Date:", "").trim();
+                final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss Z");
+                return ChronoUnit.DAYS.between(LocalDate.parse(d, formatter), LocalDate.now());
             }
         }
-        return "N/A";
+        return 0;
     }
 
     private String getPushURL(Issue issue) {
@@ -166,10 +180,19 @@ public class Monitor {
     private String getPushDate(Issue issue) {
         for (Comment c : issue.getComments()) {
             if (c.getAuthor().getName().equals("hgupdate")) {
-                return parseDate(c.getBody());
+                return parseDaysAgo(c.getBody()) + " day(s) ago";
             }
         }
         return "N/A";
+    }
+
+    private long getPushDaysAgo(Issue issue) {
+        for (Comment c : issue.getComments()) {
+            if (c.getAuthor().getName().equals("hgupdate")) {
+                return parseDaysAgo(c.getBody());
+            }
+        }
+        return 0;
     }
 
     private String extractComponents(Issue issue) {
@@ -202,10 +225,17 @@ public class Monitor {
 
         pw.println("  Original Fix:");
 
+        long daysAgo = getPushDaysAgo(issue);
+
         pw.printf("  %8s: %10s, %s, %s%n", getFixVersion(issue), issue.getKey(), getPushURL(issue), getPushDate(issue));
         recordIssue(results, issue);
-
         pw.println();
+
+        if (affectedReleases.isEmpty()) {
+            pw.println("  WARNING: Affected versions is not set.");
+            pw.println();
+        }
+
         pw.println("  Backports and Forwardports:");
 
         for (IssueLink link : issue.getIssueLinks()) {
@@ -244,6 +274,8 @@ public class Monitor {
                     case 8: {
                         if (!affectedReleases.contains(8)) {
                             pw.println(MSG_NOT_AFFECTED);
+                        } else if (daysAgo < BAKE_TIME) {
+                            pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
                         } else {
                             pw.println(MSG_MISSING);
                         }
@@ -258,6 +290,8 @@ public class Monitor {
                             pw.println("Requested: jdk11u-fix-request is set");
                         } else if (!affectedReleases.contains(11)) {
                             pw.println(MSG_NOT_AFFECTED);
+                        } else if (daysAgo < BAKE_TIME) {
+                            pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
                         } else {
                             pw.println(MSG_MISSING);
                         }
@@ -266,6 +300,8 @@ public class Monitor {
                     case 12: {
                         if (!affectedReleases.contains(12)) {
                             pw.println(MSG_NOT_AFFECTED);
+                        } else if (daysAgo < BAKE_TIME) {
+                            pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
                         } else {
                             pw.println(MSG_MISSING);
                         }
@@ -283,6 +319,9 @@ public class Monitor {
         }
 
         pw.println();
+    }
+
+    private void printDelimiterLine(PrintStream pw) {
         pw.println("-----------------------------------------------------------------------------------------------------");
     }
 
