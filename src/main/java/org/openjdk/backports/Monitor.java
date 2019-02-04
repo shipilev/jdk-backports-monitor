@@ -45,6 +45,7 @@ public class Monitor {
     public static final String MSG_BAKING   = "WAITING for patch to bake a little";
     public static final String MSG_MISSING  = "MISSING";
     public static final String MSG_APPROVED = "APPROVED";
+    public static final String MSG_WARNING  = "WARNING";
 
     public static final int BAKE_TIME = 14; // days
 
@@ -82,6 +83,7 @@ public class Monitor {
         System.out.println("  \"" + MSG_MISSING + "\"");
         System.out.println("  \"" + MSG_APPROVED + "\"");
         System.out.println("  \"" + MSG_BAKING + "\"");
+        System.out.println("  \"" + MSG_WARNING + "\"");
         System.out.println();
 
         System.out.println("Closed bugs with \"redhat-openjdk\" label:");
@@ -90,9 +92,15 @@ public class Monitor {
         SearchResult rhIssues = restClient.getSearchClient().searchJql("labels = redhat-openjdk AND (status = Closed OR status = Resolved) AND type != Backport",
                 options.getMaxIssues(), 0, null).claim();
 
-        printDelimiterLine(System.out);
+        SortedSet<TrackedIssue> issues = new TreeSet<>();
+
         for (BasicIssue i : rhIssues.getIssues()) {
-            printIssue(System.out, cli.getIssue(i.getKey()).claim(), cli);
+            issues.add(parseIssue(cli.getIssue(i.getKey()).claim(), cli));
+        }
+
+        printDelimiterLine(System.out);
+        for (TrackedIssue i : issues) {
+            System.out.println(i.output);
             printDelimiterLine(System.out);
         }
 
@@ -203,7 +211,46 @@ public class Monitor {
         return joiner.toString();
     }
 
-    private void printIssue(PrintStream pw, Issue issue, IssueRestClient cli) {
+    private enum Actionable {
+        NONE,
+        WAITING,
+        ACTIONABLE,
+        ;
+
+        public Actionable mix(Actionable a) {
+            return Actionable.values()[Math.max(ordinal(), a.ordinal())];
+        }
+    }
+
+    private static class TrackedIssue implements Comparable<TrackedIssue> {
+        final String output;
+        final long age;
+        final Actionable actionable;
+
+        public TrackedIssue(String output, long age, Actionable actionable) {
+            this.output = output;
+            this.age = age;
+            this.actionable = actionable;
+        }
+
+        @Override
+        public int compareTo(TrackedIssue other) {
+            int v1 = Integer.compare(other.actionable.ordinal(), this.actionable.ordinal());
+            if (v1 != 0) {
+                return v1;
+            }
+            int v2 = Long.compare(other.age, this.age);
+            if (v2 != 0) {
+                return v2;
+            }
+            return this.output.compareTo(other.output);
+        }
+    }
+
+    private TrackedIssue parseIssue(Issue issue, IssueRestClient cli) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+
         Set<Integer> affectedReleases = new HashSet<>();
         for (Version v : issue.getAffectedVersions()) {
             int ver = extractVersion(v.getName());
@@ -232,7 +279,7 @@ public class Monitor {
         pw.println();
 
         if (affectedReleases.isEmpty()) {
-            pw.println("  WARNING: Affected versions is not set.");
+            pw.println("  " + MSG_WARNING + ": Affected versions is not set.");
             pw.println();
         }
 
@@ -248,6 +295,8 @@ public class Monitor {
 
         int origRel = getFixReleaseVersion(issue);
         int highRel = results.lastKey();
+
+        Actionable actionable = Actionable.NONE;
 
         boolean printed = false;
         for (int release : new int[]{13, 12, 11, 8}) {
@@ -275,24 +324,30 @@ public class Monitor {
                         if (!affectedReleases.contains(8)) {
                             pw.println(MSG_NOT_AFFECTED);
                         } else if (daysAgo < BAKE_TIME) {
+                            actionable = actionable.mix(Actionable.WAITING);
                             pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
                         } else {
+                            actionable = actionable.mix(Actionable.ACTIONABLE);
                             pw.println(MSG_MISSING);
                         }
                         break;
                     }
                     case 11: {
                         if (issue.getLabels().contains("jdk11u-fix-yes")) {
+                            actionable = actionable.mix(Actionable.ACTIONABLE);
                             pw.println(MSG_APPROVED + ": jdk11u-fix-yes is set");
                         } else if (issue.getLabels().contains("jdk11u-fix-no")) {
                             pw.println("REJECTED: jdk11u-fix-no is set");
                         } else if (issue.getLabels().contains("jdk11u-fix-request")) {
                             pw.println("Requested: jdk11u-fix-request is set");
+                            actionable = actionable.mix(Actionable.WAITING);
                         } else if (!affectedReleases.contains(11)) {
                             pw.println(MSG_NOT_AFFECTED);
                         } else if (daysAgo < BAKE_TIME) {
+                            actionable = actionable.mix(Actionable.WAITING);
                             pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
                         } else {
+                            actionable = actionable.mix(Actionable.ACTIONABLE);
                             pw.println(MSG_MISSING);
                         }
                         break;
@@ -301,8 +356,10 @@ public class Monitor {
                         if (!affectedReleases.contains(12)) {
                             pw.println(MSG_NOT_AFFECTED);
                         } else if (daysAgo < BAKE_TIME) {
+                            actionable = actionable.mix(Actionable.WAITING);
                             pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
                         } else {
+                            actionable = actionable.mix(Actionable.ACTIONABLE);
                             pw.println(MSG_MISSING);
                         }
                         break;
@@ -319,6 +376,8 @@ public class Monitor {
         }
 
         pw.println();
+
+        return new TrackedIssue(sw.toString(), daysAgo, actionable);
     }
 
     private void printDelimiterLine(PrintStream pw) {
