@@ -353,7 +353,15 @@ public class Monitor {
                         break;
                     }
                     case 12: {
-                        if (!affectedReleases.contains(12)) {
+                        if (issue.getLabels().contains("jdk12u-fix-yes")) {
+                            actionable = actionable.mix(Actionable.ACTIONABLE);
+                            pw.println(MSG_APPROVED + ": jdk12u-fix-yes is set");
+                        } else if (issue.getLabels().contains("jdk12u-fix-no")) {
+                            pw.println("REJECTED: jdk12u-fix-no is set");
+                        } else if (issue.getLabels().contains("jdk12u-fix-request")) {
+                            pw.println("Requested: jdk12u-fix-request is set");
+                            actionable = actionable.mix(Actionable.WAITING);
+                        } else if (!affectedReleases.contains(12)) {
                             pw.println(MSG_NOT_AFFECTED);
                         } else if (daysAgo < BAKE_TIME) {
                             actionable = actionable.mix(Actionable.WAITING);
