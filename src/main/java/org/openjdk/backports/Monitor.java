@@ -393,8 +393,11 @@ public class Monitor {
     }
 
     private void recordIssue(Map<Integer, List<String>> results, Issue issue) {
-        String line = String.format("%s, %10s, %s, %s", getFixVersion(issue), issue.getKey(), getPushURL(issue), getPushDate(issue));
-        int ver = extractVersion(getFixVersion(issue));
+        String fixVersion = getFixVersion(issue);
+        if (fixVersion.contains("-oracle")) return;
+
+        String line = String.format("%s, %10s, %s, %s", fixVersion, issue.getKey(), getPushURL(issue), getPushDate(issue));
+        int ver = extractVersion(fixVersion);
         List<String> list = results.computeIfAbsent(ver, k -> new ArrayList<>());
         list.add(line);
     }
