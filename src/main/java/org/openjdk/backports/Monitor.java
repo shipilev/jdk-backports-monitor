@@ -79,11 +79,13 @@ public class Monitor {
         System.out.println("=====================================================================================================");
         System.out.println();
 
-        System.out.println("Actionable issues, search for these strings:");
+        System.out.println("For actionable issues, search for these strings:");
         System.out.println("  \"" + MSG_MISSING + "\"");
         System.out.println("  \"" + MSG_APPROVED + "\"");
-        System.out.println("  \"" + MSG_BAKING + "\"");
         System.out.println("  \"" + MSG_WARNING + "\"");
+        System.out.println();
+        System.out.println("For lingering issues, search for these strings:");
+        System.out.println("  \"" + MSG_BAKING + "\"");
         System.out.println();
 
         System.out.println("Closed bugs with \"redhat-openjdk\" label:");
