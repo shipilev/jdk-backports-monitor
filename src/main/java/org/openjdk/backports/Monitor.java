@@ -180,6 +180,31 @@ public class Monitor {
         }
     }
 
+    static class RetryableIssuePromise {
+        private final IssueRestClient cli;
+        private final String key;
+        private Promise<Issue> cur;
+
+        public RetryableIssuePromise(IssueRestClient cli, String key) {
+            this.cli = cli;
+            this.key = key;
+            this.cur = cli.getIssue(key);
+        }
+
+        public Issue claim() {
+            for (int t = 0; t < 5; t++) {
+                try {
+                    return cur.claim();
+                } catch (Exception e) {
+                    backoff(100 + t * 500);
+                    cur = cli.getIssue(key);
+                }
+            }
+            return cur.claim();
+        }
+
+    }
+
     private List<Issue> getIssues(SearchRestClient searchCli, IssueRestClient cli, String request) {
         List<Issue> issues = new ArrayList<>();
 
@@ -190,37 +215,27 @@ public class Monitor {
 
         // Poor man's rate limiter:
 
-        List<Promise<Issue>> batch = new ArrayList<>();
+        List<RetryableIssuePromise> batch = new ArrayList<>();
         int cnt = 0;
         for (BasicIssue i : found.getIssues()) {
             backoff(20);
-            batch.add(cli.getIssue(i.getKey()));
+            batch.add(new RetryableIssuePromise(cli, i.getKey()));
             if (cnt++ > 10) {
-                flushBatch(issues, batch);
+                for (RetryableIssuePromise p : batch) {
+                    issues.add(p.claim());
+                }
+                batch.clear();
                 cnt = 0;
             }
         }
-        flushBatch(issues, batch);
+        for (RetryableIssuePromise p : batch) {
+            issues.add(p.claim());
+        }
 
         return issues;
     }
 
-    private void flushBatch(List<Issue> issues, List<Promise<Issue>> batch) {
-        for (Promise<Issue> p : batch) {
-            for (int tries = 0; tries < 5; tries++) {
-                try {
-                    issues.add(p.claim());
-                    break;
-                } catch (Exception e) {
-                    backoff(100 + tries * 500);
-                    e.printStackTrace();
-                }
-            }
-        }
-        batch.clear();
-    }
-
-    private void backoff(int msec) {
+    private static void backoff(int msec) {
         try {
             TimeUnit.MILLISECONDS.sleep(msec);
         } catch (InterruptedException ie) {
