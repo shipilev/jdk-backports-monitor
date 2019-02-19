@@ -9,6 +9,6 @@ Usage:
 
        java -jar target/jdk-backports-monitor.jar --label redhat-openjdk
        
-2) Print the release logs for a given release
+2) Print the pushes stats for a given release
 
-       java -jar target/jdk-backports-monitor.jar --release 11.0.3
+       java -jar target/jdk-backports-monitor.jar --pushes 11.0.3
