@@ -59,10 +59,10 @@ public class Monitor {
 
         PrintStream out = System.out;
 
-        out.println("JDK BACKPORTS MONITORING REPORT");
+        out.println("JDK BACKPORTS LABEL REPORT: " + label);
         out.println("=====================================================================================================");
         out.println();
-        out.println("This report shows bugs with \"" + label + "\" label, along with their backporting status.");
+        out.println("This report shows bugs with the given label, along with their backporting status.");
         out.println();
         out.println("For actionable issues, search for these strings:");
         out.println("  \"" + MSG_MISSING + "\"");
@@ -100,10 +100,10 @@ public class Monitor {
 
         PrintStream out = System.out;
 
-        out.println("JDK BACKPORTS PUSHES REPORT");
+        out.println("JDK BACKPORTS PUSHES REPORT: " + release);
         out.println("=====================================================================================================");
         out.println();
-        out.println("This report shows who pushed the backports to \"" + release + "\" release. ");
+        out.println("This report shows who pushed the backports to the given release.");
         out.println("This usually shows who did the backporting, testing, and review work.");
         out.println();
 
