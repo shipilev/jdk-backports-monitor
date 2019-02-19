@@ -64,6 +64,8 @@ public class Monitor {
         out.println();
         out.println("This report shows bugs with the given label, along with their backporting status.");
         out.println();
+        out.println("Report generated: " + new Date());
+        out.println();
         out.println("For actionable issues, search for these strings:");
         out.println("  \"" + MSG_MISSING + "\"");
         out.println("  \"" + MSG_APPROVED + "\"");
@@ -105,6 +107,8 @@ public class Monitor {
         out.println();
         out.println("This report shows who pushed the backports to the given release.");
         out.println("This usually shows who did the backporting, testing, and review work.");
+        out.println();
+        out.println("Report generated: " + new Date());
         out.println();
 
         List<Issue> issues = getIssues(searchCli, issueCli, "project = JDK AND fixVersion = " + release);
