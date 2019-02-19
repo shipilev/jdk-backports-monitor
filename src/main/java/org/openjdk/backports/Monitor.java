@@ -26,22 +26,18 @@ package org.openjdk.backports;
 
 import com.atlassian.jira.rest.client.api.*;
 import com.atlassian.jira.rest.client.api.domain.*;
-import com.atlassian.jira.rest.client.internal.async.AsynchronousJiraRestClientFactory;
 import com.atlassian.util.concurrent.Promise;
 import com.google.common.collect.*;
 
 import java.io.*;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 
 public class Monitor {
-    private static final String JIRA_URL = "https://bugs.openjdk.java.net/";
 
     private static final String MSG_NOT_AFFECTED = "Not affected";
     private static final String MSG_BAKING   = "WAITING for patch to bake a little";
@@ -51,20 +47,13 @@ public class Monitor {
 
     private static final int BAKE_TIME = 14; // days
 
-    private final String user;
-    private final String pass;
     private final int maxIssues;
 
-    public Monitor(String user, String pass, int maxIssues) {
-        this.user = user;
-        this.pass = pass;
+    public Monitor(int maxIssues) {
         this.maxIssues = maxIssues;
     }
 
-    public void runLabelReport(String label) throws URISyntaxException {
-        JiraRestClientFactory factory = new AsynchronousJiraRestClientFactory();
-        JiraRestClient restClient = factory.createWithBasicHttpAuthentication(new URI(JIRA_URL), user, pass);
-
+    public void runLabelReport(JiraRestClient restClient, String label) throws URISyntaxException {
         SearchRestClient searchCli = restClient.getSearchClient();
         IssueRestClient issueCli = restClient.getIssueClient();
 
@@ -104,10 +93,7 @@ public class Monitor {
         }
     }
 
-    public void runPushesReport(String release) throws URISyntaxException {
-        JiraRestClientFactory factory = new AsynchronousJiraRestClientFactory();
-        JiraRestClient restClient = factory.createWithBasicHttpAuthentication(new URI(JIRA_URL), user, pass);
-
+    public void runPushesReport(JiraRestClient restClient, String release) throws URISyntaxException {
         SearchRestClient searchCli = restClient.getSearchClient();
         IssueRestClient issueCli = restClient.getIssueClient();
         UserRestClient userCli = restClient.getUserClient();
@@ -191,12 +177,6 @@ public class Monitor {
                 out.println("  " + i.getKey() + ": " + i.getSummary());
             }
             out.println();
-        }
-
-        try {
-            restClient.close();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
@@ -416,7 +396,7 @@ public class Monitor {
         pw.println(issue.getKey() + ": " + issue.getSummary());
         pw.println();
         pw.println("  Original Bug:");
-        pw.println("      URL: " + JIRA_URL + "browse/" + issue.getKey());
+        pw.println("      URL: " + Main.JIRA_URL + "browse/" + issue.getKey());
         pw.println("      Reporter: " + (issue.getReporter() != null ? issue.getReporter().getDisplayName() : "None"));
         pw.println("      Assignee: " + (issue.getAssignee() != null ? issue.getAssignee().getDisplayName() : "None"));
         pw.println("      Priority: " + issue.getPriority().getName());

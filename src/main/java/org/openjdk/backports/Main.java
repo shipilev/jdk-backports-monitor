@@ -24,11 +24,18 @@
  */
 package org.openjdk.backports;
 
+import com.atlassian.jira.rest.client.api.JiraRestClient;
+import com.atlassian.jira.rest.client.api.JiraRestClientFactory;
+import com.atlassian.jira.rest.client.internal.async.AsynchronousJiraRestClientFactory;
+
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.URI;
 import java.util.Properties;
 
 public class Main {
+
+    public static final String JIRA_URL = "https://bugs.openjdk.java.net/";
 
     public static void main(String[] args) {
         Options options = new Options(args);
@@ -49,14 +56,25 @@ public class Main {
                     throw new IllegalStateException("user/pass keys are missing in auth file: " + options.getAuthProps());
                 }
 
-                Monitor m = new Monitor(user, pass, options.getMaxIssues());
+                Monitor m = new Monitor(options.getMaxIssues());
 
-                if (options.getLabelReport() != null) {
-                    m.runLabelReport(options.getLabelReport());
-                }
+                JiraRestClientFactory factory = new AsynchronousJiraRestClientFactory();
+                JiraRestClient restClient = null;
 
-                if (options.getPushesReport() != null) {
-                    m.runPushesReport(options.getPushesReport());
+                try {
+                    restClient = factory.createWithBasicHttpAuthentication(new URI(JIRA_URL), user, pass);
+
+                    if (options.getLabelReport() != null) {
+                        m.runLabelReport(restClient, options.getLabelReport());
+                    }
+
+                    if (options.getPushesReport() != null) {
+                        m.runPushesReport(restClient, options.getPushesReport());
+                    }
+                } finally {
+                    if (restClient != null) {
+                        restClient.close();
+                    }
                 }
             }
         } catch (Exception e) {
