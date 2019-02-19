@@ -126,14 +126,21 @@ public class Monitor {
         Multiset<String> byComponent = HashMultiset.create();
         Multimap<String, Issue> byCommitter = TreeMultimap.create(String::compareTo, Comparator.comparing(BasicIssue::getKey));
 
+        int filteredSyncs = 0;
+
         for (Issue issue : issues) {
             String committer = getPushUser(issue);
             if (!committer.equals("N/A")) { // Skip automatic syncs
                 byPriority.add(issue.getPriority().getName());
                 byComponent.add(extractComponents(issue));
                 byCommitter.put(committer, issue);
+            } else {
+                filteredSyncs++;
             }
         }
+
+        out.println("Filtered " + filteredSyncs + " automatic syncs, " + byPriority.size() + " pushes left.");
+        out.println();
 
         out.println("Release: " + release);
         out.println();
