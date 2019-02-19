@@ -24,14 +24,14 @@
  */
 package org.openjdk.backports;
 
-import com.atlassian.jira.rest.client.api.IssueRestClient;
-import com.atlassian.jira.rest.client.api.JiraRestClient;
-import com.atlassian.jira.rest.client.api.JiraRestClientFactory;
+import com.atlassian.jira.rest.client.api.*;
 import com.atlassian.jira.rest.client.api.domain.*;
 import com.atlassian.jira.rest.client.internal.async.AsynchronousJiraRestClientFactory;
 import com.atlassian.util.concurrent.Promise;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Multiset;
 import com.google.common.collect.TreeMultimap;
+import com.google.common.collect.TreeMultiset;
 
 import java.io.*;
 import java.net.URI;
@@ -67,7 +67,8 @@ public class Monitor {
         JiraRestClientFactory factory = new AsynchronousJiraRestClientFactory();
         JiraRestClient restClient = factory.createWithBasicHttpAuthentication(new URI(JIRA_URL), user, pass);
 
-        IssueRestClient cli = restClient.getIssueClient();
+        SearchRestClient searchCli = restClient.getSearchClient();
+        IssueRestClient issueCli = restClient.getIssueClient();
 
         PrintStream out = System.out;
 
@@ -85,13 +86,11 @@ public class Monitor {
         out.println("  \"" + MSG_BAKING + "\"");
         out.println();
 
-        SearchResult rhIssues = restClient.getSearchClient().searchJql("labels = redhat-openjdk AND (status = Closed OR status = Resolved) AND type != Backport",
-                maxIssues, 0, null).claim();
+        List<Issue> found = getIssues(searchCli, issueCli, "labels = " + label + " AND (status = Closed OR status = Resolved) AND type != Backport");
 
         SortedSet<TrackedIssue> issues = new TreeSet<>();
-
-        for (BasicIssue i : rhIssues.getIssues()) {
-            issues.add(parseIssue(cli.getIssue(i.getKey()).claim(), cli));
+        for (Issue i : found) {
+            issues.add(parseIssue(i, issueCli));
         }
 
         printDelimiterLine(out);
@@ -111,7 +110,9 @@ public class Monitor {
         JiraRestClientFactory factory = new AsynchronousJiraRestClientFactory();
         JiraRestClient restClient = factory.createWithBasicHttpAuthentication(new URI(JIRA_URL), user, pass);
 
-        IssueRestClient cli = restClient.getIssueClient();
+        SearchRestClient searchCli = restClient.getSearchClient();
+        IssueRestClient issueCli = restClient.getIssueClient();
+        UserRestClient userCli = restClient.getUserClient();
 
         PrintStream out = System.out;
 
@@ -121,48 +122,45 @@ public class Monitor {
         out.println("Report shows who pushed the backports (which is usually who did the backporting work).");
         out.println();
 
-        SearchResult rhIssues = restClient.getSearchClient().searchJql("project = JDK AND fixVersion = " + release,
-                maxIssues, 0, null).claim();
+        List<Issue> issues = getIssues(searchCli, issueCli, "project = JDK AND fixVersion = " + release);
 
         Multimap<String, Issue> byUser = TreeMultimap.create(String::compareTo, Comparator.comparing(BasicIssue::getKey));
 
-        List<Promise<Issue>> promises = new ArrayList<>();
-        for (BasicIssue i : rhIssues.getIssues()) {
-            promises.add(cli.getIssue(i.getKey())); // async batching should go here
-        }
-
-        for (int c = 0; c < promises.size(); c++) {
-            out.println("Claiming " + c);
-            Promise<Issue> pr = promises.get(c);
-            int tries = 3;
-            while (tries > 0) {
-                try {
-                    Issue issue = pr.claim();
-                    String pusher = getPushUser(issue);
-                    if (!pusher.equals("N/A")) {
-                        byUser.put(pusher, issue);
-                    }
-                    tries = 0;
-                } catch (Exception e) {
-                    try {
-                        TimeUnit.MILLISECONDS.sleep(300);
-                    } catch (InterruptedException ie) {
-                        ie.printStackTrace();
-                    }
-                    if (tries-- == 0) {
-                        e.printStackTrace();
-                    }
-                }
+        for (Issue issue : issues) {
+            String pusher = getPushUser(issue);
+            if (pusher.equals("N/A")) {
+                pusher = "Auto-sync";
             }
+            byUser.put(pusher, issue);
         }
 
         out.println();
-        out.println("Release: " + release + ", " + byUser.size() + " issues");
+        out.println("Release: " + release);
+        out.println();
+
+        Multiset<String> byCompany = TreeMultiset.create();
+
+        for (String pusher : byUser.keySet()) {
+            User user = userCli.getUser(pusher).claim();
+            String email = user.getEmailAddress();
+            String company = email.substring(email.indexOf("@") + 1);
+
+            byCompany.add(company, byUser.get(pusher).size());
+        }
+
+        out.println("Distribution by company: ");
+        out.printf("  %3d: <total issues>%n", byUser.size());
+        for (String company : byCompany.elementSet()) {
+            out.printf("    %3d: %s%n", byCompany.count(company), company);
+        }
         out.println();
 
         for (String pusher : byUser.keySet()) {
-            out.println(pusher + ": " + byUser.get(pusher).size() + " issues");
-            for (Issue i : byUser.get(pusher)) {
+            User user = userCli.getUser(pusher).claim();
+
+            Collection<Issue> userPushes = byUser.get(pusher);
+            out.println(user.getDisplayName() + ": " + userPushes.size() + " issues");
+            for (Issue i : userPushes) {
                 out.println("  " + i.getKey() + ": " + i.getSummary());
             }
             out.println();
@@ -172,6 +170,53 @@ public class Monitor {
             restClient.close();
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private List<Issue> getIssues(SearchRestClient searchCli, IssueRestClient cli, String request) {
+        List<Issue> issues = new ArrayList<>();
+        List<Promise<Issue>> batch = new ArrayList<>();
+
+        SearchResult found = searchCli.searchJql(request, maxIssues, 0, null).claim();
+
+        System.out.println("Found " + found.getTotal() + " matching issues, processing first " + found.getMaxResults() + " issues.");
+        System.out.println();
+
+        // Poor man's rate limiter:
+
+        int cnt = 0;
+        for (BasicIssue i : found.getIssues()) {
+            backoff(20);
+            batch.add(cli.getIssue(i.getKey()));
+            if (cnt++ > 10) {
+                flushBatch(issues, batch);
+                cnt = 0;
+            }
+        }
+        flushBatch(issues, batch);
+
+        return issues;
+    }
+
+    private void flushBatch(List<Issue> issues, List<Promise<Issue>> batch) {
+        for (Promise<Issue> p : batch) {
+            for (int tries = 0; tries < 5; tries++) {
+                try {
+                    issues.add(p.claim());
+                    break;
+                } catch (Exception e) {
+                    backoff(100 + tries * 500);
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    private void backoff(int msec) {
+        try {
+            TimeUnit.MILLISECONDS.sleep(msec);
+        } catch (InterruptedException ie) {
+            ie.printStackTrace();
         }
     }
 
