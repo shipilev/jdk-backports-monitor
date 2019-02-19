@@ -29,6 +29,9 @@ import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.atlassian.jira.rest.client.api.JiraRestClientFactory;
 import com.atlassian.jira.rest.client.api.domain.*;
 import com.atlassian.jira.rest.client.internal.async.AsynchronousJiraRestClientFactory;
+import com.atlassian.util.concurrent.Promise;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.TreeMultimap;
 
 import java.io.*;
 import java.net.URI;
@@ -37,62 +40,53 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class Monitor {
-    public static final String JIRA_URL = "https://bugs.openjdk.java.net/";
+    private static final String JIRA_URL = "https://bugs.openjdk.java.net/";
 
-    public static final String MSG_NOT_AFFECTED = "Not affected";
-    public static final String MSG_BAKING   = "WAITING for patch to bake a little";
-    public static final String MSG_MISSING  = "MISSING";
-    public static final String MSG_APPROVED = "APPROVED";
-    public static final String MSG_WARNING  = "WARNING";
+    private static final String MSG_NOT_AFFECTED = "Not affected";
+    private static final String MSG_BAKING   = "WAITING for patch to bake a little";
+    private static final String MSG_MISSING  = "MISSING";
+    private static final String MSG_APPROVED = "APPROVED";
+    private static final String MSG_WARNING  = "WARNING";
 
-    public static final int BAKE_TIME = 14; // days
+    private static final int BAKE_TIME = 14; // days
 
-    private final Options options;
+    private final String user;
+    private final String pass;
+    private final int maxIssues;
 
-    public Monitor(Options options) {
-        this.options = options;
+    public Monitor(String user, String pass, int maxIssues) {
+        this.user = user;
+        this.pass = pass;
+        this.maxIssues = maxIssues;
     }
 
-    public void run() throws URISyntaxException {
-        Properties p = new Properties();
-        try (FileInputStream fis = new FileInputStream(options.getAuthProps())){
-            p.load(fis);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        String user = p.getProperty("user");
-        String pass = p.getProperty("pass");
-
-        if (user == null || pass == null) {
-            throw new IllegalStateException("user/pass keys are missing in auth file: " + options.getAuthProps());
-        }
-
+    public void runLabelReport(String label) throws URISyntaxException {
         JiraRestClientFactory factory = new AsynchronousJiraRestClientFactory();
         JiraRestClient restClient = factory.createWithBasicHttpAuthentication(new URI(JIRA_URL), user, pass);
 
         IssueRestClient cli = restClient.getIssueClient();
 
-        System.out.println("JDK BACKPORTS MONITORING REPORT");
-        System.out.println("=====================================================================================================");
-        System.out.println();
+        PrintStream out = System.out;
 
-        System.out.println("For actionable issues, search for these strings:");
-        System.out.println("  \"" + MSG_MISSING + "\"");
-        System.out.println("  \"" + MSG_APPROVED + "\"");
-        System.out.println("  \"" + MSG_WARNING + "\"");
-        System.out.println();
-        System.out.println("For lingering issues, search for these strings:");
-        System.out.println("  \"" + MSG_BAKING + "\"");
-        System.out.println();
-
-        System.out.println("Closed bugs with \"redhat-openjdk\" label:");
-        System.out.println();
+        out.println("JDK BACKPORTS MONITORING REPORT");
+        out.println("=====================================================================================================");
+        out.println();
+        out.println("Report shows bugs with \"" + label + "\" label, along with their backporting status.");
+        out.println();
+        out.println("For actionable issues, search for these strings:");
+        out.println("  \"" + MSG_MISSING + "\"");
+        out.println("  \"" + MSG_APPROVED + "\"");
+        out.println("  \"" + MSG_WARNING + "\"");
+        out.println();
+        out.println("For lingering issues, search for these strings:");
+        out.println("  \"" + MSG_BAKING + "\"");
+        out.println();
 
         SearchResult rhIssues = restClient.getSearchClient().searchJql("labels = redhat-openjdk AND (status = Closed OR status = Resolved) AND type != Backport",
-                options.getMaxIssues(), 0, null).claim();
+                maxIssues, 0, null).claim();
 
         SortedSet<TrackedIssue> issues = new TreeSet<>();
 
@@ -100,10 +94,78 @@ public class Monitor {
             issues.add(parseIssue(cli.getIssue(i.getKey()).claim(), cli));
         }
 
-        printDelimiterLine(System.out);
+        printDelimiterLine(out);
         for (TrackedIssue i : issues) {
-            System.out.println(i.output);
-            printDelimiterLine(System.out);
+            out.println(i.output);
+            printDelimiterLine(out);
+        }
+
+        try {
+            restClient.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void runReleaseReport(String release) throws URISyntaxException {
+        JiraRestClientFactory factory = new AsynchronousJiraRestClientFactory();
+        JiraRestClient restClient = factory.createWithBasicHttpAuthentication(new URI(JIRA_URL), user, pass);
+
+        IssueRestClient cli = restClient.getIssueClient();
+
+        PrintStream out = System.out;
+
+        out.println("JDK BACKPORTS RELEASE REPORT");
+        out.println("=====================================================================================================");
+        out.println();
+        out.println("Report shows who pushed the backports (which is usually who did the backporting work).");
+        out.println();
+
+        SearchResult rhIssues = restClient.getSearchClient().searchJql("project = JDK AND fixVersion = " + release,
+                maxIssues, 0, null).claim();
+
+        Multimap<String, Issue> byUser = TreeMultimap.create(String::compareTo, Comparator.comparing(BasicIssue::getKey));
+
+        List<Promise<Issue>> promises = new ArrayList<>();
+        for (BasicIssue i : rhIssues.getIssues()) {
+            promises.add(cli.getIssue(i.getKey())); // async batching should go here
+        }
+
+        for (int c = 0; c < promises.size(); c++) {
+            out.println("Claiming " + c);
+            Promise<Issue> pr = promises.get(c);
+            int tries = 3;
+            while (tries > 0) {
+                try {
+                    Issue issue = pr.claim();
+                    String pusher = getPushUser(issue);
+                    if (!pusher.equals("N/A")) {
+                        byUser.put(pusher, issue);
+                    }
+                    tries = 0;
+                } catch (Exception e) {
+                    try {
+                        TimeUnit.MILLISECONDS.sleep(300);
+                    } catch (InterruptedException ie) {
+                        ie.printStackTrace();
+                    }
+                    if (tries-- == 0) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
+        out.println();
+        out.println("Release: " + release + ", " + byUser.size() + " issues");
+        out.println();
+
+        for (String pusher : byUser.keySet()) {
+            out.println(pusher + ": " + byUser.get(pusher).size() + " issues");
+            for (Issue i : byUser.get(pusher)) {
+                out.println("  " + i.getKey() + ": " + i.getSummary());
+            }
+            out.println();
         }
 
         try {
@@ -167,6 +229,15 @@ public class Monitor {
         return "N/A";
     }
 
+    private String parseUser(String s) {
+        for (String l : s.split("\n")) {
+            if (l.startsWith("User")) {
+                return l.replaceFirst("User:", "").trim();
+            }
+        }
+        return "N/A";
+    }
+
     private long parseDaysAgo(String s) {
         for (String l : s.split("\n")) {
             if (l.startsWith("Date")) {
@@ -191,6 +262,15 @@ public class Monitor {
         for (Comment c : issue.getComments()) {
             if (c.getAuthor().getName().equals("hgupdate")) {
                 return parseDaysAgo(c.getBody()) + " day(s) ago";
+            }
+        }
+        return "N/A";
+    }
+
+    private String getPushUser(Issue issue) {
+        for (Comment c : issue.getComments()) {
+            if (c.getAuthor().getName().equals("hgupdate")) {
+                return parseUser(c.getBody());
             }
         }
         return "N/A";

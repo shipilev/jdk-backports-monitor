@@ -24,6 +24,10 @@
  */
 package org.openjdk.backports;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Properties;
+
 public class Main {
 
     public static void main(String[] args) {
@@ -31,7 +35,29 @@ public class Main {
 
         try {
             if (options.parse()) {
-                new Monitor(options).run();
+                Properties p = new Properties();
+                try (FileInputStream fis = new FileInputStream(options.getAuthProps())){
+                    p.load(fis);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+                String user = p.getProperty("user");
+                String pass = p.getProperty("pass");
+
+                if (user == null || pass == null) {
+                    throw new IllegalStateException("user/pass keys are missing in auth file: " + options.getAuthProps());
+                }
+
+                Monitor m = new Monitor(user, pass, options.getMaxIssues());
+
+                if (options.getLabelReport() != null) {
+                    m.runLabelReport(options.getLabelReport());
+                }
+
+                if (options.getReleaseReport() != null) {
+                    m.runReleaseReport(options.getReleaseReport());
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
