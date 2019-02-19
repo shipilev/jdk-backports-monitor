@@ -425,7 +425,7 @@ public class Monitor {
         long daysAgo = getPushDaysAgo(issue);
 
         pw.printf("  %8s: %10s, %s, %s%n", getFixVersion(issue), issue.getKey(), getPushURL(issue), getPushDate(issue));
-        recordIssue(results, issue);
+        recordIssue(results, issue, false);
         pw.println();
 
         if (affectedReleases.isEmpty()) {
@@ -439,12 +439,12 @@ public class Monitor {
             if (link.getIssueLinkType().getName().equals("Backport")) {
                 String linkKey = link.getTargetIssueKey();
                 Issue backport = cli.getIssue(linkKey).claim();
-                recordIssue(results, backport);
+                recordIssue(results, backport, true);
             }
         }
 
         int origRel = getFixReleaseVersion(issue);
-        int highRel = results.lastKey();
+        int highRel = results.isEmpty() ? origRel : results.lastKey();
 
         Actionable actionable = Actionable.NONE;
 
@@ -542,11 +542,14 @@ public class Monitor {
         pw.println("-----------------------------------------------------------------------------------------------------");
     }
 
-    private void recordIssue(Map<Integer, List<String>> results, Issue issue) {
+    private void recordIssue(Map<Integer, List<String>> results, Issue issue, boolean bypassEmpty) {
         String fixVersion = getFixVersion(issue);
         if (fixVersion.contains("-oracle")) return;
 
-        String line = String.format("%s, %10s, %s, %s", fixVersion, issue.getKey(), getPushURL(issue), getPushDate(issue));
+        String pushURL = getPushURL(issue);
+        if (bypassEmpty && pushURL.equals("N/A")) return; // skip automatic syncs and closed backports
+
+        String line = String.format("%s, %10s, %s, %s", fixVersion, issue.getKey(), pushURL, getPushDate(issue));
         int ver = extractVersion(fixVersion);
         List<String> list = results.computeIfAbsent(ver, k -> new ArrayList<>());
         list.add(line);
