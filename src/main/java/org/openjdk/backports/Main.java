@@ -55,8 +55,8 @@ public class Main {
                     m.runLabelReport(options.getLabelReport());
                 }
 
-                if (options.getReleaseReport() != null) {
-                    m.runReleaseReport(options.getReleaseReport());
+                if (options.getPushesReport() != null) {
+                    m.runPushesReport(options.getPushesReport());
                 }
             }
         } catch (Exception e) {

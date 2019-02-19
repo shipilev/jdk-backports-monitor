@@ -36,7 +36,7 @@ public class Options {
     private String authProps;
     private int maxIssues;
     private String labelReport;
-    private String releaseReport;
+    private String pushesReport;
 
     public Options(String[] args) {
         this.args = args;
@@ -54,8 +54,8 @@ public class Options {
         OptionSpec<String> optLabelReport = parser.accepts("label", "Report status of closed bugs for given label")
                 .withRequiredArg().ofType(String.class).describedAs("tag");
 
-        OptionSpec<String> optReleaseReport = parser.accepts("release", "Report backports by release")
-                .withRequiredArg().ofType(String.class).describedAs("release");
+        OptionSpec<String> optPushesReport = parser.accepts("pushes", "Report backport pushes by release")
+                .withRequiredArg().ofType(String.class).describedAs("pushes");
 
         parser.accepts("h", "Print this help.");
 
@@ -77,7 +77,7 @@ public class Options {
         maxIssues = optMaxIssues.value(set);
         authProps = optAuthProps.value(set);
         labelReport = optLabelReport.value(set);
-        releaseReport = optReleaseReport.value(set);
+        pushesReport = optPushesReport.value(set);
 
         return true;
     }
@@ -94,7 +94,7 @@ public class Options {
         return labelReport;
     }
 
-    public String getReleaseReport() {
-        return releaseReport;
+    public String getPushesReport() {
+        return pushesReport;
     }
 }

@@ -73,7 +73,7 @@ public class Monitor {
         out.println("JDK BACKPORTS MONITORING REPORT");
         out.println("=====================================================================================================");
         out.println();
-        out.println("Report shows bugs with \"" + label + "\" label, along with their backporting status.");
+        out.println("This report shows bugs with \"" + label + "\" label, along with their backporting status.");
         out.println();
         out.println("For actionable issues, search for these strings:");
         out.println("  \"" + MSG_MISSING + "\"");
@@ -104,7 +104,7 @@ public class Monitor {
         }
     }
 
-    public void runReleaseReport(String release) throws URISyntaxException {
+    public void runPushesReport(String release) throws URISyntaxException {
         JiraRestClientFactory factory = new AsynchronousJiraRestClientFactory();
         JiraRestClient restClient = factory.createWithBasicHttpAuthentication(new URI(JIRA_URL), user, pass);
 
@@ -114,10 +114,11 @@ public class Monitor {
 
         PrintStream out = System.out;
 
-        out.println("JDK BACKPORTS RELEASE REPORT");
+        out.println("JDK BACKPORTS PUSHES REPORT");
         out.println("=====================================================================================================");
         out.println();
-        out.println("Report shows who pushed the backports (which is usually who did the backporting work).");
+        out.println("This report shows who pushed the backports to \"" + release + "\" release. ");
+        out.println("This usually shows who did the backporting, testing, and review work.");
         out.println();
 
         List<Issue> issues = getIssues(searchCli, issueCli, "project = JDK AND fixVersion = " + release);
@@ -140,9 +141,6 @@ public class Monitor {
         }
 
         out.println("Filtered " + filteredSyncs + " automatic syncs, " + byPriority.size() + " pushes left.");
-        out.println();
-
-        out.println("Release: " + release);
         out.println();
 
         out.println("Distribution by priority:");
