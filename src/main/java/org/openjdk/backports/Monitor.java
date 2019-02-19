@@ -123,21 +123,20 @@ public class Monitor {
         List<Issue> issues = getIssues(searchCli, issueCli, "project = JDK AND fixVersion = " + release);
 
         Multiset<String> byPriority = TreeMultiset.create();
-        Multiset<String> byComponent = TreeMultiset.create();
+        Multiset<String> byComponent = HashMultiset.create();
         Multimap<String, Issue> byCommitter = TreeMultimap.create(String::compareTo, Comparator.comparing(BasicIssue::getKey));
 
         for (Issue issue : issues) {
-            byPriority.add(issue.getPriority().getName());
-            byComponent.add(extractComponents(issue));
             String committer = getPushUser(issue);
             if (!committer.equals("N/A")) { // Skip automatic syncs
+                byPriority.add(issue.getPriority().getName());
+                byComponent.add(extractComponents(issue));
                 byCommitter.put(committer, issue);
             }
         }
 
         out.println("Release: " + release);
         out.println();
-
 
         out.println("Distribution by priority:");
         for (String prio : byPriority.elementSet()) {
@@ -198,7 +197,6 @@ public class Monitor {
 
     private List<Issue> getIssues(SearchRestClient searchCli, IssueRestClient cli, String request) {
         List<Issue> issues = new ArrayList<>();
-        List<Promise<Issue>> batch = new ArrayList<>();
 
         SearchResult found = searchCli.searchJql(request, maxIssues, 0, null).claim();
 
@@ -207,6 +205,7 @@ public class Monitor {
 
         // Poor man's rate limiter:
 
+        List<Promise<Issue>> batch = new ArrayList<>();
         int cnt = 0;
         for (BasicIssue i : found.getIssues()) {
             backoff(20);
@@ -233,6 +232,7 @@ public class Monitor {
                 }
             }
         }
+        batch.clear();
     }
 
     private void backoff(int msec) {
