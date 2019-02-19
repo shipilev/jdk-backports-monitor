@@ -28,10 +28,7 @@ import com.atlassian.jira.rest.client.api.*;
 import com.atlassian.jira.rest.client.api.domain.*;
 import com.atlassian.jira.rest.client.internal.async.AsynchronousJiraRestClientFactory;
 import com.atlassian.util.concurrent.Promise;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multiset;
-import com.google.common.collect.TreeMultimap;
-import com.google.common.collect.TreeMultiset;
+import com.google.common.collect.*;
 
 import java.io.*;
 import java.net.URI;
@@ -41,6 +38,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 public class Monitor {
     private static final String JIRA_URL = "https://bugs.openjdk.java.net/";
@@ -124,43 +122,50 @@ public class Monitor {
 
         List<Issue> issues = getIssues(searchCli, issueCli, "project = JDK AND fixVersion = " + release);
 
-        Multimap<String, Issue> byUser = TreeMultimap.create(String::compareTo, Comparator.comparing(BasicIssue::getKey));
+        Multimap<String, Issue> byCommitter = TreeMultimap.create(String::compareTo, Comparator.comparing(BasicIssue::getKey));
 
         for (Issue issue : issues) {
             String pusher = getPushUser(issue);
-            if (pusher.equals("N/A")) {
-                pusher = "Auto-sync";
+            if (!pusher.equals("N/A")) { // Skip automatic syncs
+                byCommitter.put(pusher, issue);
             }
-            byUser.put(pusher, issue);
         }
 
-        out.println();
         out.println("Release: " + release);
         out.println();
 
         Multiset<String> byCompany = TreeMultiset.create();
+        Map<String, Multiset<String>> byCompanyAndCommitter = new HashMap<>();
 
-        for (String pusher : byUser.keySet()) {
-            User user = userCli.getUser(pusher).claim();
+        for (String committer : byCommitter.keySet()) {
+            User user = userCli.getUser(committer).claim();
             String email = user.getEmailAddress();
-            String company = email.substring(email.indexOf("@") + 1);
+            String company = email.substring(email.indexOf("@"));
 
-            byCompany.add(company, byUser.get(pusher).size());
+            byCompany.add(company, byCommitter.get(committer).size());
+            Multiset<String> users = byCompanyAndCommitter.computeIfAbsent(company, k -> HashMultiset.create());
+            users.add(user.getDisplayName(), byCommitter.get(committer).size());
         }
 
-        out.println("Distribution by company: ");
-        out.printf("  %3d: <total issues>%n", byUser.size());
-        for (String company : byCompany.elementSet()) {
-            out.printf("    %3d: %s%n", byCompany.count(company), company);
+        out.println("Distribution by company/committer: ");
+        out.printf("   %3d: <total issues>%n", byCommitter.size());
+        for (String company : Multisets.copyHighestCountFirst(byCompany).elementSet()) {
+            out.printf("      %3d: %s%n", byCompany.count(company), company);
+            Multiset<String> committers = byCompanyAndCommitter.get(company);
+            for (String committer : Multisets.copyHighestCountFirst(committers).elementSet()) {
+                out.printf("         %3d: %s%n", committers.count(committer), committer);
+            }
         }
         out.println();
 
-        for (String pusher : byUser.keySet()) {
-            User user = userCli.getUser(pusher).claim();
+        out.println("Commits:");
+        out.println();
 
-            Collection<Issue> userPushes = byUser.get(pusher);
-            out.println(user.getDisplayName() + ": " + userPushes.size() + " issues");
-            for (Issue i : userPushes) {
+        for (String committer : byCommitter.keySet()) {
+            User user = userCli.getUser(committer).claim();
+
+            out.println(user.getDisplayName() + ":");
+            for (Issue i : byCommitter.get(committer)) {
                 out.println("  " + i.getKey() + ": " + i.getSummary());
             }
             out.println();
