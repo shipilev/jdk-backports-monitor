@@ -122,17 +122,36 @@ public class Monitor {
 
         List<Issue> issues = getIssues(searchCli, issueCli, "project = JDK AND fixVersion = " + release);
 
+        Multiset<String> byPriority = TreeMultiset.create();
+        Multiset<String> byComponent = TreeMultiset.create();
         Multimap<String, Issue> byCommitter = TreeMultimap.create(String::compareTo, Comparator.comparing(BasicIssue::getKey));
 
         for (Issue issue : issues) {
-            String pusher = getPushUser(issue);
-            if (!pusher.equals("N/A")) { // Skip automatic syncs
-                byCommitter.put(pusher, issue);
+            byPriority.add(issue.getPriority().getName());
+            byComponent.add(extractComponents(issue));
+            String committer = getPushUser(issue);
+            if (!committer.equals("N/A")) { // Skip automatic syncs
+                byCommitter.put(committer, issue);
             }
         }
 
         out.println("Release: " + release);
         out.println();
+
+
+        out.println("Distribution by priority:");
+        for (String prio : byPriority.elementSet()) {
+            out.printf("   %3d: %s%n", byPriority.count(prio), prio);
+        }
+        out.println();
+
+        out.println("Distribution by components:");
+        for (String comp : Multisets.copyHighestCountFirst(byComponent).elementSet()) {
+            out.printf("   %3d: %s%n", byComponent.count(comp), comp);
+        }
+        out.println();
+
+        out.println("Distribution by company/committer:");
 
         Multiset<String> byCompany = TreeMultiset.create();
         Map<String, Multiset<String>> byCompanyAndCommitter = new HashMap<>();
@@ -147,7 +166,6 @@ public class Monitor {
             users.add(user.getDisplayName(), byCommitter.get(committer).size());
         }
 
-        out.println("Distribution by company/committer: ");
         out.printf("   %3d: <total issues>%n", byCommitter.size());
         for (String company : Multisets.copyHighestCountFirst(byCompany).elementSet()) {
             out.printf("      %3d: %s%n", byCompany.count(company), company);
