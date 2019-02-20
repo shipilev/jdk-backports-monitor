@@ -95,6 +95,43 @@ public class Monitor {
         }
     }
 
+    public void runOrphansReport(JiraRestClient restClient, String release) throws URISyntaxException {
+        SearchRestClient searchCli = restClient.getSearchClient();
+        IssueRestClient issueCli = restClient.getIssueClient();
+
+        PrintStream out = System.out;
+
+        out.println("JDK BACKPORTS ORPHANS REPORT: " + release);
+        out.println("=====================================================================================================");
+        out.println();
+        out.println("This report shows backports that were approved, but not yet pushed.");
+        out.println("Some of them are true orphans with original backport requesters never got sponsored.");
+        out.println();
+        out.println("Report generated: " + new Date());
+        out.println();
+
+        List<Issue> found = getIssues(searchCli, issueCli, "labels = jdk" + release + "u-fix-yes AND " +
+                "fixVersion !~ '" + release + ".*' AND " +
+                "issue not in linked-subquery(\"issue in subquery(\\\"fixVersion ~ '" + release + ".*' AND fixVersion !~ '*oracle'\\\")\")");
+
+        SortedSet<TrackedIssue> issues = new TreeSet<>();
+        for (Issue i : found) {
+            issues.add(parseIssue(i, issueCli));
+        }
+
+        printDelimiterLine(out);
+        for (TrackedIssue i : issues) {
+            out.println(i.output);
+            printDelimiterLine(out);
+        }
+
+        try {
+            restClient.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void runPushesReport(JiraRestClient restClient, String release) throws URISyntaxException {
         SearchRestClient searchCli = restClient.getSearchClient();
         IssueRestClient issueCli = restClient.getIssueClient();

@@ -71,6 +71,10 @@ public class Main {
                     if (options.getPushesReport() != null) {
                         m.runPushesReport(restClient, options.getPushesReport());
                     }
+
+                    if (options.getOrphansReport() != null) {
+                        m.runOrphansReport(restClient, options.getOrphansReport());
+                    }
                 } finally {
                     if (restClient != null) {
                         restClient.close();

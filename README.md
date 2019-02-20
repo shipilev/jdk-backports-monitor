@@ -12,3 +12,7 @@ Usage:
 2) Print the pushes stats for a given release
 
        java -jar target/jdk-backports-monitor.jar --pushes 11.0.3
+       
+3) List orphaned issues that were approved, but not yet pushed to a given release
+
+       java -jar target/jdk-backports-monitor.jar --orphans 11
