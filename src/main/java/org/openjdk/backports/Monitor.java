@@ -588,10 +588,28 @@ public class Monitor {
 
     private void recordIssue(Map<Integer, List<String>> results, Issue issue, boolean bypassEmpty) {
         String fixVersion = getFixVersion(issue);
+
+        // This is Oracle-internal push. Ignore.
         if (fixVersion.contains("-oracle")) return;
 
         String pushURL = getPushURL(issue);
-        if (bypassEmpty && pushURL.equals("N/A")) return; // skip automatic syncs and closed backports
+
+        if (pushURL.equals("N/A")) {
+            // Oh yeah, issues would have these versions set as "fix", but there would
+            // be no public pushes until CPU releases. Awesome.
+            switch (fixVersion) {
+                case "11.0.1":
+                case "12.0.1":
+                    pushURL = "<'kinda open, but not quite' backport>";
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        if (bypassEmpty && pushURL.equals("N/A")) {
+            return;
+        }
 
         String line = String.format("%s, %10s, %s, %s", fixVersion, issue.getKey(), pushURL, getPushDate(issue));
         int ver = extractVersion(fixVersion);
