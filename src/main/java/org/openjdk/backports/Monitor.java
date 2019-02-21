@@ -182,7 +182,7 @@ public class Monitor {
         }
         out.println();
 
-        out.println("Distribution by company/committer:");
+        out.println("Distribution by email/name:");
 
         Multiset<String> byCompany = TreeMultiset.create();
         Map<String, Multiset<String>> byCompanyAndCommitter = new HashMap<>();
@@ -246,10 +246,13 @@ public class Monitor {
 
     }
 
-    private List<Issue> getIssues(SearchRestClient searchCli, IssueRestClient cli, String request) {
+    private List<Issue> getIssues(SearchRestClient searchCli, IssueRestClient cli, String query) {
         List<Issue> issues = new ArrayList<>();
 
-        SearchResult found = searchCli.searchJql(request, maxIssues, 0, null).claim();
+        System.out.println("JIRA Query: " + query);
+        System.out.println();
+
+        SearchResult found = searchCli.searchJql(query, maxIssues, 0, null).claim();
 
         System.out.println("Found " + found.getTotal() + " matching issues, processing first " + found.getMaxResults() + " issues.");
         System.out.println();
