@@ -112,7 +112,7 @@ public class Monitor {
 
         List<Issue> found = getIssues(searchCli, issueCli, "labels = jdk" + release + "u-fix-yes AND " +
                 "fixVersion !~ '" + release + ".*' AND " +
-                "issue not in linked-subquery(\"issue in subquery(\\\"fixVersion ~ '" + release + ".*' AND fixVersion !~ '*oracle'\\\")\")");
+                "issue not in linked-subquery(\"issue in subquery(\\\"fixVersion ~ '" + release + ".*' AND fixVersion !~ '*oracle' AND (status = Closed OR status = Resolved)\\\")\")");
 
         SortedSet<TrackedIssue> issues = new TreeSet<>();
         for (Issue i : found) {
