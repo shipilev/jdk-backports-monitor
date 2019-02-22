@@ -515,7 +515,15 @@ public class Monitor {
                 pw.printf("  %8s: ", release);
                 switch (release) {
                     case 8: {
-                        if (!affectedReleases.contains(8)) {
+                        if (issue.getLabels().contains("jdk8u-fix-yes")) {
+                            actionable = actionable.mix(Actionable.ACTIONABLE);
+                            pw.println(MSG_APPROVED + ": jdk8u-fix-yes is set");
+                        } else if (issue.getLabels().contains("jdk8u-fix-no")) {
+                            pw.println("REJECTED: jdk8u-fix-no is set");
+                        } else if (issue.getLabels().contains("jdk8u-fix-request")) {
+                            pw.println("Requested: jdk8u-fix-request is set");
+                            actionable = actionable.mix(Actionable.WAITING);
+                        } else if (!affectedReleases.contains(8)) {
                             pw.println(MSG_NOT_AFFECTED);
                         } else if (daysAgo < BAKE_TIME) {
                             actionable = actionable.mix(Actionable.WAITING);
