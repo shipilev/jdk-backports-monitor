@@ -110,9 +110,17 @@ public class Monitor {
         out.println("Report generated: " + new Date());
         out.println();
 
-        List<Issue> found = getIssues(searchCli, issueCli, "labels = jdk" + release + "u-fix-yes AND " +
-                "fixVersion !~ '" + release + ".*' AND " +
-                "issue not in linked-subquery(\"issue in subquery(\\\"fixVersion ~ '" + release + ".*' AND fixVersion !~ '*oracle' AND (status = Closed OR status = Resolved)\\\")\")");
+        String query = "labels = jdk" + release + "u-fix-yes AND fixVersion !~ '" + release + ".*'";
+
+        switch (release) {
+            case "8":
+                query += " AND issue not in linked-subquery(\"issue in subquery(\\\"fixVersion = 'openjdk8u' AND (status = Closed OR status = Resolved)\\\")\")";
+                break;
+            default:
+                query += " AND issue not in linked-subquery(\"issue in subquery(\\\"fixVersion ~ '" + release + ".*' AND fixVersion !~ '*oracle' AND (status = Closed OR status = Resolved)\\\")\")";
+        }
+
+        List<Issue> found = getIssues(searchCli, issueCli, query);
 
         SortedSet<TrackedIssue> issues = new TreeSet<>();
         for (Issue i : found) {
