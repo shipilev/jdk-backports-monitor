@@ -75,6 +75,10 @@ public class Main {
                     if (options.getOrphansReport() != null) {
                         m.runOrphansReport(restClient, options.getOrphansReport());
                     }
+
+                    if (options.getIssueReport() != null) {
+                        m.runIssueReport(restClient, options.getIssueReport());
+                    }
                 } finally {
                     if (restClient != null) {
                         restClient.close();

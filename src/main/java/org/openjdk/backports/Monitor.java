@@ -95,6 +95,33 @@ public class Monitor {
         }
     }
 
+    public void runIssueReport(JiraRestClient restClient, String issueId) throws URISyntaxException {
+        IssueRestClient issueCli = restClient.getIssueClient();
+
+        PrintStream out = System.out;
+
+        out.println("JDK BACKPORTS ISSUE REPORT: " + issueId);
+        out.println("=====================================================================================================");
+        out.println();
+        out.println("This report shows a single issue status.");
+        out.println();
+        out.println("Report generated: " + new Date());
+        out.println();
+
+        Issue issue = issueCli.getIssue(issueId).claim();
+
+        TrackedIssue trackedIssue = parseIssue(issue, issueCli);
+
+        printDelimiterLine(out);
+        out.println(trackedIssue.output);
+
+        try {
+            restClient.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void runOrphansReport(JiraRestClient restClient, String release) throws URISyntaxException {
         SearchRestClient searchCli = restClient.getSearchClient();
         IssueRestClient issueCli = restClient.getIssueClient();

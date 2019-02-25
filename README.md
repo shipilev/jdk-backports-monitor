@@ -16,3 +16,7 @@ Usage:
 3) List orphaned issues that were approved, but not yet pushed to a given release
 
        java -jar target/jdk-backports-monitor.jar --orphans 11
+       
+4) Show the report for the individual issue (useful for monitor debugging)
+
+        java -jar target/jdk-backports-monitor.jar --issue JDK-8217597

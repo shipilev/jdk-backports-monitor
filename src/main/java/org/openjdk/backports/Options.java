@@ -38,6 +38,7 @@ public class Options {
     private String labelReport;
     private String pushesReport;
     private String orphansReport;
+    private String issueReport;
 
     public Options(String[] args) {
         this.args = args;
@@ -61,6 +62,9 @@ public class Options {
         OptionSpec<String> optOrphansReport = parser.accepts("orphans", "Report backports that were approved, but not pushed")
                 .withRequiredArg().ofType(String.class).describedAs("orphans");
 
+        OptionSpec<String> optIssueReport = parser.accepts("issue", "Report issue status (useful for debugging)")
+                .withRequiredArg().ofType(String.class).defaultsTo("bug-id");
+
         parser.accepts("h", "Print this help.");
 
         OptionSet set;
@@ -83,6 +87,7 @@ public class Options {
         labelReport = optLabelReport.value(set);
         pushesReport = optPushesReport.value(set);
         orphansReport = optOrphansReport.value(set);
+        issueReport = optIssueReport.value(set);
 
         return true;
     }
@@ -105,6 +110,10 @@ public class Options {
 
     public String getOrphansReport() {
         return orphansReport;
+    }
+
+    public String getIssueReport() {
+        return issueReport;
     }
 
 }
