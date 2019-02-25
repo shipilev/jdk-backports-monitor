@@ -87,12 +87,6 @@ public class Monitor {
             out.println(i.output);
             printDelimiterLine(out);
         }
-
-        try {
-            restClient.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     public void runIssueReport(JiraRestClient restClient, String issueId) throws URISyntaxException {
@@ -114,12 +108,6 @@ public class Monitor {
 
         printDelimiterLine(out);
         out.println(trackedIssue.output);
-
-        try {
-            restClient.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     public void runOrphansReport(JiraRestClient restClient, String release) throws URISyntaxException {
@@ -159,12 +147,6 @@ public class Monitor {
         for (TrackedIssue i : issues) {
             out.println(i.output);
             printDelimiterLine(out);
-        }
-
-        try {
-            restClient.close();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
