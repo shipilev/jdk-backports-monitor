@@ -129,8 +129,8 @@ public class Monitor {
 
         switch (release) {
             case "8":
-                query += " AND fixVersion != 'openjdk8u'";
-                query += " AND issue not in linked-subquery(\"issue in subquery(\\\"fixVersion = 'openjdk8u' AND (status = Closed OR status = Resolved)\\\")\")";
+                query += " AND fixVersion !~ 'openjdk8u*'";
+                query += " AND issue not in linked-subquery(\"issue in subquery(\\\"fixVersion ~ 'openjdk8u*' AND (status = Closed OR status = Resolved)\\\")\")";
                 break;
             default:
                 query += " AND issue not in linked-subquery(\"issue in subquery(\\\"fixVersion ~ '" + release + ".*' AND fixVersion !~ '*oracle' AND (status = Closed OR status = Resolved)\\\")\")";
