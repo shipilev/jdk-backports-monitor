@@ -63,7 +63,7 @@ public class Options {
                 .withRequiredArg().ofType(String.class).describedAs("orphans");
 
         OptionSpec<String> optIssueReport = parser.accepts("issue", "Report issue status (useful for debugging)")
-                .withRequiredArg().ofType(String.class).defaultsTo("bug-id");
+                .withRequiredArg().ofType(String.class).describedAs("bug-id");
 
         parser.accepts("h", "Print this help.");
 
