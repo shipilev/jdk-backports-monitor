@@ -125,7 +125,7 @@ public class Monitor {
         out.println("Report generated: " + new Date());
         out.println();
 
-        String query = "labels = jdk" + release + "u-fix-yes AND fixVersion !~ '" + release + ".*'";
+        String query = "labels = jdk" + release + "u-fix-yes AND labels != openjdk-na AND fixVersion !~ '" + release + ".*'";
 
         switch (release) {
             case "8":
