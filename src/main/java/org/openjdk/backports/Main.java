@@ -76,6 +76,10 @@ public class Main {
                         m.runOrphansReport(restClient, options.getOrphansReport());
                     }
 
+                    if (options.getFilterReport() != null) {
+                        m.runFilterReport(restClient, options.getFilterReport());
+                    }
+
                     if (options.getIssueReport() != null) {
                         m.runIssueReport(restClient, options.getIssueReport());
                     }

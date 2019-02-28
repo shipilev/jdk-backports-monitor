@@ -250,6 +250,33 @@ public class Monitor {
         }
     }
 
+    public void runFilterReport(JiraRestClient restClient, long filterId) throws URISyntaxException {
+        SearchRestClient searchCli = restClient.getSearchClient();
+        IssueRestClient issueCli = restClient.getIssueClient();
+
+        PrintStream out = System.out;
+
+        Filter filter = searchCli.getFilter(filterId).claim();
+
+        out.println("JDK BACKPORTS FILTER REPORT");
+        out.println("=====================================================================================================");
+        out.println();
+        out.println("This report shows brief list of issues matching the filter.");
+        out.println();
+        out.println("Report generated: " + new Date());
+        out.println();
+
+        List<Issue> issues = getIssues(searchCli, issueCli, filter.getJql());
+
+        out.println("Filter: " + filter.getName());
+        out.println("Prefix bug IDs with " + Main.JIRA_URL + "browse/ to reach the relevant JIRA entry.");
+        out.println();
+
+        for (Issue i : issues) {
+            out.println("  " + i.getKey() + ": " + i.getSummary());
+        }
+    }
+
     static class UserCache {
         private final UserRestClient client;
         private final Map<String, User> users;
