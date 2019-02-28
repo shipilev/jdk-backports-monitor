@@ -269,7 +269,9 @@ public class Monitor {
         List<Issue> issues = getIssues(searchCli, issueCli, filter.getJql());
 
         out.println("Filter: " + filter.getName());
-        out.println("Prefix bug IDs with " + Main.JIRA_URL + "browse/ to reach the relevant JIRA entry.");
+        out.println("Filter URL: " + Main.JIRA_URL + "issues/?filter=" + filterId);
+        out.println();
+        out.println("Hint: Prefix bug IDs with " + Main.JIRA_URL + "browse/ to reach the relevant JIRA entry.");
         out.println();
 
         for (Issue i : issues) {
@@ -330,10 +332,32 @@ public class Monitor {
 
     }
 
+    private String rewrap(String src, int width) {
+        StringBuilder result = new StringBuilder();
+        String[] words = src.split("[ \n]");
+        String line = "";
+        int cols = 0;
+        for (String w : words) {
+            cols += w.length();
+            line += w + " ";
+            if (cols > width) {
+                result.append(line);
+                result.append("\n");
+                line = "";
+                cols = 0;
+            }
+        }
+        if (!line.trim().isEmpty()) {
+            result.append(line);
+            result.append("\n");
+        }
+        return result.toString();
+    }
+
     private List<Issue> getIssues(SearchRestClient searchCli, IssueRestClient cli, String query) {
         List<Issue> issues = new ArrayList<>();
 
-        System.out.println("JIRA Query: " + query);
+        System.out.println("JIRA Query: " + rewrap(query, 80));
         System.out.println();
 
         SearchResult found = searchCli.searchJql(query, maxIssues, 0, null).claim();
