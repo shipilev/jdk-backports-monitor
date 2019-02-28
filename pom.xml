@@ -63,6 +63,7 @@ questions.
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <configuration>
+                    <source>8</source>
                     <quiet>true</quiet>
                 </configuration>
                 <executions>
