@@ -32,6 +32,7 @@ import com.google.common.collect.*;
 import java.io.*;
 import java.net.URISyntaxException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -47,10 +48,12 @@ public class Monitor {
 
     private static final int BAKE_TIME = 14; // days
 
+    private final UserCache users;
     private final int maxIssues;
 
-    public Monitor(int maxIssues) {
+    public Monitor(JiraRestClient restClient, int maxIssues) {
         this.maxIssues = maxIssues;
+        this.users = new UserCache(restClient.getUserClient());
     }
 
     public void runLabelReport(JiraRestClient restClient, String label) throws URISyntaxException {
@@ -153,7 +156,6 @@ public class Monitor {
     public void runPushesReport(JiraRestClient restClient, String release) throws URISyntaxException {
         SearchRestClient searchCli = restClient.getSearchClient();
         IssueRestClient issueCli = restClient.getIssueClient();
-        UserRestClient userCli = restClient.getUserClient();
 
         PrintStream out = System.out;
 
@@ -171,6 +173,7 @@ public class Monitor {
         Multiset<String> byPriority = TreeMultiset.create();
         Multiset<String> byComponent = HashMultiset.create();
         Multimap<String, Issue> byCommitter = TreeMultimap.create(String::compareTo, Comparator.comparing(BasicIssue::getKey));
+        Set<Issue> byTime = new TreeSet<>(Comparator.comparing(Monitor::getPushSecondsAgo).thenComparing(Issue::getKey));
 
         int filteredSyncs = 0;
 
@@ -180,6 +183,7 @@ public class Monitor {
                 byPriority.add(issue.getPriority().getName());
                 byComponent.add(extractComponents(issue));
                 byCommitter.put(committer, issue);
+                byTime.add(issue);
             } else {
                 filteredSyncs++;
             }
@@ -206,13 +210,13 @@ public class Monitor {
         Map<String, Multiset<String>> byCompanyAndCommitter = new HashMap<>();
 
         for (String committer : byCommitter.keySet()) {
-            User user = userCli.getUser(committer).claim();
+            User user = users.getUser(committer);
             String email = user.getEmailAddress();
             String company = email.substring(email.indexOf("@"));
 
             byCompany.add(company, byCommitter.get(committer).size());
-            Multiset<String> users = byCompanyAndCommitter.computeIfAbsent(company, k -> HashMultiset.create());
-            users.add(user.getDisplayName(), byCommitter.get(committer).size());
+            Multiset<String> bu = byCompanyAndCommitter.computeIfAbsent(company, k -> HashMultiset.create());
+            bu.add(users.getDisplayName(committer), byCommitter.get(committer).size());
         }
 
         out.printf("   %3d: <total issues>%n", byCommitter.size());
@@ -225,17 +229,52 @@ public class Monitor {
         }
         out.println();
 
-        out.println("Commits:");
+        out.println("Chronological push log:");
+        out.println();
+
+        for (Issue i : byTime) {
+            String name = users.getDisplayName(getPushUser(i));
+            out.printf("  %3d day(s) ago, %" + users.maxDisplayName() + "s, %s: %s%n", TimeUnit.SECONDS.toDays(getPushSecondsAgo(i)), name, i.getKey(), i.getSummary());
+        }
+        out.println();
+
+        out.println("Committer push log:");
         out.println();
 
         for (String committer : byCommitter.keySet()) {
-            User user = userCli.getUser(committer).claim();
-
-            out.println(user.getDisplayName() + ":");
+            out.println("  " + users.getDisplayName(committer) + ":");
             for (Issue i : byCommitter.get(committer)) {
-                out.println("  " + i.getKey() + ": " + i.getSummary());
+                out.println("    " + i.getKey() + ": " + i.getSummary());
             }
             out.println();
+        }
+    }
+
+    static class UserCache {
+        private final UserRestClient client;
+        private final Map<String, User> users;
+        private final Map<String, String> displayNames;
+
+        public UserCache(UserRestClient client) {
+            this.client = client;
+            this.users = new HashMap<>();
+            this.displayNames = new HashMap<>();
+        }
+
+        public User getUser(String id) {
+            return users.computeIfAbsent(id, u -> client.getUser(u).claim());
+        }
+
+        public String getDisplayName(String id) {
+            return displayNames.computeIfAbsent(id, u -> getUser(u).getDisplayName());
+        }
+
+        public int maxDisplayName() {
+            int r = 0;
+            for (String v : displayNames.values()) {
+                r = Math.max(r, v.length());
+            }
+            return r;
         }
     }
 
@@ -368,12 +407,23 @@ public class Monitor {
         return "N/A";
     }
 
-    private long parseDaysAgo(String s) {
+    private static long parseDaysAgo(String s) {
         for (String l : s.split("\n")) {
             if (l.startsWith("Date")) {
                 String d = l.replaceFirst("Date:", "").trim();
                 final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss Z");
                 return ChronoUnit.DAYS.between(LocalDate.parse(d, formatter), LocalDate.now());
+            }
+        }
+        return 0;
+    }
+
+    private static long parseSecondsAgo(String s) {
+        for (String l : s.split("\n")) {
+            if (l.startsWith("Date")) {
+                String d = l.replaceFirst("Date:", "").trim();
+                final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss Z");
+                return ChronoUnit.SECONDS.between(LocalDateTime.parse(d, formatter), LocalDateTime.now());
             }
         }
         return 0;
@@ -406,10 +456,19 @@ public class Monitor {
         return "N/A";
     }
 
-    private long getPushDaysAgo(Issue issue) {
+    private static long getPushDaysAgo(Issue issue) {
         for (Comment c : issue.getComments()) {
             if (c.getAuthor().getName().equals("hgupdate")) {
                 return parseDaysAgo(c.getBody());
+            }
+        }
+        return 0;
+    }
+
+    private static long getPushSecondsAgo(Issue issue) {
+        for (Comment c : issue.getComments()) {
+            if (c.getAuthor().getName().equals("hgupdate")) {
+                return parseSecondsAgo(c.getBody());
             }
         }
         return 0;

@@ -56,13 +56,13 @@ public class Main {
                     throw new IllegalStateException("user/pass keys are missing in auth file: " + options.getAuthProps());
                 }
 
-                Monitor m = new Monitor(options.getMaxIssues());
-
                 JiraRestClientFactory factory = new AsynchronousJiraRestClientFactory();
                 JiraRestClient restClient = null;
 
                 try {
                     restClient = factory.createWithBasicHttpAuthentication(new URI(JIRA_URL), user, pass);
+
+                    Monitor m = new Monitor(restClient, options.getMaxIssues());
 
                     if (options.getLabelReport() != null) {
                         m.runLabelReport(restClient, options.getLabelReport());
