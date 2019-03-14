@@ -416,6 +416,10 @@ public class Monitor {
             version = version.substring("openjdk".length());
         }
 
+        if (version.endsWith("shenandoah")) {
+            version = version.substring(0, version.indexOf("shenandoah") - 1);
+        }
+
         int dotIdx = version.indexOf(".");
         if (dotIdx != -1) {
             try {
@@ -483,6 +487,15 @@ public class Monitor {
     private String getPushURL(Issue issue) {
         for (Comment c : issue.getComments()) {
             if (c.getAuthor().getName().equals("hgupdate")) {
+                return parseURL(c.getBody());
+            }
+        }
+        return "N/A";
+    }
+
+    private String getShenandoahPushURL(Issue issue) {
+        for (Comment c : issue.getComments()) {
+            if (c.getBody().contains("Manual push")) {
                 return parseURL(c.getBody());
             }
         }
@@ -731,11 +744,18 @@ public class Monitor {
         String pushURL = getPushURL(issue);
 
         if (pushURL.equals("N/A")) {
-            // Oh yeah, issues would have these versions set as "fix", but there would
-            // be no public pushes until CPU releases. Awesome.
             switch (fixVersion) {
+                case "8-shenandoah":
+                case "11-shenandoah":
+                    pushURL = getShenandoahPushURL(issue);
+                    if (pushURL.equals("N/A")) {
+                        pushURL = "<unknown push>";
+                    }
+                    break;
                 case "11.0.1":
                 case "12.0.1":
+                    // Oh yeah, issues would have these versions set as "fix", but there would
+                    // be no public pushes until CPU releases. Awesome.
                     pushURL = "<'kinda open, but not quite' backport>";
                     break;
                 default:
