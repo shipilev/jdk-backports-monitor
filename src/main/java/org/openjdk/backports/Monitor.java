@@ -49,9 +49,11 @@ public class Monitor {
     private static final int BAKE_TIME = 14; // days
 
     private final UserCache users;
+    private final HgDB hgDB;
     private final int maxIssues;
 
-    public Monitor(JiraRestClient restClient, int maxIssues) {
+    public Monitor(JiraRestClient restClient, HgDB hgDB, int maxIssues) {
+        this.hgDB = hgDB;
         this.maxIssues = maxIssues;
         this.users = new UserCache(restClient.getUserClient());
     }
@@ -417,7 +419,7 @@ public class Monitor {
         }
 
         if (version.endsWith("shenandoah")) {
-            version = version.substring(0, version.indexOf("shenandoah") - 1);
+            return -1;
         }
 
         int dotIdx = version.indexOf(".");
@@ -437,6 +439,19 @@ public class Monitor {
             }
         }
 
+        try {
+            return Integer.parseInt(version);
+        } catch (Exception e) {
+            return -1;
+        }
+    }
+
+    private int extractVersionShenandoah(String version) {
+        if (!version.endsWith("-shenandoah")) {
+            return -1;
+        }
+
+        version = version.substring(0, version.indexOf("shenandoah") - 1);
         try {
             return Integer.parseInt(version);
         } catch (Exception e) {
@@ -587,9 +602,13 @@ public class Monitor {
         PrintWriter pw = new PrintWriter(sw);
 
         Set<Integer> affectedReleases = new HashSet<>();
+        Set<Integer> affectedShenandoah = new HashSet<>();
         for (Version v : issue.getAffectedVersions()) {
             int ver = extractVersion(v.getName());
             affectedReleases.add(ver);
+            if (v.getName().endsWith("-shenandoah")) {
+                affectedShenandoah.add(extractVersionShenandoah(v.getName()));
+            }
         }
 
         pw.println();
@@ -726,6 +745,56 @@ public class Monitor {
             pw.println("      None.");
         }
 
+        if (issue.getLabels().contains("gc-shenandoah")) {
+            printed = false;
+            pw.println();
+            pw.println("  Shenandoah Backports:");
+
+            String synopsis = issue.getKey().replaceFirst("JDK-", "[backport] ");
+
+            for (int ver : new int[]{11, 8}) {
+                pw.printf("  %8s: ", ver);
+                switch (ver) {
+                    case 11:
+                        if (!affectedShenandoah.contains(11)) {
+                            pw.println(MSG_NOT_AFFECTED);
+                        } else {
+                            List<HgDB.Record> jdk11 = hgDB.search("jdk11", synopsis);
+                            if (!jdk11.isEmpty()) {
+                                for (HgDB.Record record : jdk11) {
+                                    pw.println(record.repo + "/rev/" + record.hash);
+                                    printed = true;
+                                }
+                            } else {
+                                pw.println(MSG_MISSING);
+                            }
+                        }
+                        break;
+                    case 8:
+                        if (!affectedShenandoah.contains(8)) {
+                            pw.println(MSG_NOT_AFFECTED);
+                        } else {
+                            List<HgDB.Record> jdk8u = hgDB.search("jdk8u", synopsis);
+                            if (!jdk8u.isEmpty()) {
+                                for (HgDB.Record record : jdk8u) {
+                                    pw.println(record.repo + "/rev/" + record.hash);
+                                    printed = true;
+                                }
+                            } else {
+                                pw.println(MSG_MISSING);
+                            }
+                        }
+                        break;
+                    default:
+                        pw.println("Unknown release: " + ver);
+                }
+            }
+
+            if (!printed) {
+                pw.println("      None.");
+            }
+        }
+
         pw.println();
 
         return new TrackedIssue(sw.toString(), daysAgo, actionable);
@@ -745,13 +814,13 @@ public class Monitor {
 
         if (pushURL.equals("N/A")) {
             switch (fixVersion) {
-                case "8-shenandoah":
-                case "11-shenandoah":
-                    pushURL = getShenandoahPushURL(issue);
-                    if (pushURL.equals("N/A")) {
-                        pushURL = "<unknown push>";
-                    }
-                    break;
+//                case "8-shenandoah":
+//                case "11-shenandoah":
+//                    pushURL = getShenandoahPushURL(issue);
+//                    if (pushURL.equals("N/A")) {
+//                        pushURL = "<unknown push>";
+//                    }
+//                    break;
                 case "11.0.1":
                 case "12.0.1":
                     // Oh yeah, issues would have these versions set as "fix", but there would

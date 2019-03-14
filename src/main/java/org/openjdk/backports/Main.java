@@ -49,6 +49,18 @@ public class Main {
                     throw new RuntimeException(e);
                 }
 
+                HgDB hgDB = new HgDB();
+                try {
+                    hgDB.load();
+                } catch (Exception e) {
+                    // Whatever
+                }
+
+                if (options.getUpdateHgDB() != null) {
+                    hgDB.update(options.getUpdateHgDB());
+                    hgDB.save();
+                }
+
                 String user = p.getProperty("user");
                 String pass = p.getProperty("pass");
 
@@ -62,7 +74,7 @@ public class Main {
                 try {
                     restClient = factory.createWithBasicHttpAuthentication(new URI(JIRA_URL), user, pass);
 
-                    Monitor m = new Monitor(restClient, options.getMaxIssues());
+                    Monitor m = new Monitor(restClient, hgDB, options.getMaxIssues());
 
                     if (options.getLabelReport() != null) {
                         m.runLabelReport(restClient, options.getLabelReport());
