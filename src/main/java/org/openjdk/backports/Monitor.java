@@ -746,7 +746,6 @@ public class Monitor {
         }
 
         if (issue.getLabels().contains("gc-shenandoah")) {
-            printed = false;
             pw.println();
             pw.println("  Shenandoah Backports:");
 
@@ -754,44 +753,21 @@ public class Monitor {
 
             for (int ver : new int[]{11, 8}) {
                 pw.printf("  %8s: ", ver);
-                switch (ver) {
-                    case 11:
-                        if (!affectedShenandoah.contains(11)) {
-                            pw.println(MSG_NOT_AFFECTED);
-                        } else {
-                            List<HgDB.Record> jdk11 = hgDB.search("jdk11", synopsis);
-                            if (!jdk11.isEmpty()) {
-                                for (HgDB.Record record : jdk11) {
-                                    pw.println(record.repo + "/rev/" + record.hash);
-                                    printed = true;
-                                }
-                            } else {
-                                pw.println(MSG_MISSING);
-                            }
+                if (!affectedShenandoah.contains(ver)) {
+                    pw.println(MSG_NOT_AFFECTED);
+                } else if (!hgDB.hasRepo("jdk" + ver)) {
+                    pw.println(MSG_WARNING + ": No Mercurial data available to judge");
+                } else {
+                    List<HgDB.Record> rs = hgDB.search("jdk" + ver, synopsis);
+                    if (!rs.isEmpty()) {
+                        for (HgDB.Record r : rs) {
+                            pw.println(r.toString());
                         }
-                        break;
-                    case 8:
-                        if (!affectedShenandoah.contains(8)) {
-                            pw.println(MSG_NOT_AFFECTED);
-                        } else {
-                            List<HgDB.Record> jdk8u = hgDB.search("jdk8u", synopsis);
-                            if (!jdk8u.isEmpty()) {
-                                for (HgDB.Record record : jdk8u) {
-                                    pw.println(record.repo + "/rev/" + record.hash);
-                                    printed = true;
-                                }
-                            } else {
-                                pw.println(MSG_MISSING);
-                            }
-                        }
-                        break;
-                    default:
-                        pw.println("Unknown release: " + ver);
+                    } else {
+                        actionable = actionable.mix(Actionable.ACTIONABLE);
+                        pw.println(MSG_MISSING);
+                    }
                 }
-            }
-
-            if (!printed) {
-                pw.println("      None.");
             }
         }
 
@@ -814,13 +790,6 @@ public class Monitor {
 
         if (pushURL.equals("N/A")) {
             switch (fixVersion) {
-//                case "8-shenandoah":
-//                case "11-shenandoah":
-//                    pushURL = getShenandoahPushURL(issue);
-//                    if (pushURL.equals("N/A")) {
-//                        pushURL = "<unknown push>";
-//                    }
-//                    break;
                 case "11.0.1":
                 case "12.0.1":
                     // Oh yeah, issues would have these versions set as "fix", but there would

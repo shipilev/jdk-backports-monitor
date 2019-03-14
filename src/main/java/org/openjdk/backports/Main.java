@@ -50,15 +50,8 @@ public class Main {
                 }
 
                 HgDB hgDB = new HgDB();
-                try {
-                    hgDB.load();
-                } catch (Exception e) {
-                    // Whatever
-                }
-
-                if (options.getUpdateHgDB() != null) {
-                    hgDB.update(options.getUpdateHgDB());
-                    hgDB.save();
+                if (options.getHgRepos() != null) {
+                    hgDB.load(options.getHgRepos());
                 }
 
                 String user = p.getProperty("user");

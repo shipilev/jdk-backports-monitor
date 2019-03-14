@@ -40,7 +40,7 @@ public class Options {
     private String orphansReport;
     private String issueReport;
     private Long filterReport;
-    private String updateHgDB;
+    private String hgRepos;
 
     public Options(String[] args) {
         this.args = args;
@@ -70,8 +70,8 @@ public class Options {
         OptionSpec<Long> optFilterReport = parser.accepts("filter", "Report issues matching the filter")
                 .withRequiredArg().ofType(long.class).describedAs("filter-id");
 
-        OptionSpec<String> optUpdateHgDB = parser.accepts("update-hg-db", "Update changesets database")
-                .withRequiredArg().ofType(String.class).describedAs("path-to-local-hg");
+        OptionSpec<String> optUpdateHgDB = parser.accepts("hg-repos", "Use these repositories for Mercurial metadata")
+                .withRequiredArg().ofType(String.class).describedAs("paths-to-local-hg");
 
         parser.accepts("h", "Print this help.");
 
@@ -97,7 +97,7 @@ public class Options {
         orphansReport = optOrphansReport.value(set);
         issueReport = optIssueReport.value(set);
         filterReport = optFilterReport.value(set);
-        updateHgDB = optUpdateHgDB.value(set);
+        hgRepos = optUpdateHgDB.value(set);
 
         return true;
     }
@@ -130,6 +130,6 @@ public class Options {
         return filterReport;
     }
 
-    public String getUpdateHgDB() { return updateHgDB; }
+    public String getHgRepos() { return hgRepos; }
 
 }

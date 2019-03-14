@@ -29,47 +29,52 @@ import java.util.*;
 
 public class HgDB {
 
-    private Set<Record> records;
+    private final Set<Record> records;
 
     public HgDB() {
         this.records = new HashSet<>();
     }
 
-    public void load() throws Exception {
-        try {
-            FileInputStream fis = new FileInputStream("hg.db");
-            BufferedInputStream bis = new BufferedInputStream(fis);
-            ObjectInputStream ois = new ObjectInputStream(bis);
-            records = (Set<Record>) ois.readObject();
-            ois.close();
-            bis.close();
-            fis.close();
-        } catch (Exception e) {
-            records = new HashSet<>();
-            throw e;
+    public void load(String hgRepos) {
+        PrintStream pw = System.out;
+
+        if (hgRepos == null || hgRepos.isEmpty()) {
+            return;
         }
-    }
 
-    public void update(String repoPath) throws IOException, InterruptedException {
-        String repo = "";
+        for (String repoPath : hgRepos.split(",")) {
+            pw.print("Loading changeset metadata from " + repoPath + "... ");
 
-        {
-            List<String> lines = exec("hg", "paths", "-R", repoPath);
-            for (String line : lines) {
-                if (line.startsWith("default = ")) {
-                    String[] split = line.split("=");
-                    repo = split[1];
+            String repo = "N/A";
+
+            try {
+                List<String> lines = exec("hg", "paths", "-R", repoPath);
+                for (String line : lines) {
+                    if (line.startsWith("default = ")) {
+                        String[] split = line.split(" = ");
+                        repo = split[1];
+                    }
                 }
+            } catch (Exception e) {
+                pw.println("Cannot figure out repo url");
+            }
+
+            try {
+                List<String> lines = exec("hg", "log", "-R", repoPath, "-T",
+                        "{node|short}BACKPORT-SEPARATOR{latesttag}BACKPORT-SEPARATOR{desc|firstline}\n");
+                for (String line : lines) {
+                    String[] split = line.split("BACKPORT-SEPARATOR");
+                    records.add(new Record(repo, split[0], split[1], split[2]));
+                }
+
+                pw.println(" " + lines.size() + " loaded.");
+            } catch (Exception e) {
+                pw.println("Cannot get changeset log");
             }
         }
 
-        {
-            List<String> lines = exec("hg", "log", "-R", repoPath, "-T", "{node|short}BACKPORT-SEPARATOR{desc|firstline}\n");
-            for (String line : lines) {
-                String[] split = line.split("BACKPORT-SEPARATOR");
-                records.add(new Record(repo, split[0].trim(), split[1].trim()));
-            }
-        }
+        pw.println("HG DB has " + records.size() + " records.");
+        pw.println();
     }
 
     private List<String> exec(String... command) throws IOException, InterruptedException {
@@ -87,19 +92,13 @@ public class HgDB {
         return result;
     }
 
-    public void save() throws IOException {
-        try {
-            FileOutputStream fos = new FileOutputStream("hg.db");
-            BufferedOutputStream bos = new BufferedOutputStream(fos);
-            ObjectOutputStream oos = new ObjectOutputStream(bos);
-            oos.writeObject(records);
-            oos.close();
-            bos.close();
-            fos.close();
-        } catch (Exception e) {
-            records = new HashSet<>();
-            throw e;
+    public boolean hasRepo(String repo) {
+        for (Record record : records) {
+            if (record.repo.contains(repo)) {
+                return true;
+            }
         }
+        return false;
     }
 
     public List<Record> search(String repo, String synopsis) {
@@ -112,14 +111,16 @@ public class HgDB {
         return result;
     }
 
-    public static class Record implements Serializable {
+    public static class Record {
         final String repo;
         final String hash;
+        final String tag;
         final String synopsis;
 
-        private Record(String repo, String hash, String synopsis) {
+        private Record(String repo, String hash, String tag, String synopsis) {
             this.repo = repo;
             this.hash = hash;
+            this.tag = tag;
             this.synopsis = synopsis;
         }
 
@@ -139,6 +140,11 @@ public class HgDB {
             int result = repo.hashCode();
             result = 31 * result + hash.hashCode();
             return result;
+        }
+
+        @Override
+        public String toString() {
+            return tag + ", "+ repo + "/rev/" + hash;
         }
     }
 
