@@ -113,13 +113,13 @@ public class Monitor {
         out.println(trackedIssue.output);
     }
 
-    public void runPendingPushesReport(JiraRestClient restClient, String release) throws URISyntaxException {
+    public void runPendingPushReport(JiraRestClient restClient, String release) throws URISyntaxException {
         SearchRestClient searchCli = restClient.getSearchClient();
         IssueRestClient issueCli = restClient.getIssueClient();
 
         PrintStream out = System.out;
 
-        out.println("JDK BACKPORTS PENDING PUSHES REPORT: " + release);
+        out.println("JDK BACKPORTS PENDING PUSH REPORT: " + release);
         out.println("=====================================================================================================");
         out.println();
         out.println("This report shows backports that were approved, but not yet pushed.");

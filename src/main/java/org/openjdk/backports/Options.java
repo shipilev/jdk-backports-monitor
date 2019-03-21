@@ -36,7 +36,7 @@ public class Options {
     private String authProps;
     private String labelReport;
     private String pushesReport;
-    private String pendingPushesReport;
+    private String pendingPushReport;
     private String issueReport;
     private Long filterReport;
     private String hgRepos;
@@ -57,7 +57,7 @@ public class Options {
         OptionSpec<String> optPushesReport = parser.accepts("pushes", "Report backport pushes by release")
                 .withRequiredArg().ofType(String.class).describedAs("release");
 
-        OptionSpec<String> optPendingPushesReport = parser.accepts("pending-pushes", "Report backports that were approved, and pending for push")
+        OptionSpec<String> optPendingPushReport = parser.accepts("pending-push", "Report backports that were approved, and pending for push")
                 .withRequiredArg().ofType(String.class).describedAs("release");
 
         OptionSpec<String> optIssueReport = parser.accepts("issue", "Report issue status (useful for debugging)")
@@ -89,7 +89,7 @@ public class Options {
         authProps = optAuthProps.value(set);
         labelReport = optLabelReport.value(set);
         pushesReport = optPushesReport.value(set);
-        pendingPushesReport = optPendingPushesReport.value(set);
+        pendingPushReport = optPendingPushReport.value(set);
         issueReport = optIssueReport.value(set);
         filterReport = optFilterReport.value(set);
         hgRepos = optUpdateHgDB.value(set);
@@ -109,8 +109,8 @@ public class Options {
         return pushesReport;
     }
 
-    public String getPendingPushesReport() {
-        return pendingPushesReport;
+    public String getPendingPushReport() {
+        return pendingPushReport;
     }
 
     public String getIssueReport() {

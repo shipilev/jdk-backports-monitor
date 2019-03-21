@@ -15,7 +15,7 @@ Usage:
        
 3) List issues that were approved, but not yet pushed to a given release
 
-       java -jar target/jdk-backports-monitor.jar --pending-pushes 11
+       java -jar target/jdk-backports-monitor.jar --pending-push 11
  
 4) Display the issues list for a given filter id
        
