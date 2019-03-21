@@ -390,25 +390,27 @@ public class Monitor {
 
         final int pageSize = 30;
 
-        int cnt = 0;
-        while (true) {
-            SearchResult found = new RetryableSearchPromise(searchCli, query, pageSize, cnt).claim();
-            int total = found.getTotal();
+        SearchResult poll = new RetryableSearchPromise(searchCli, query, 1, 0).claim();
+        int total = poll.getTotal();
 
-            System.out.println("Loaded " + Math.min(total, cnt + pageSize) + "/" + total + " matching issues.");
+        List<RetryableSearchPromise> searchPromises = new ArrayList<>();
+        for (int cnt = 0; cnt < total; cnt += pageSize) {
+            searchPromises.add(new RetryableSearchPromise(searchCli, query, pageSize, cnt));
+            System.out.println("Acquiring page [" + cnt  + ", " + (cnt + pageSize) + "] (total: " + total + ")");
+        }
+
+        for (RetryableSearchPromise sp : searchPromises) {
+            SearchResult found = sp.claim();
 
             List<RetryableIssuePromise> batch = new ArrayList<>();
             for (BasicIssue i : found.getIssues()) {
                 batch.add(new RetryableIssuePromise(cli, i.getKey()));
             }
-            for (RetryableIssuePromise p : batch) {
-                issues.add(p.claim());
+            for (RetryableIssuePromise ip : batch) {
+                issues.add(ip.claim());
             }
 
-            cnt += pageSize;
-            if (cnt > total) {
-                break;
-            }
+            System.out.println("Loaded " + issues.size() + "/" + total + " matching issues.");
         }
 
         System.out.println();
