@@ -77,8 +77,8 @@ public class Main {
                         m.runPushesReport(restClient, options.getPushesReport());
                     }
 
-                    if (options.getOrphansReport() != null) {
-                        m.runOrphansReport(restClient, options.getOrphansReport());
+                    if (options.getPendingPushesReport() != null) {
+                        m.runPendingPushesReport(restClient, options.getPendingPushesReport());
                     }
 
                     if (options.getFilterReport() != null) {
