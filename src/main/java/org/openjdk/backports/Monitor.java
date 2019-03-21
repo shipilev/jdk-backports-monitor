@@ -508,15 +508,6 @@ public class Monitor {
         return "N/A";
     }
 
-    private String getShenandoahPushURL(Issue issue) {
-        for (Comment c : issue.getComments()) {
-            if (c.getBody().contains("Manual push")) {
-                return parseURL(c.getBody());
-            }
-        }
-        return "N/A";
-    }
-
     private String getPushDate(Issue issue) {
         for (Comment c : issue.getComments()) {
             if (c.getAuthor().getName().equals("hgupdate")) {
