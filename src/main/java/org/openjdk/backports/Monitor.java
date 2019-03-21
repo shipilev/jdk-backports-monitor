@@ -657,12 +657,15 @@ public class Monitor {
 
         pw.println("  Backports and Forwardports:");
 
+        List<RetryableIssuePromise> links = new ArrayList<>();
         for (IssueLink link : issue.getIssueLinks()) {
             if (link.getIssueLinkType().getName().equals("Backport")) {
                 String linkKey = link.getTargetIssueKey();
-                Issue backport = cli.getIssue(linkKey).claim();
-                recordIssue(results, backport, true);
+                links.add(new RetryableIssuePromise(cli, linkKey));
             }
+        }
+        for (RetryableIssuePromise p : links) {
+            recordIssue(results, p.claim(), true);
         }
 
         int origRel = getFixReleaseVersion(issue);
