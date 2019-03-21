@@ -50,11 +50,9 @@ public class Monitor {
 
     private final UserCache users;
     private final HgDB hgDB;
-    private final int maxIssues;
 
-    public Monitor(JiraRestClient restClient, HgDB hgDB, int maxIssues) {
+    public Monitor(JiraRestClient restClient, HgDB hgDB) {
         this.hgDB = hgDB;
-        this.maxIssues = maxIssues;
         this.users = new UserCache(restClient.getUserClient());
     }
 
@@ -331,7 +329,35 @@ public class Monitor {
             }
             return cur.claim();
         }
+    }
 
+    static class RetryableSearchPromise {
+
+        private final SearchRestClient searchCli;
+        private final String query;
+        private final int pageSize;
+        private final int cnt;
+        private Promise<SearchResult> cur;
+
+        public RetryableSearchPromise(SearchRestClient searchCli, String query, int pageSize, int cnt) {
+            this.searchCli = searchCli;
+            this.query = query;
+            this.pageSize = pageSize;
+            this.cnt = cnt;
+            this.cur = searchCli.searchJql(query, pageSize, cnt, null);
+        }
+
+        public SearchResult claim() {
+            for (int t = 0; t < 5; t++) {
+                try {
+                    return cur.claim();
+                } catch (Exception e) {
+                    backoff(100 + t * 500);
+                    cur = searchCli.searchJql(query, pageSize, cnt, null);
+                }
+            }
+            return cur.claim();
+        }
     }
 
     private String rewrap(String src, int width) {
@@ -362,29 +388,30 @@ public class Monitor {
         System.out.println("JIRA Query: " + rewrap(query, 80));
         System.out.println();
 
-        SearchResult found = searchCli.searchJql(query, maxIssues, 0, null).claim();
+        final int pageSize = 30;
 
-        System.out.println("Found " + found.getTotal() + " matching issues, processing first " + found.getMaxResults() + " issues.");
-        System.out.println();
-
-        // Poor man's rate limiter:
-
-        List<RetryableIssuePromise> batch = new ArrayList<>();
         int cnt = 0;
-        for (BasicIssue i : found.getIssues()) {
-            backoff(20);
-            batch.add(new RetryableIssuePromise(cli, i.getKey()));
-            if (cnt++ > 10) {
-                for (RetryableIssuePromise p : batch) {
-                    issues.add(p.claim());
-                }
-                batch.clear();
-                cnt = 0;
+        while (true) {
+            SearchResult found = new RetryableSearchPromise(searchCli, query, pageSize, cnt).claim();
+            int total = found.getTotal();
+
+            System.out.println("Loaded " + Math.min(total, cnt + pageSize) + "/" + total + " matching issues.");
+
+            List<RetryableIssuePromise> batch = new ArrayList<>();
+            for (BasicIssue i : found.getIssues()) {
+                batch.add(new RetryableIssuePromise(cli, i.getKey()));
+            }
+            for (RetryableIssuePromise p : batch) {
+                issues.add(p.claim());
+            }
+
+            cnt += pageSize;
+            if (cnt > total) {
+                break;
             }
         }
-        for (RetryableIssuePromise p : batch) {
-            issues.add(p.claim());
-        }
+
+        System.out.println();
 
         return issues;
     }

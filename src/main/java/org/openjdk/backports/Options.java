@@ -34,7 +34,6 @@ import java.io.IOException;
 public class Options {
     private final String[] args;
     private String authProps;
-    private int maxIssues;
     private String labelReport;
     private String pushesReport;
     private String pendingPushesReport;
@@ -51,9 +50,6 @@ public class Options {
 
         OptionSpec<String> optAuthProps = parser.accepts("auth", "Property file with user/pass authentication pair")
                 .withRequiredArg().ofType(String.class).describedAs("file").defaultsTo("auth.props");
-
-        OptionSpec<Integer> optMaxIssues = parser.accepts("max", "Max issues to show")
-                .withRequiredArg().ofType(Integer.class).describedAs("max").defaultsTo(1000);
 
         OptionSpec<String> optLabelReport = parser.accepts("label", "Report status of closed bugs for given label")
                 .withRequiredArg().ofType(String.class).describedAs("tag");
@@ -90,7 +86,6 @@ public class Options {
             return false;
         }
 
-        maxIssues = optMaxIssues.value(set);
         authProps = optAuthProps.value(set);
         labelReport = optLabelReport.value(set);
         pushesReport = optPushesReport.value(set);
@@ -104,10 +99,6 @@ public class Options {
 
     public String getAuthProps() {
         return authProps;
-    }
-
-    public int getMaxIssues() {
-        return maxIssues;
     }
 
     public String getLabelReport() {
