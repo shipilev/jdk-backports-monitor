@@ -213,10 +213,7 @@ public class Monitor {
         Map<String, Multiset<String>> byCompanyAndCommitter = new HashMap<>();
 
         for (String committer : byCommitter.keySet()) {
-            User user = users.getUser(committer);
-            String email = user.getEmailAddress();
-            String company = email.substring(email.indexOf("@"));
-
+            String company = users.getAffiliation(committer);
             byCompany.add(company, byCommitter.get(committer).size());
             Multiset<String> bu = byCompanyAndCommitter.computeIfAbsent(company, k -> HashMultiset.create());
             bu.add(users.getDisplayName(committer), byCommitter.get(committer).size());
@@ -236,8 +233,11 @@ public class Monitor {
         out.println();
 
         for (Issue i : byTime) {
-            String name = users.getDisplayName(getPushUser(i));
-            out.printf("  %3d day(s) ago, %" + users.maxDisplayName() + "s, %s: %s%n", TimeUnit.SECONDS.toDays(getPushSecondsAgo(i)), name, i.getKey(), i.getSummary());
+            String pushUser = getPushUser(i);
+            out.printf("  %3d day(s) ago, %" + users.maxDisplayName() + "s, %" + users.maxAffiliation() + "s, %s: %s%n",
+                    TimeUnit.SECONDS.toDays(getPushSecondsAgo(i)),
+                    users.getDisplayName(pushUser), users.getAffiliation(pushUser),
+                    i.getKey(), i.getSummary());
         }
         out.println();
 
@@ -245,7 +245,7 @@ public class Monitor {
         out.println();
 
         for (String committer : byCommitter.keySet()) {
-            out.println("  " + users.getDisplayName(committer) + ":");
+            out.println("  " + users.getDisplayName(committer) + ", " + users.getAffiliation(committer) + ":");
             for (Issue i : byCommitter.get(committer)) {
                 out.println("    " + i.getKey() + ": " + i.getSummary());
             }
@@ -286,11 +286,13 @@ public class Monitor {
         private final UserRestClient client;
         private final Map<String, User> users;
         private final Map<String, String> displayNames;
+        private final Map<String, String> affiliations;
 
         public UserCache(UserRestClient client) {
             this.client = client;
             this.users = new HashMap<>();
             this.displayNames = new HashMap<>();
+            this.affiliations = new HashMap<>();
         }
 
         public User getUser(String id) {
@@ -299,6 +301,21 @@ public class Monitor {
 
         public String getDisplayName(String id) {
             return displayNames.computeIfAbsent(id, u -> getUser(u).getDisplayName());
+        }
+
+        public String getAffiliation(String id) {
+            return affiliations.computeIfAbsent(id, u -> {
+                String email = getUser(u).getEmailAddress();
+                return email.substring(email.indexOf("@"));
+            });
+        }
+
+        public int maxAffiliation() {
+            int r = 0;
+            for (String v : affiliations.values()) {
+                r = Math.max(r, v.length());
+            }
+            return r;
         }
 
         public int maxDisplayName() {
