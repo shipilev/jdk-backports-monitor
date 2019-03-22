@@ -56,7 +56,7 @@ public class Monitor {
         this.users = new UserCache(restClient.getUserClient());
     }
 
-    public void runLabelReport(JiraRestClient restClient, String label) throws URISyntaxException {
+    public void runLabelReport(JiraRestClient restClient, String label, Actionable minLevel) throws URISyntaxException {
         SearchRestClient searchCli = restClient.getSearchClient();
         IssueRestClient issueCli = restClient.getIssueClient();
 
@@ -68,6 +68,8 @@ public class Monitor {
         out.println("This report shows bugs with the given label, along with their backporting status.");
         out.println();
         out.println("Report generated: " + new Date());
+        out.println();
+        out.println("Minimal actionable level to display: " + minLevel);
         out.println();
         out.println("For actionable issues, search for these strings:");
         out.println("  \"" + MSG_MISSING + "\"");
@@ -87,6 +89,7 @@ public class Monitor {
 
         printDelimiterLine(out);
         for (TrackedIssue i : issues) {
+            if (i.actionable.ordinal() < minLevel.ordinal()) continue;
             out.println(i.output);
             printDelimiterLine(out);
         }
@@ -579,20 +582,6 @@ public class Monitor {
             joiner.add(c.getName());
         }
         return joiner.toString();
-    }
-
-    private enum Actionable {
-        NONE,
-        WAITING,
-        REQUESTED,
-        PUSHABLE,
-        MISSING,
-        CRITICAL,
-        ;
-
-        public Actionable mix(Actionable a) {
-            return Actionable.values()[Math.max(ordinal(), a.ordinal())];
-        }
     }
 
     private static class TrackedIssue implements Comparable<TrackedIssue> {

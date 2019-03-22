@@ -24,10 +24,7 @@
  */
 package org.openjdk.backports;
 
-import joptsimple.OptionException;
-import joptsimple.OptionParser;
-import joptsimple.OptionSet;
-import joptsimple.OptionSpec;
+import joptsimple.*;
 
 import java.io.IOException;
 
@@ -40,6 +37,8 @@ public class Options {
     private String issueReport;
     private Long filterReport;
     private String hgRepos;
+    private Actionable minLevel;
+
 
     public Options(String[] args) {
         this.args = args;
@@ -69,6 +68,9 @@ public class Options {
         OptionSpec<String> optUpdateHgDB = parser.accepts("hg-repos", "Use these repositories for Mercurial metadata")
                 .withRequiredArg().ofType(String.class).describedAs("paths-to-local-hg");
 
+        OptionSpec<Actionable> optMinLevel = parser.accepts("min-level", "Minimal actionable level to print")
+                .withRequiredArg().ofType(Actionable.class).describedAs("level").defaultsTo(Actionable.NONE);
+
         parser.accepts("h", "Print this help.");
 
         OptionSet set;
@@ -93,6 +95,7 @@ public class Options {
         issueReport = optIssueReport.value(set);
         filterReport = optFilterReport.value(set);
         hgRepos = optUpdateHgDB.value(set);
+        minLevel = optMinLevel.value(set);
 
         return true;
     }
@@ -122,5 +125,7 @@ public class Options {
     }
 
     public String getHgRepos() { return hgRepos; }
+
+    public Actionable getMinLevel() { return minLevel; }
 
 }

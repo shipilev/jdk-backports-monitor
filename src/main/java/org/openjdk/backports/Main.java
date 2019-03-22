@@ -70,7 +70,7 @@ public class Main {
                     Monitor m = new Monitor(restClient, hgDB);
 
                     if (options.getLabelReport() != null) {
-                        m.runLabelReport(restClient, options.getLabelReport());
+                        m.runLabelReport(restClient, options.getLabelReport(), options.getMinLevel());
                     }
 
                     if (options.getPushesReport() != null) {
