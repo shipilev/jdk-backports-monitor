@@ -584,7 +584,10 @@ public class Monitor {
     private enum Actionable {
         NONE,
         WAITING,
-        ACTIONABLE,
+        REQUESTED,
+        PUSHABLE,
+        MISSING,
+        CRITICAL,
         ;
 
         public Actionable mix(Actionable a) {
@@ -618,6 +621,8 @@ public class Monitor {
     }
 
     private TrackedIssue parseIssue(Issue issue, IssueRestClient cli) {
+        Actionable actionable = Actionable.NONE;
+
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
 
@@ -655,6 +660,7 @@ public class Monitor {
         if (affectedReleases.isEmpty()) {
             pw.println("  " + MSG_WARNING + ": Affected versions is not set.");
             pw.println();
+            actionable = actionable.mix(Actionable.CRITICAL);
         }
 
         pw.println("  Backports and Forwardports:");
@@ -672,8 +678,6 @@ public class Monitor {
 
         int origRel = getFixReleaseVersion(issue);
         int highRel = results.isEmpty() ? origRel : results.lastKey();
-
-        Actionable actionable = Actionable.NONE;
 
         boolean printed = false;
         for (int release : new int[]{13, 12, 11, 8}) {
@@ -699,60 +703,60 @@ public class Monitor {
                 switch (release) {
                     case 8: {
                         if (issue.getLabels().contains("jdk8u-fix-yes")) {
-                            actionable = actionable.mix(Actionable.ACTIONABLE);
+                            actionable = actionable.mix(Actionable.PUSHABLE);
                             pw.println(MSG_APPROVED + ": jdk8u-fix-yes is set");
                         } else if (issue.getLabels().contains("jdk8u-fix-no")) {
                             pw.println("REJECTED: jdk8u-fix-no is set");
                         } else if (issue.getLabels().contains("jdk8u-fix-request")) {
                             pw.println("Requested: jdk8u-fix-request is set");
-                            actionable = actionable.mix(Actionable.WAITING);
+                            actionable = actionable.mix(Actionable.REQUESTED);
                         } else if (!affectedReleases.contains(8)) {
                             pw.println(MSG_NOT_AFFECTED);
                         } else if (daysAgo < BAKE_TIME) {
                             actionable = actionable.mix(Actionable.WAITING);
                             pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
                         } else {
-                            actionable = actionable.mix(Actionable.ACTIONABLE);
+                            actionable = actionable.mix(Actionable.MISSING);
                             pw.println(MSG_MISSING);
                         }
                         break;
                     }
                     case 11: {
                         if (issue.getLabels().contains("jdk11u-fix-yes")) {
-                            actionable = actionable.mix(Actionable.ACTIONABLE);
+                            actionable = actionable.mix(Actionable.PUSHABLE);
                             pw.println(MSG_APPROVED + ": jdk11u-fix-yes is set");
                         } else if (issue.getLabels().contains("jdk11u-fix-no")) {
                             pw.println("REJECTED: jdk11u-fix-no is set");
                         } else if (issue.getLabels().contains("jdk11u-fix-request")) {
                             pw.println("Requested: jdk11u-fix-request is set");
-                            actionable = actionable.mix(Actionable.WAITING);
+                            actionable = actionable.mix(Actionable.REQUESTED);
                         } else if (!affectedReleases.contains(11)) {
                             pw.println(MSG_NOT_AFFECTED);
                         } else if (daysAgo < BAKE_TIME) {
                             actionable = actionable.mix(Actionable.WAITING);
                             pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
                         } else {
-                            actionable = actionable.mix(Actionable.ACTIONABLE);
+                            actionable = actionable.mix(Actionable.MISSING);
                             pw.println(MSG_MISSING);
                         }
                         break;
                     }
                     case 12: {
                         if (issue.getLabels().contains("jdk12u-fix-yes")) {
-                            actionable = actionable.mix(Actionable.ACTIONABLE);
+                            actionable = actionable.mix(Actionable.PUSHABLE);
                             pw.println(MSG_APPROVED + ": jdk12u-fix-yes is set");
                         } else if (issue.getLabels().contains("jdk12u-fix-no")) {
                             pw.println("REJECTED: jdk12u-fix-no is set");
                         } else if (issue.getLabels().contains("jdk12u-fix-request")) {
                             pw.println("Requested: jdk12u-fix-request is set");
-                            actionable = actionable.mix(Actionable.WAITING);
+                            actionable = actionable.mix(Actionable.REQUESTED);
                         } else if (!affectedReleases.contains(12)) {
                             pw.println(MSG_NOT_AFFECTED);
                         } else if (daysAgo < BAKE_TIME) {
                             actionable = actionable.mix(Actionable.WAITING);
                             pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
                         } else {
-                            actionable = actionable.mix(Actionable.ACTIONABLE);
+                            actionable = actionable.mix(Actionable.MISSING);
                             pw.println(MSG_MISSING);
                         }
                         break;
@@ -787,7 +791,7 @@ public class Monitor {
                             pw.println(r.toString());
                         }
                     } else {
-                        actionable = actionable.mix(Actionable.ACTIONABLE);
+                        actionable = actionable.mix(Actionable.MISSING);
                         pw.println(MSG_MISSING);
                     }
                 }
