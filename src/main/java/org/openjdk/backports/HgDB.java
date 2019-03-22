@@ -60,7 +60,7 @@ public class HgDB {
             }
 
             try {
-                List<String> lines = exec("hg", "log", "-R", repoPath, "-T",
+                List<String> lines = exec("hg", "log", "-M", "-R", repoPath, "-T",
                         "{node|short}BACKPORT-SEPARATOR{latesttag}BACKPORT-SEPARATOR{desc|firstline}BACKPORT-SEPARATOR{author}\n");
                 for (String line : lines) {
                     String[] split = line.split("BACKPORT-SEPARATOR");
