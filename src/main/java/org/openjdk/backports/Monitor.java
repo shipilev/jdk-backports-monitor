@@ -46,7 +46,7 @@ public class Monitor {
     private static final String MSG_APPROVED = "APPROVED";
     private static final String MSG_WARNING  = "WARNING";
 
-    private static final int BAKE_TIME = 14; // days
+    private static final int BAKE_TIME = 10; // days
 
     private final UserCache users;
     private final HgDB hgDB;
