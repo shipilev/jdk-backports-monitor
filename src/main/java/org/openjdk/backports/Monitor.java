@@ -48,6 +48,8 @@ public class Monitor {
 
     private static final int BAKE_TIME = 10; // days
 
+    private static final int PAGE_SIZE = 50;
+
     private final UserCache users;
     private final HgDB hgDB;
 
@@ -408,15 +410,13 @@ public class Monitor {
         System.out.println("JIRA Query: " + rewrap(query, 80));
         System.out.println();
 
-        final int pageSize = 30;
-
         SearchResult poll = new RetryableSearchPromise(searchCli, query, 1, 0).claim();
         int total = poll.getTotal();
 
         List<RetryableSearchPromise> searchPromises = new ArrayList<>();
-        for (int cnt = 0; cnt < total; cnt += pageSize) {
-            searchPromises.add(new RetryableSearchPromise(searchCli, query, pageSize, cnt));
-            System.out.println("Acquiring page [" + cnt  + ", " + (cnt + pageSize) + "] (total: " + total + ")");
+        for (int cnt = 0; cnt < total; cnt += PAGE_SIZE) {
+            searchPromises.add(new RetryableSearchPromise(searchCli, query, PAGE_SIZE, cnt));
+            System.out.println("Acquiring page [" + cnt  + ", " + (cnt + PAGE_SIZE) + "] (total: " + total + ")");
         }
 
         for (RetryableSearchPromise sp : searchPromises) {
