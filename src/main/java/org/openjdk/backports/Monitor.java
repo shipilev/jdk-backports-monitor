@@ -28,6 +28,8 @@ import com.atlassian.jira.rest.client.api.*;
 import com.atlassian.jira.rest.client.api.domain.*;
 import com.atlassian.util.concurrent.Promise;
 import com.google.common.collect.*;
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
 
 import java.io.*;
 import java.net.URISyntaxException;
@@ -249,6 +251,45 @@ public class Monitor {
         for (String committer : byCommitter.keySet()) {
             out.println("  " + users.getDisplayName(committer) + ", " + users.getAffiliation(committer) + ":");
             for (Issue i : byCommitter.get(committer)) {
+                out.println("    " + i.getKey() + ": " + i.getSummary());
+            }
+            out.println();
+        }
+    }
+
+    public void runReleaseNotesReport(JiraRestClient restClient, String release) throws URISyntaxException {
+        SearchRestClient searchCli = restClient.getSearchClient();
+        IssueRestClient issueCli = restClient.getIssueClient();
+
+        PrintStream out = System.out;
+
+        out.println("RELEASE NOTES FOR: " + release);
+        out.println("=====================================================================================================");
+        out.println();
+        out.println("Notes generated: " + new Date());
+        out.println();
+
+        List<Issue> issues = getIssues(searchCli, issueCli, "project = JDK AND fixVersion = " + release);
+
+        Multimap<String, Issue> byComponent = TreeMultimap.create(String::compareTo, Comparator.comparing(BasicIssue::getKey));
+
+        int filteredSyncs = 0;
+
+        for (Issue issue : issues) {
+            String committer = getPushUser(issue);
+            if (!committer.equals("N/A")) { // Skip automatic syncs
+                byComponent.put(extractComponents(issue), issue);
+            } else {
+                filteredSyncs++;
+            }
+        }
+
+        out.println("Filtered " + filteredSyncs + " automatic syncs, " + byComponent.size() + " pushes left.");
+        out.println();
+
+        for (String component : byComponent.keySet()) {
+            out.println("  " + component + ":");
+            for (Issue i : byComponent.get(component)) {
                 out.println("    " + i.getKey() + ": " + i.getSummary());
             }
             out.println();
@@ -594,9 +635,18 @@ public class Monitor {
     }
 
     private String extractComponents(Issue issue) {
-        StringJoiner joiner = new StringJoiner(",");
+        StringJoiner joiner = new StringJoiner("/");
         for (BasicComponent c : issue.getComponents()) {
             joiner.add(c.getName());
+        }
+        IssueField subcomponent = issue.getFieldByName("Subcomponent");
+        if (subcomponent != null && subcomponent.getValue() != null) {
+            try {
+                JSONObject o = new JSONObject(subcomponent.getValue().toString());
+                joiner.add(o.get("name").toString());
+            } catch (JSONException e) {
+                // Do nothing
+            }
         }
         return joiner.toString();
     }

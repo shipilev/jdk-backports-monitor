@@ -88,6 +88,10 @@ public class Main {
                     if (options.getIssueReport() != null) {
                         m.runIssueReport(restClient, options.getIssueReport());
                     }
+
+                    if (options.getReleaseNotesReport() != null) {
+                        m.runReleaseNotesReport(restClient, options.getReleaseNotesReport());
+                    }
                 } finally {
                     if (restClient != null) {
                         restClient.close();

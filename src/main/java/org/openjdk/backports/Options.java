@@ -34,6 +34,7 @@ public class Options {
     private String labelReport;
     private String pushesReport;
     private String pendingPushReport;
+    private String releaseNotesReport;
     private String issueReport;
     private Long filterReport;
     private String hgRepos;
@@ -65,6 +66,9 @@ public class Options {
         OptionSpec<Long> optFilterReport = parser.accepts("filter", "Report issues matching the filter")
                 .withRequiredArg().ofType(long.class).describedAs("filter-id");
 
+        OptionSpec<String> optReleaseNotesReport = parser.accepts("release-notes", "Generates release notes for a given release")
+                .withRequiredArg().ofType(String.class).describedAs("release");
+
         OptionSpec<String> optUpdateHgDB = parser.accepts("hg-repos", "Use these repositories for Mercurial metadata")
                 .withRequiredArg().ofType(String.class).describedAs("paths-to-local-hg");
 
@@ -94,6 +98,7 @@ public class Options {
         pendingPushReport = optPendingPushReport.value(set);
         issueReport = optIssueReport.value(set);
         filterReport = optFilterReport.value(set);
+        releaseNotesReport = optReleaseNotesReport.value(set);
         hgRepos = optUpdateHgDB.value(set);
         minLevel = optMinLevel.value(set);
 
@@ -114,6 +119,10 @@ public class Options {
 
     public String getPendingPushReport() {
         return pendingPushReport;
+    }
+
+    public String getReleaseNotesReport() {
+        return releaseNotesReport;
     }
 
     public String getIssueReport() {
