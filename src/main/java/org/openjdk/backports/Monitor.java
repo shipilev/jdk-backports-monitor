@@ -212,25 +212,7 @@ public class Monitor {
         out.println();
 
         out.println("Distribution by email/name:");
-
-        Multiset<String> byCompany = TreeMultiset.create();
-        Map<String, Multiset<String>> byCompanyAndCommitter = new HashMap<>();
-
-        for (String committer : byCommitter.keySet()) {
-            String company = users.getAffiliation(committer);
-            byCompany.add(company, byCommitter.get(committer).size());
-            Multiset<String> bu = byCompanyAndCommitter.computeIfAbsent(company, k -> HashMultiset.create());
-            bu.add(users.getDisplayName(committer), byCommitter.get(committer).size());
-        }
-
-        out.printf("   %3d: <total issues>%n", byCommitter.size());
-        for (String company : Multisets.copyHighestCountFirst(byCompany).elementSet()) {
-            out.printf("      %3d: %s%n", byCompany.count(company), company);
-            Multiset<String> committers = byCompanyAndCommitter.get(company);
-            for (String committer : Multisets.copyHighestCountFirst(committers).elementSet()) {
-                out.printf("         %3d: %s%n", committers.count(committer), committer);
-            }
-        }
+        printByEmailName(out, byCommitter);
         out.println();
 
         out.println("Chronological push log:");
@@ -257,6 +239,72 @@ public class Monitor {
         }
     }
 
+    private void printByEmailName(PrintStream out, Multimap<String, Issue> byCommitter) {
+        Multiset<String> byCompany = TreeMultiset.create();
+        Map<String, Multiset<String>> byCompanyAndCommitter = new HashMap<>();
+
+        for (String committer : byCommitter.keySet()) {
+            String company = users.getAffiliation(committer);
+            byCompany.add(company, byCommitter.get(committer).size());
+            Multiset<String> bu = byCompanyAndCommitter.computeIfAbsent(company, k -> HashMultiset.create());
+            bu.add(users.getDisplayName(committer), byCommitter.get(committer).size());
+        }
+
+        out.printf("   %3d: <total issues>%n", byCommitter.size());
+        for (String company : Multisets.copyHighestCountFirst(byCompany).elementSet()) {
+            out.printf("      %3d: %s%n", byCompany.count(company), company);
+            Multiset<String> committers = byCompanyAndCommitter.get(company);
+            for (String committer : Multisets.copyHighestCountFirst(committers).elementSet()) {
+                out.printf("         %3d: %s%n", committers.count(committer), committer);
+            }
+        }
+    }
+
+    private Issue getParent(IssueRestClient cli, Issue start) {
+        List<RetryableIssuePromise> backports = new ArrayList<>();
+        for (IssueLink link : start.getIssueLinks()) {
+            if (link.getIssueLinkType().getName().equals("Backport")) {
+                String linkKey = link.getTargetIssueKey();
+                backports.add(new RetryableIssuePromise(cli, linkKey));
+            }
+        }
+
+        // If there is only a single "Backport link", report it as parent
+        if (backports.size() == 1) {
+            return backports.get(0).claim();
+        } else {
+            return null;
+        }
+    }
+
+    private List<Issue> collectReleaseNotes(IssueRestClient cli, Issue start) {
+        List<Issue> releaseNotes = new ArrayList<>();
+
+        // The issue itself can have release notes
+        if (start.getLabels().contains("release-note")) {
+            releaseNotes.add(start);
+        }
+
+        // Search for original parent
+        Issue parent = getParent(cli, start);
+        if (parent == null) return releaseNotes;
+
+        if (parent.getLabels().contains("release-note")) {
+            releaseNotes.add(parent);
+        }
+
+        for (IssueLink link : parent.getIssueLinks()) {
+            String linkKey = link.getTargetIssueKey();
+
+            Issue su = new RetryableIssuePromise(cli, linkKey).claim();
+            if (su.getLabels().contains("release-note")) {
+                releaseNotes.add(su);
+            }
+        }
+
+        return releaseNotes;
+    }
+
     public void runReleaseNotesReport(JiraRestClient restClient, String release) throws URISyntaxException {
         SearchRestClient searchCli = restClient.getSearchClient();
         IssueRestClient issueCli = restClient.getIssueClient();
@@ -272,6 +320,7 @@ public class Monitor {
         List<Issue> issues = getIssues(searchCli, issueCli, "project = JDK AND fixVersion = " + release);
 
         Multimap<String, Issue> byComponent = TreeMultimap.create(String::compareTo, Comparator.comparing(BasicIssue::getKey));
+        Multimap<String, Issue> byCommitter = TreeMultimap.create(String::compareTo, Comparator.comparing(BasicIssue::getKey));
 
         int filteredSyncs = 0;
 
@@ -279,6 +328,7 @@ public class Monitor {
             String committer = getPushUser(issue);
             if (!committer.equals("N/A")) { // Skip automatic syncs
                 byComponent.put(extractComponents(issue), issue);
+                byCommitter.put(committer, issue);
             } else {
                 filteredSyncs++;
             }
@@ -287,13 +337,34 @@ public class Monitor {
         out.println("Filtered " + filteredSyncs + " automatic syncs, " + byComponent.size() + " pushes left.");
         out.println();
 
+        out.println("Hint: Parentheses mention the release version for the original fix.");
+        out.println("Hint: Prefix bug IDs with " + Main.JIRA_URL + "browse/ to reach the relevant JIRA entry.");
+        out.println();
+
+        out.println("Changes by component:");
+        out.println();
+
         for (String component : byComponent.keySet()) {
             out.println("  " + component + ":");
+
+            Multimap<String, Issue> byOrigRelease = TreeMultimap.create(String::compareTo, Comparator.comparing(BasicIssue::getKey));
             for (Issue i : byComponent.get(component)) {
-                out.println("    " + i.getKey() + ": " + i.getSummary());
+                Issue p = getParent(issueCli, i);
+                byOrigRelease.put(p != null ? "(" + getFixVersion(p) + ")" : "", i);
+            }
+
+            for (String origRelease : byOrigRelease.keySet()) {
+                for (Issue i : byOrigRelease.get(origRelease)) {
+                    out.printf("     %4s %s: %s%n", origRelease, i.getKey(), i.getSummary());
+                }
             }
             out.println();
         }
+        out.println();
+
+        out.println("Distribution by email/name:");
+        printByEmailName(out, byCommitter);
+        out.println();
     }
 
     public void runFilterReport(JiraRestClient restClient, long filterId) throws URISyntaxException {
