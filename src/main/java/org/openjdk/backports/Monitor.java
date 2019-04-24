@@ -440,11 +440,11 @@ public class Monitor {
         }
 
         public Issue claim() {
-            for (int t = 0; t < 5; t++) {
+            for (int t = 0; t < 10; t++) {
                 try {
                     return cur.claim();
                 } catch (Exception e) {
-                    backoff(100 + t * 500);
+                    backoff((1 + t*t)*100);
                     cur = cli.getIssue(key);
                 }
             }
@@ -469,11 +469,11 @@ public class Monitor {
         }
 
         public SearchResult claim() {
-            for (int t = 0; t < 5; t++) {
+            for (int t = 0; t < 10; t++) {
                 try {
                     return cur.claim();
                 } catch (Exception e) {
-                    backoff(100 + t * 500);
+                    backoff((1 + t*t)*100);
                     cur = searchCli.searchJql(query, pageSize, cnt, null);
                 }
             }
