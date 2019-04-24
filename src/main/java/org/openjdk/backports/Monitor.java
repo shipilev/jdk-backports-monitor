@@ -807,7 +807,7 @@ public class Monitor {
         int highRel = results.isEmpty() ? origRel : results.lastKey();
 
         boolean printed = false;
-        for (int release : new int[]{13, 12, 11, 8}) {
+        for (int release : new int[]{13, 12, 11, 8, 7}) {
             List<String> lines = results.get(release);
             if (lines != null) {
                 if (release != origRel) {
@@ -828,6 +828,18 @@ public class Monitor {
             } else if (release <= highRel) {
                 pw.printf("  %8s: ", release);
                 switch (release) {
+                    case 7: {
+                        if (!affectedReleases.contains(7)) {
+                            pw.println(MSG_NOT_AFFECTED);
+                        } else if (daysAgo < BAKE_TIME) {
+                            actionable = actionable.mix(Actionable.WAITING);
+                            pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
+                        } else {
+                            actionable = actionable.mix(Actionable.MISSING);
+                            pw.println(MSG_MISSING);
+                        }
+                        break;
+                    }
                     case 8: {
                         if (issue.getLabels().contains("jdk8u-fix-yes")) {
                             actionable = actionable.mix(Actionable.PUSHABLE);
