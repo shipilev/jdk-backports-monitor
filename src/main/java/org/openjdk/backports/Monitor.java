@@ -263,7 +263,7 @@ public class Monitor {
         }
     }
 
-    private Issue getParent(IssueRestClient cli, Issue start) {
+    private RetryableIssuePromise getParent(IssueRestClient cli, Issue start) {
         List<RetryableIssuePromise> backports = new ArrayList<>();
         for (IssueLink link : start.getIssueLinks()) {
             if (link.getIssueLinkType().getName().equals("Backport")) {
@@ -274,38 +274,10 @@ public class Monitor {
 
         // If there is only a single "Backport link", report it as parent
         if (backports.size() == 1) {
-            return backports.get(0).claim();
+            return backports.get(0);
         } else {
             return null;
         }
-    }
-
-    private List<Issue> collectReleaseNotes(IssueRestClient cli, Issue start) {
-        List<Issue> releaseNotes = new ArrayList<>();
-
-        // The issue itself can have release notes
-        if (start.getLabels().contains("release-note")) {
-            releaseNotes.add(start);
-        }
-
-        // Search for original parent
-        Issue parent = getParent(cli, start);
-        if (parent == null) return releaseNotes;
-
-        if (parent.getLabels().contains("release-note")) {
-            releaseNotes.add(parent);
-        }
-
-        for (IssueLink link : parent.getIssueLinks()) {
-            String linkKey = link.getTargetIssueKey();
-
-            Issue su = new RetryableIssuePromise(cli, linkKey).claim();
-            if (su.getLabels().contains("release-note")) {
-                releaseNotes.add(su);
-            }
-        }
-
-        return releaseNotes;
     }
 
     public void runReleaseNotesReport(JiraRestClient restClient, String release) throws URISyntaxException {
@@ -347,13 +319,25 @@ public class Monitor {
         out.println("Changes by component:");
         out.println();
 
+        Map<Issue, RetryableIssuePromise> parents = new HashMap<>();
+        for (String component : byComponent.keySet()) {
+            for (Issue i : byComponent.get(component)) {
+                parents.put(i, getParent(issueCli, i));
+            }
+        }
+
         for (String component : byComponent.keySet()) {
             out.println("  " + component + ":");
 
             Multimap<String, Issue> byOrigRelease = TreeMultimap.create(String::compareTo, Comparator.comparing(BasicIssue::getKey));
             for (Issue i : byComponent.get(component)) {
-                Issue p = getParent(issueCli, i);
-                byOrigRelease.put(p != null ? "(" + getFixVersion(p) + ")" : "", i);
+                RetryableIssuePromise promise = parents.get(i);
+                if (promise != null) {
+                    Issue p = promise.claim();
+                    byOrigRelease.put("(" + getFixVersion(p) + ")", i);
+                } else {
+                    byOrigRelease.put("", i);
+                }
             }
 
             for (String origRelease : byOrigRelease.keySet()) {
