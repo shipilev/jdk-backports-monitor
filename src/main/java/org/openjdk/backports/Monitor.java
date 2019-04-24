@@ -342,7 +342,7 @@ public class Monitor {
 
             for (String origRelease : byOrigRelease.keySet()) {
                 for (Issue i : byOrigRelease.get(origRelease)) {
-                    out.printf("     %4s %s: %s%n", origRelease, i.getKey(), i.getSummary());
+                    out.printf("    %15s %s: %s%n", origRelease, i.getKey(), i.getSummary());
                 }
             }
             out.println();
