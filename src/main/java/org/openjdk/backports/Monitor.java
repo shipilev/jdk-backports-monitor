@@ -84,7 +84,10 @@ public class Monitor {
         out.println("  \"" + MSG_BAKING + "\"");
         out.println();
 
-        List<Issue> found = getIssues(searchCli, issueCli, "labels = " + label + " AND (status = Closed OR status = Resolved) AND type != Backport");
+        List<Issue> found = getIssues(searchCli, issueCli, "labels = " + label +
+                " AND (status in (Closed, Resolved))" +
+                " AND (resolution not in (\"Won't Fix\", Duplicate, \"Cannot Reproduce\", \"Not an Issue\", Withdrawn))" +
+                " AND type != Backport");
 
         SortedSet<TrackedIssue> issues = new TreeSet<>();
         for (Issue i : found) {
