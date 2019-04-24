@@ -319,15 +319,13 @@ public class Monitor {
         out.println("Changes by component:");
         out.println();
 
-        Map<Issue, RetryableIssuePromise> parents = new HashMap<>();
         for (String component : byComponent.keySet()) {
+            out.println("  " + component + ":");
+
+            Map<Issue, RetryableIssuePromise> parents = new HashMap<>();
             for (Issue i : byComponent.get(component)) {
                 parents.put(i, getParent(issueCli, i));
             }
-        }
-
-        for (String component : byComponent.keySet()) {
-            out.println("  " + component + ":");
 
             Multimap<String, Issue> byOrigRelease = TreeMultimap.create(String::compareTo, Comparator.comparing(BasicIssue::getKey));
             for (Issue i : byComponent.get(component)) {
