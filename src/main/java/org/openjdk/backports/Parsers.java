@@ -31,7 +31,7 @@ import java.time.temporal.ChronoUnit;
 
 public class Parsers {
 
-    public static int extractVersion(String version) {
+    public static int parseVersion(String version) {
         if (version.equals("solaris_10u7")) {
             // Special-case odd issue: https://bugs.openjdk.java.net/browse/JDK-6913047
             return 0;
@@ -71,7 +71,7 @@ public class Parsers {
         }
     }
 
-    public static int extractVersionShenandoah(String version) {
+    public static int parseVersionShenandoah(String version) {
         if (!version.endsWith("-shenandoah")) {
             return -1;
         }

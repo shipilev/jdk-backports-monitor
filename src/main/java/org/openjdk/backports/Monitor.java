@@ -608,7 +608,7 @@ public class Monitor {
         for (Version v : issue.getAffectedVersions()) {
             String verName = v.getName();
             if (verName.endsWith("-shenandoah")) {
-                int ver = Parsers.extractVersionShenandoah(verName);
+                int ver = Parsers.parseVersionShenandoah(verName);
                 if (ver < 0) {
                     pw.println("  " + MSG_WARNING + ": Unknown affected version: " + verName);
                     pw.println();
@@ -616,7 +616,7 @@ public class Monitor {
                 }
                 affectedShenandoah.add(ver);
             } else {
-                int ver = Parsers.extractVersion(verName);
+                int ver = Parsers.parseVersion(verName);
                 if (ver < 0) {
                     pw.println("  " + MSG_WARNING + ": Unknown affected version: " + verName);
                     pw.println();
@@ -645,7 +645,7 @@ public class Monitor {
             recordIssue(results, p.claim(), true);
         }
 
-        int origRel = Parsers.extractVersion(getFixVersion(issue));
+        int origRel = Parsers.parseVersion(getFixVersion(issue));
         int highRel = results.isEmpty() ? origRel : results.lastKey();
 
         boolean printed = false;
@@ -814,7 +814,7 @@ public class Monitor {
         }
 
         String line = String.format("%s, %10s, %s, %s", fixVersion, issue.getKey(), pushURL, getPushDate(issue));
-        int ver = Parsers.extractVersion(fixVersion);
+        int ver = Parsers.parseVersion(fixVersion);
         List<String> list = results.computeIfAbsent(ver, k -> new ArrayList<>());
         list.add(line);
     }
