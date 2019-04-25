@@ -560,6 +560,13 @@ public class Monitor {
     }
 
     private int extractVersion(String version) {
+        if (version.equals("solaris_10u7")) {
+            // Special-case odd issue: https://bugs.openjdk.java.net/browse/JDK-6913047
+            return 0;
+        }
+
+        version = version.toLowerCase();
+
         if (version.startsWith("openjdk")) {
             version = version.substring("openjdk".length());
         }
@@ -678,7 +685,7 @@ public class Monitor {
                 return parseDaysAgo(c.getBody());
             }
         }
-        return 0;
+        return -1;
     }
 
     private static long getPushSecondsAgo(Issue issue) {
@@ -687,7 +694,7 @@ public class Monitor {
                 return parseSecondsAgo(c.getBody());
             }
         }
-        return 0;
+        return -1;
     }
 
     private String extractComponents(Issue issue) {
@@ -738,16 +745,6 @@ public class Monitor {
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
 
-        Set<Integer> affectedReleases = new HashSet<>();
-        Set<Integer> affectedShenandoah = new HashSet<>();
-        for (Version v : issue.getAffectedVersions()) {
-            int ver = extractVersion(v.getName());
-            affectedReleases.add(ver);
-            if (v.getName().endsWith("-shenandoah")) {
-                affectedShenandoah.add(extractVersionShenandoah(v.getName()));
-            }
-        }
-
         pw.println();
         pw.println(issue.getKey() + ": " + issue.getSummary());
         pw.println();
@@ -766,8 +763,31 @@ public class Monitor {
         long daysAgo = getPushDaysAgo(issue);
 
         pw.printf("  %8s: %10s, %s, %s%n", getFixVersion(issue), issue.getKey(), getPushURL(issue), getPushDate(issue));
-        recordIssue(results, issue, false);
+        recordIssue(results, issue, true);
         pw.println();
+
+        Set<Integer> affectedReleases = new HashSet<>();
+        Set<Integer> affectedShenandoah = new HashSet<>();
+        for (Version v : issue.getAffectedVersions()) {
+            String verName = v.getName();
+            if (verName.endsWith("-shenandoah")) {
+                int ver = extractVersionShenandoah(verName);
+                if (ver < 0) {
+                    pw.println("  " + MSG_WARNING + ": Unknown affected version: " + verName);
+                    pw.println();
+                    actionable = actionable.mix(Actionable.CRITICAL);
+                }
+                affectedShenandoah.add(ver);
+            } else {
+                int ver = extractVersion(verName);
+                if (ver < 0) {
+                    pw.println("  " + MSG_WARNING + ": Unknown affected version: " + verName);
+                    pw.println();
+                    actionable = actionable.mix(Actionable.CRITICAL);
+                }
+                affectedReleases.add(ver);
+            }
+        }
 
         if (affectedReleases.isEmpty()) {
             pw.println("  " + MSG_WARNING + ": Affected versions is not set.");
@@ -816,7 +836,7 @@ public class Monitor {
                     case 7: {
                         if (!affectedReleases.contains(7)) {
                             pw.println(MSG_NOT_AFFECTED);
-                        } else if (daysAgo < BAKE_TIME) {
+                        } else if (daysAgo >= 0 && daysAgo < BAKE_TIME) {
                             actionable = actionable.mix(Actionable.WAITING);
                             pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
                         } else {
@@ -836,7 +856,7 @@ public class Monitor {
                             actionable = actionable.mix(Actionable.REQUESTED);
                         } else if (!affectedReleases.contains(8)) {
                             pw.println(MSG_NOT_AFFECTED);
-                        } else if (daysAgo < BAKE_TIME) {
+                        } else if (daysAgo >= 0 && daysAgo < BAKE_TIME) {
                             actionable = actionable.mix(Actionable.WAITING);
                             pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
                         } else {
@@ -856,7 +876,7 @@ public class Monitor {
                             actionable = actionable.mix(Actionable.REQUESTED);
                         } else if (!affectedReleases.contains(11)) {
                             pw.println(MSG_NOT_AFFECTED);
-                        } else if (daysAgo < BAKE_TIME) {
+                        } else if (daysAgo >= 0 && daysAgo < BAKE_TIME) {
                             actionable = actionable.mix(Actionable.WAITING);
                             pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
                         } else {
@@ -876,7 +896,7 @@ public class Monitor {
                             actionable = actionable.mix(Actionable.REQUESTED);
                         } else if (!affectedReleases.contains(12)) {
                             pw.println(MSG_NOT_AFFECTED);
-                        } else if (daysAgo < BAKE_TIME) {
+                        } else if (daysAgo >= 0 && daysAgo < BAKE_TIME) {
                             actionable = actionable.mix(Actionable.WAITING);
                             pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
                         } else {
