@@ -26,17 +26,12 @@ package org.openjdk.backports;
 
 import com.atlassian.jira.rest.client.api.*;
 import com.atlassian.jira.rest.client.api.domain.*;
-import com.atlassian.util.concurrent.Promise;
 import com.google.common.collect.*;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
 import java.io.*;
 import java.net.URISyntaxException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -426,59 +421,6 @@ public class Monitor {
         }
     }
 
-    static class RetryableIssuePromise {
-        private final IssueRestClient cli;
-        private final String key;
-        private Promise<Issue> cur;
-
-        public RetryableIssuePromise(IssueRestClient cli, String key) {
-            this.cli = cli;
-            this.key = key;
-            this.cur = cli.getIssue(key);
-        }
-
-        public Issue claim() {
-            for (int t = 0; t < 10; t++) {
-                try {
-                    return cur.claim();
-                } catch (Exception e) {
-                    backoff((1 + t*t)*100);
-                    cur = cli.getIssue(key);
-                }
-            }
-            return cur.claim();
-        }
-    }
-
-    static class RetryableSearchPromise {
-
-        private final SearchRestClient searchCli;
-        private final String query;
-        private final int pageSize;
-        private final int cnt;
-        private Promise<SearchResult> cur;
-
-        public RetryableSearchPromise(SearchRestClient searchCli, String query, int pageSize, int cnt) {
-            this.searchCli = searchCli;
-            this.query = query;
-            this.pageSize = pageSize;
-            this.cnt = cnt;
-            this.cur = searchCli.searchJql(query, pageSize, cnt, null);
-        }
-
-        public SearchResult claim() {
-            for (int t = 0; t < 10; t++) {
-                try {
-                    return cur.claim();
-                } catch (Exception e) {
-                    backoff((1 + t*t)*100);
-                    cur = searchCli.searchJql(query, pageSize, cnt, null);
-                }
-            }
-            return cur.claim();
-        }
-    }
-
     private String rewrap(String src, int width) {
         StringBuilder result = new StringBuilder();
         String[] words = src.split("[ \n]");
@@ -535,14 +477,6 @@ public class Monitor {
         return issues;
     }
 
-    private static void backoff(int msec) {
-        try {
-            TimeUnit.MILLISECONDS.sleep(msec);
-        } catch (InterruptedException ie) {
-            ie.printStackTrace();
-        }
-    }
-
     private String getFixVersion(Issue issue) {
         Iterator<Version> it = issue.getFixVersions().iterator();
         if (!it.hasNext()) {
@@ -555,107 +489,10 @@ public class Monitor {
         return fixVersion.getName();
     }
 
-    private int getFixReleaseVersion(Issue issue) {
-        return extractVersion(getFixVersion(issue));
-    }
-
-    private int extractVersion(String version) {
-        if (version.equals("solaris_10u7")) {
-            // Special-case odd issue: https://bugs.openjdk.java.net/browse/JDK-6913047
-            return 0;
-        }
-
-        version = version.toLowerCase();
-
-        if (version.startsWith("openjdk")) {
-            version = version.substring("openjdk".length());
-        }
-
-        if (version.endsWith("shenandoah")) {
-            return -1;
-        }
-
-        int dotIdx = version.indexOf(".");
-        if (dotIdx != -1) {
-            try {
-                return Integer.parseInt(version.substring(0, dotIdx));
-            } catch (Exception e) {
-                return -1;
-            }
-        }
-        int uIdx = version.indexOf("u");
-        if (uIdx != -1) {
-            try {
-                return Integer.parseInt(version.substring(0, uIdx));
-            } catch (Exception e) {
-                return -1;
-            }
-        }
-
-        try {
-            return Integer.parseInt(version);
-        } catch (Exception e) {
-            return -1;
-        }
-    }
-
-    private int extractVersionShenandoah(String version) {
-        if (!version.endsWith("-shenandoah")) {
-            return -1;
-        }
-
-        version = version.substring(0, version.indexOf("shenandoah") - 1);
-        try {
-            return Integer.parseInt(version);
-        } catch (Exception e) {
-            return -1;
-        }
-    }
-
-    private String parseURL(String s) {
-        for (String l : s.split("\n")) {
-            if (l.startsWith("URL")) {
-                return l.replaceFirst("URL:", "").trim();
-            }
-        }
-        return "N/A";
-    }
-
-    private String parseUser(String s) {
-        for (String l : s.split("\n")) {
-            if (l.startsWith("User")) {
-                return l.replaceFirst("User:", "").trim();
-            }
-        }
-        return "N/A";
-    }
-
-    private static long parseDaysAgo(String s) {
-        for (String l : s.split("\n")) {
-            if (l.startsWith("Date")) {
-                String d = l.replaceFirst("Date:", "").trim();
-                final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss Z");
-                return ChronoUnit.DAYS.between(LocalDate.parse(d, formatter), LocalDate.now());
-            }
-        }
-        return 0;
-    }
-
-    private static long parseSecondsAgo(String s) {
-        for (String l : s.split("\n")) {
-            if (l.startsWith("Date")) {
-                String d = l.replaceFirst("Date:", "").trim();
-                final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss Z");
-                return ChronoUnit.SECONDS.between(LocalDateTime.parse(d, formatter), LocalDateTime.now());
-            }
-        }
-        return 0;
-    }
-
     private String getPushURL(Issue issue) {
         for (Comment c : issue.getComments()) {
             if (c.getAuthor().getName().equals("hgupdate")) {
-                return parseURL(c.getBody());
+                return Parsers.parseURL(c.getBody());
             }
         }
         return "N/A";
@@ -664,7 +501,7 @@ public class Monitor {
     private String getPushDate(Issue issue) {
         for (Comment c : issue.getComments()) {
             if (c.getAuthor().getName().equals("hgupdate")) {
-                return parseDaysAgo(c.getBody()) + " day(s) ago";
+                return Parsers.parseDaysAgo(c.getBody()) + " day(s) ago";
             }
         }
         return "N/A";
@@ -673,7 +510,7 @@ public class Monitor {
     private String getPushUser(Issue issue) {
         for (Comment c : issue.getComments()) {
             if (c.getAuthor().getName().equals("hgupdate")) {
-                return parseUser(c.getBody());
+                return Parsers.parseUser(c.getBody());
             }
         }
         return "N/A";
@@ -682,7 +519,7 @@ public class Monitor {
     private static long getPushDaysAgo(Issue issue) {
         for (Comment c : issue.getComments()) {
             if (c.getAuthor().getName().equals("hgupdate")) {
-                return parseDaysAgo(c.getBody());
+                return Parsers.parseDaysAgo(c.getBody());
             }
         }
         return -1;
@@ -691,7 +528,7 @@ public class Monitor {
     private static long getPushSecondsAgo(Issue issue) {
         for (Comment c : issue.getComments()) {
             if (c.getAuthor().getName().equals("hgupdate")) {
-                return parseSecondsAgo(c.getBody());
+                return Parsers.parseSecondsAgo(c.getBody());
             }
         }
         return -1;
@@ -771,7 +608,7 @@ public class Monitor {
         for (Version v : issue.getAffectedVersions()) {
             String verName = v.getName();
             if (verName.endsWith("-shenandoah")) {
-                int ver = extractVersionShenandoah(verName);
+                int ver = Parsers.extractVersionShenandoah(verName);
                 if (ver < 0) {
                     pw.println("  " + MSG_WARNING + ": Unknown affected version: " + verName);
                     pw.println();
@@ -779,7 +616,7 @@ public class Monitor {
                 }
                 affectedShenandoah.add(ver);
             } else {
-                int ver = extractVersion(verName);
+                int ver = Parsers.extractVersion(verName);
                 if (ver < 0) {
                     pw.println("  " + MSG_WARNING + ": Unknown affected version: " + verName);
                     pw.println();
@@ -808,7 +645,7 @@ public class Monitor {
             recordIssue(results, p.claim(), true);
         }
 
-        int origRel = getFixReleaseVersion(issue);
+        int origRel = Parsers.extractVersion(getFixVersion(issue));
         int highRel = results.isEmpty() ? origRel : results.lastKey();
 
         boolean printed = false;
@@ -977,7 +814,7 @@ public class Monitor {
         }
 
         String line = String.format("%s, %10s, %s, %s", fixVersion, issue.getKey(), pushURL, getPushDate(issue));
-        int ver = extractVersion(fixVersion);
+        int ver = Parsers.extractVersion(fixVersion);
         List<String> list = results.computeIfAbsent(ver, k -> new ArrayList<>());
         list.add(line);
     }
