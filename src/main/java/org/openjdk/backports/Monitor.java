@@ -832,6 +832,12 @@ public class Monitor {
                     "8-a64-sh", "aarch64-port/jdk8u-shenandoah");
             printed = true;
         }
+        if (affectedReleases.contains(7)) {
+            String synopsis = issue.getKey().replaceFirst("JDK-", "");
+            printHgStatus(true, actions, pw, synopsis,
+                    "7-it-2.6", "icedtea7-forest-2.6");
+            printed = true;
+        }
         if (!printed) {
             pw.println("      None.");
         }
