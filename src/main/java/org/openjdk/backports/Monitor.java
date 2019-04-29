@@ -38,10 +38,10 @@ import java.util.concurrent.TimeUnit;
 public class Monitor {
 
     private static final String MSG_NOT_AFFECTED = "Not affected";
-    private static final String MSG_BAKING   = "WAITING for patch to bake a little";
-    private static final String MSG_MISSING  = "MISSING";
+    private static final String MSG_BAKING = "WAITING for patch to bake a little";
+    private static final String MSG_MISSING = "MISSING";
     private static final String MSG_APPROVED = "APPROVED";
-    private static final String MSG_WARNING  = "WARNING";
+    private static final String MSG_WARNING = "WARNING";
 
     private static final int BAKE_TIME = 10; // days
 
@@ -459,7 +459,7 @@ public class Monitor {
         List<RetryableSearchPromise> searchPromises = new ArrayList<>();
         for (int cnt = 0; cnt < total; cnt += PAGE_SIZE) {
             searchPromises.add(new RetryableSearchPromise(searchCli, query, PAGE_SIZE, cnt));
-            System.out.println("Acquiring page [" + cnt  + ", " + (cnt + PAGE_SIZE) + "] (total: " + total + ")");
+            System.out.println("Acquiring page [" + cnt + ", " + (cnt + PAGE_SIZE) + "] (total: " + total + ")");
         }
 
         for (RetryableSearchPromise sp : searchPromises) {
@@ -774,23 +774,20 @@ public class Monitor {
             String synopsis = issue.getKey().replaceFirst("JDK-", "[backport] ");
 
             for (int ver : new int[]{11, 8}) {
-                if (!affectedShenandoah.contains(ver)) {
-                    pw.println(MSG_NOT_AFFECTED);
-                } else {
-                    switch (ver) {
-                        case 8:
-                            actionable = printHgStatus(actionable, pw, synopsis,
-                                    "8-sh", "shenandoah/jdk8");
-                            actionable = printHgStatus(actionable, pw, synopsis,
-                                    "8-aarch64", "aarch64-port/jdk8u-shenandoah");
-                            break;
-                        case 11:
-                            actionable = printHgStatus(actionable, pw, synopsis,
-                                    "11-sh", "shenandoah/jdk11");
-                            break;
-                        default:
-                            pw.println("Unknown release: " + ver);
-                    }
+                boolean affected = affectedShenandoah.contains(ver);
+                switch (ver) {
+                    case 8:
+                        actionable = printHgStatus(affected, actionable, pw, synopsis,
+                                "8-sh", "shenandoah/jdk8");
+                        actionable = printHgStatus(affected, actionable, pw, synopsis,
+                                "8-aarch64", "aarch64-port/jdk8u-shenandoah");
+                        break;
+                    case 11:
+                        actionable = printHgStatus(affected, actionable, pw, synopsis,
+                                "11-sh", "shenandoah/jdk11");
+                        break;
+                    default:
+                        pw.println("Unknown release: " + ver);
                 }
             }
         }
@@ -800,9 +797,11 @@ public class Monitor {
         return new TrackedIssue(sw.toString(), daysAgo, actionable);
     }
 
-    private Actionable printHgStatus(Actionable actionable, PrintWriter pw, String synopsis, String label, String repo) {
+    private Actionable printHgStatus(boolean affected, Actionable actionable, PrintWriter pw, String synopsis, String label, String repo) {
         pw.printf("  %" + VER_INDENT + "s: ", label);
-        if (!hgDB.hasRepo(repo)) {
+        if (!affected) {
+            pw.println(MSG_NOT_AFFECTED);
+        } else if (!hgDB.hasRepo(repo)) {
             pw.println(MSG_WARNING + ": No Mercurial data available to judge");
         } else {
             List<HgDB.Record> rs = hgDB.search(repo, synopsis);
