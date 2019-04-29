@@ -47,6 +47,8 @@ public class Monitor {
 
     private static final int PAGE_SIZE = 50;
 
+    private static final int VER_INDENT = 10;
+
     private final UserCache users;
     private final HgDB hgDB;
 
@@ -599,7 +601,7 @@ public class Monitor {
 
         long daysAgo = getPushDaysAgo(issue);
 
-        pw.printf("  %8s: %10s, %s, %s%n", getFixVersion(issue), issue.getKey(), getPushURL(issue), getPushDate(issue));
+        pw.printf("  %" + VER_INDENT + "s: %10s, %s, %s%n", getFixVersion(issue), issue.getKey(), getPushURL(issue), getPushDate(issue));
         recordIssue(results, issue, true);
         pw.println();
 
@@ -658,17 +660,17 @@ public class Monitor {
                     boolean first = true;
                     for (String line : lines) {
                         if (first) {
-                            pw.printf("  %8s: ", release);
+                            pw.printf("  %" + VER_INDENT + "s: ", release);
                             first = false;
                         } else {
-                            pw.printf("  %8s  ", "");
+                            pw.printf("  %" + VER_INDENT + "s  ", "");
                         }
                         pw.println(line);
                         printed = true;
                     }
                 }
             } else if (release <= highRel) {
-                pw.printf("  %8s: ", release);
+                pw.printf("  %" + VER_INDENT + "s: ", release);
                 switch (release) {
                     case 7: {
                         if (!affectedReleases.contains(7)) {
@@ -787,7 +789,7 @@ public class Monitor {
     }
 
     private Actionable printHgStatus(Actionable actionable, PrintWriter pw, String synopsis, String label, String repo) {
-        pw.printf("  %8s: ", label);
+        pw.printf("  %" + VER_INDENT + "s: ", label);
         if (!hgDB.hasRepo(repo)) {
             pw.println(MSG_WARNING + ": No Mercurial data available to judge");
         } else {
