@@ -654,7 +654,7 @@ public class Monitor {
             if (release == origRel) continue;
             List<String> lines = results.get(release);
             if (lines != null && !affectedReleases.contains(release)) {
-                pw.println("  " + MSG_WARNING + ": Port to " + release + " was found. No relevant affected version set.");
+                pw.println("  " + MSG_WARNING + ": Port to " + release + " was found. No relevant affected version is set, assuming one.");
                 pw.println();
                 affectedReleases.add(release);
             }
