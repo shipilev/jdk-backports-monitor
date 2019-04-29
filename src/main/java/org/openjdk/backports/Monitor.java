@@ -51,6 +51,11 @@ public class Monitor {
 
     private static final int[] VERSIONS_TO_CARE_FOR = {13, 12, 11, 8, 7};
 
+    // LTS backports are most important, then merges, then STS backports
+    private static int IMPORTANCE_LTS_BACKPORT = 3;
+    private static int IMPORTANCE_MERGE = 2;
+    private static int IMPORTANCE_STS_BACKPORT = 1;
+
     private final UserCache users;
     private final HgDB hgDB;
 
@@ -582,15 +587,20 @@ public class Monitor {
 
     private static class Actions implements Comparable<Actions> {
         Actionable actionable;
-        int count;
+        int importance;
 
         public Actions() {
             actionable = Actionable.NONE;
         }
+
         public void update(Actionable act) {
+            update(act, 0);
+        }
+
+        public void update(Actionable act, int impt) {
             actionable = actionable.mix(act);
             if (act.ordinal() > Actionable.NONE.ordinal()) {
-                count++;
+                importance += impt;
             }
         }
 
@@ -600,7 +610,7 @@ public class Monitor {
             if (v1 != 0) {
                 return v1;
             }
-            return Integer.compare(count, other.count);
+            return Integer.compare(importance, other.importance);
         }
     }
 
@@ -715,14 +725,14 @@ public class Monitor {
                             actions.update(Actionable.WAITING);
                             pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
                         } else {
-                            actions.update(Actionable.MISSING);
+                            actions.update(Actionable.MISSING, IMPORTANCE_LTS_BACKPORT);
                             pw.println(MSG_MISSING);
                         }
                         break;
                     }
                     case 8: {
                         if (issue.getLabels().contains("jdk8u-fix-yes")) {
-                            actions.update(Actionable.PUSHABLE);
+                            actions.update(Actionable.PUSHABLE, IMPORTANCE_LTS_BACKPORT);
                             pw.println(MSG_APPROVED + ": jdk8u-fix-yes is set");
                         } else if (issue.getLabels().contains("jdk8u-fix-no")) {
                             pw.println("REJECTED: jdk8u-fix-no is set");
@@ -735,14 +745,14 @@ public class Monitor {
                             actions.update(Actionable.WAITING);
                             pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
                         } else {
-                            actions.update(Actionable.MISSING);
+                            actions.update(Actionable.MISSING, IMPORTANCE_LTS_BACKPORT);
                             pw.println(MSG_MISSING);
                         }
                         break;
                     }
                     case 11: {
                         if (issue.getLabels().contains("jdk11u-fix-yes")) {
-                            actions.update(Actionable.PUSHABLE);
+                            actions.update(Actionable.PUSHABLE, IMPORTANCE_LTS_BACKPORT);
                             pw.println(MSG_APPROVED + ": jdk11u-fix-yes is set");
                         } else if (issue.getLabels().contains("jdk11u-fix-no")) {
                             pw.println("REJECTED: jdk11u-fix-no is set");
@@ -755,14 +765,14 @@ public class Monitor {
                             actions.update(Actionable.WAITING);
                             pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
                         } else {
-                            actions.update(Actionable.MISSING);
+                            actions.update(Actionable.MISSING, IMPORTANCE_LTS_BACKPORT);
                             pw.println(MSG_MISSING);
                         }
                         break;
                     }
                     case 12: {
                         if (issue.getLabels().contains("jdk12u-fix-yes")) {
-                            actions.update(Actionable.PUSHABLE);
+                            actions.update(Actionable.PUSHABLE, IMPORTANCE_STS_BACKPORT);
                             pw.println(MSG_APPROVED + ": jdk12u-fix-yes is set");
                         } else if (issue.getLabels().contains("jdk12u-fix-no")) {
                             pw.println("REJECTED: jdk12u-fix-no is set");
@@ -775,7 +785,7 @@ public class Monitor {
                             actions.update(Actionable.WAITING);
                             pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
                         } else {
-                            actions.update(Actionable.MISSING);
+                            actions.update(Actionable.MISSING, IMPORTANCE_STS_BACKPORT);
                             pw.println(MSG_MISSING);
                         }
                         break;
@@ -866,7 +876,7 @@ public class Monitor {
                     pw.println(r.toString());
                 }
             } else {
-                actions.update(Actionable.MISSING);
+                actions.update(Actionable.MISSING, IMPORTANCE_MERGE);
                 pw.println(MSG_MISSING);
             }
         }
