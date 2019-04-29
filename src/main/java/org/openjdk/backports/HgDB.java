@@ -61,10 +61,10 @@ public class HgDB {
 
             try {
                 List<String> lines = exec("hg", "log", "-M", "-R", repoPath, "-T",
-                        "{node|short}BACKPORT-SEPARATOR{latesttag}BACKPORT-SEPARATOR{desc|firstline}BACKPORT-SEPARATOR{author}\n");
+                        "{node|short}BACKPORT-SEPARATOR{desc|firstline}BACKPORT-SEPARATOR{author}\n");
                 for (String line : lines) {
                     String[] split = line.split("BACKPORT-SEPARATOR");
-                    records.add(new Record(repo, split[0], split[1], split[2], split[3]));
+                    records.add(new Record(repo, split[0], split[1], split[2]));
                 }
 
                 pw.println(" " + lines.size() + " loaded.");
@@ -118,14 +118,12 @@ public class HgDB {
     public static class Record {
         final String repo;
         final String hash;
-        final String tag;
         final String synopsis;
         final String author;
 
-        private Record(String repo, String hash, String tag, String synopsis, String author) {
+        private Record(String repo, String hash, String synopsis, String author) {
             this.repo = repo;
             this.hash = hash;
-            this.tag = tag;
             this.synopsis = synopsis;
             this.author = author;
         }
@@ -150,7 +148,7 @@ public class HgDB {
 
         @Override
         public String toString() {
-            return repo + "/rev/" + hash + ", after " + tag + "";
+            return repo + "/rev/" + hash;
         }
     }
 
