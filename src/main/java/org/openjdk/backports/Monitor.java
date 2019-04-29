@@ -98,12 +98,17 @@ public class Monitor {
             issues.add(parseIssue(i, issueCli));
         }
 
+        int count = 0;
         printDelimiterLine(out);
         for (TrackedIssue i : issues) {
             if (i.actions.actionable.ordinal() < minLevel.ordinal()) continue;
             out.println(i.output);
             printDelimiterLine(out);
+            count++;
         }
+
+        out.println();
+        out.println("" + count + " issues shown.");
     }
 
     public void runIssueReport(JiraRestClient restClient, String issueId) throws URISyntaxException {
