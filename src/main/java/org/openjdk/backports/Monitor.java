@@ -71,7 +71,7 @@ public class Monitor {
         PrintStream out = System.out;
 
         out.println("JDK BACKPORTS LABEL REPORT: " + label);
-        out.println("=====================================================================================================");
+        printMajorDelimiterLine(out);
         out.println();
         out.println("This report shows bugs with the given label, along with their backporting status.");
         out.println();
@@ -117,7 +117,7 @@ public class Monitor {
         PrintStream out = System.out;
 
         out.println("JDK BACKPORTS ISSUE REPORT: " + issueId);
-        out.println("=====================================================================================================");
+        printMajorDelimiterLine(out);
         out.println();
         out.println("This report shows a single issue status.");
         out.println();
@@ -139,7 +139,7 @@ public class Monitor {
         PrintStream out = System.out;
 
         out.println("JDK BACKPORTS PENDING PUSH REPORT: " + release);
-        out.println("=====================================================================================================");
+        printMajorDelimiterLine(out);
         out.println();
         out.println("This report shows backports that were approved, but not yet pushed.");
         out.println("Some of them are true orphans with original backport requesters never got sponsored.");
@@ -179,7 +179,7 @@ public class Monitor {
         PrintStream out = System.out;
 
         out.println("JDK BACKPORTS PUSHES REPORT: " + release);
-        out.println("=====================================================================================================");
+        printMajorDelimiterLine(out);
         out.println();
         out.println("This report shows who pushed the backports to the given release.");
         out.println("This usually shows who did the backporting, testing, and review work.");
@@ -296,7 +296,7 @@ public class Monitor {
         PrintStream out = System.out;
 
         out.println("RELEASE NOTES FOR: " + release);
-        out.println("=====================================================================================================");
+        printMajorDelimiterLine(out);
         out.println();
         out.println("Notes generated: " + new Date());
         out.println();
@@ -370,7 +370,7 @@ public class Monitor {
         Filter filter = searchCli.getFilter(filterId).claim();
 
         out.println("JDK BACKPORTS FILTER REPORT");
-        out.println("=====================================================================================================");
+        printMajorDelimiterLine(out);
         out.println();
         out.println("This report shows brief list of issues matching the filter.");
         out.println();
@@ -888,7 +888,11 @@ public class Monitor {
     }
 
     private void printDelimiterLine(PrintStream pw) {
-        pw.println("-----------------------------------------------------------------------------------------------------");
+        pw.println("-------------------------------------------------------------------------------------------------------------------");
+    }
+
+    private void printMajorDelimiterLine(PrintStream pw) {
+        pw.println("===================================================================================================================");
     }
 
     private void recordIssue(Map<Integer, List<String>> results, Issue issue, boolean bypassEmpty) {
