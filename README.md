@@ -19,15 +19,17 @@ you should have seen the Bash version I had before it.
 
 ## What Do I Need... Wait, Do I Really Need To Run It?
 
-Many queries involve complex JQL statements, which requires authentication to execute. The tool expects the property file with user/login: 
+Many queries involve complex JQL statements, which requires authentication to execute. 
+The tool expects the property file with your user/login for OpenJDK bug database
+(comes with a glorious OpenJDK Author role, after some contributions):
 
        $ cat auth.props
        user=duke
        pass=duke
 
-Querying JIRA can take a while, especially for large reports. Not only it wastes run time,
+Querying JIRA can take a while, especially for large reports. Not only it takes local time,
 it also puts pressure on the remote JIRA instance. So, set up the CI job to generate this
-once a day/week/month.
+once a day/week/month, and then stare at the result to your heart's content.
 
 Generated reports from my CI jobs are here:
   https://builds.shipilev.net/backports-monitor/
