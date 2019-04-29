@@ -47,7 +47,7 @@ public class Monitor {
 
     private static final int PAGE_SIZE = 50;
 
-    private static final int VER_INDENT = 10;
+    private static final int VER_INDENT = 9; // spaces
 
     private static final int[] VERSIONS_TO_CARE_FOR = {13, 12, 11, 8, 7};
 
@@ -804,7 +804,7 @@ public class Monitor {
                         printHgStatus(affected, actions, pw, synopsis,
                                 "8-sh", "shenandoah/jdk8");
                         printHgStatus(affected, actions, pw, synopsis,
-                                "8-aarch64", "aarch64-port/jdk8u-shenandoah");
+                                "8-a64-sh", "aarch64-port/jdk8u-shenandoah");
                         break;
                     case 11:
                         printHgStatus(affected, actions, pw, synopsis,
@@ -829,7 +829,7 @@ public class Monitor {
         if (affectedReleases.contains(8)) {
             String synopsis = issue.getKey().replaceFirst("JDK-", "");
             printHgStatus(true, actions, pw, synopsis,
-                    "8-aarch64", "aarch64-port/jdk8u-shenandoah");
+                    "8-a64-sh", "aarch64-port/jdk8u-shenandoah");
             printed = true;
         }
         if (!printed) {
