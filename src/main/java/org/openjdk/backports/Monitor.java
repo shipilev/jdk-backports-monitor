@@ -792,6 +792,16 @@ public class Monitor {
             }
         }
 
+        if (affectedReleases.contains(8)) {
+            pw.println();
+            pw.println("  Other Backports:");
+
+            String synopsis = issue.getKey().replaceFirst("JDK-", "");
+
+            actionable = printHgStatus(true, actionable, pw, synopsis,
+                         "8-aarch64", "aarch64-port/jdk8u-shenandoah");
+        }
+
         pw.println();
 
         return new TrackedIssue(sw.toString(), daysAgo, actionable);
@@ -806,7 +816,15 @@ public class Monitor {
         } else {
             List<HgDB.Record> rs = hgDB.search(repo, synopsis);
             if (!rs.isEmpty()) {
-                for (HgDB.Record r : rs) pw.println(r.toString());
+                boolean first = true;
+                for (HgDB.Record r : rs) {
+                    if (first) {
+                        first = false;
+                    } else {
+                        pw.printf("  %" + VER_INDENT + "s  ", "");
+                    }
+                    pw.println(r.toString());
+                }
             } else {
                 actionable = actionable.mix(Actionable.MISSING);
                 pw.println(MSG_MISSING);
