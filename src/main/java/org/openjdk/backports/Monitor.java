@@ -95,7 +95,7 @@ public class Monitor {
 
         printDelimiterLine(out);
         for (TrackedIssue i : issues) {
-            if (i.actionable.ordinal() < minLevel.ordinal()) continue;
+            if (i.actions.actionable.ordinal() < minLevel.ordinal()) continue;
             out.println(i.output);
             printDelimiterLine(out);
         }
@@ -558,17 +558,17 @@ public class Monitor {
     private static class TrackedIssue implements Comparable<TrackedIssue> {
         final String output;
         final long age;
-        final Actionable actionable;
+        final Actions actions;
 
-        public TrackedIssue(String output, long age, Actionable actionable) {
+        public TrackedIssue(String output, long age, Actions actions) {
             this.output = output;
             this.age = age;
-            this.actionable = actionable;
+            this.actions = actions;
         }
 
         @Override
         public int compareTo(TrackedIssue other) {
-            int v1 = Integer.compare(other.actionable.ordinal(), this.actionable.ordinal());
+            int v1 = other.actions.compareTo(actions);
             if (v1 != 0) {
                 return v1;
             }
@@ -580,8 +580,32 @@ public class Monitor {
         }
     }
 
+    private static class Actions implements Comparable<Actions> {
+        Actionable actionable;
+        int count;
+
+        public Actions() {
+            actionable = Actionable.NONE;
+        }
+        public void update(Actionable act) {
+            actionable = actionable.mix(act);
+            if (act.ordinal() > Actionable.NONE.ordinal()) {
+                count++;
+            }
+        }
+
+        @Override
+        public int compareTo(Actions other) {
+            int v1 = Integer.compare(actionable.ordinal(), other.actionable.ordinal());
+            if (v1 != 0) {
+                return v1;
+            }
+            return Integer.compare(count, other.count);
+        }
+    }
+
     private TrackedIssue parseIssue(Issue issue, IssueRestClient cli) {
-        Actionable actionable = Actionable.NONE;
+        Actions actions = new Actions();
 
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
@@ -616,7 +640,7 @@ public class Monitor {
                 if (ver < 0) {
                     pw.println("  " + MSG_WARNING + ": Unknown affected version: " + verName);
                     pw.println();
-                    actionable = actionable.mix(Actionable.CRITICAL);
+                    actions.update(Actionable.CRITICAL);
                 }
                 affectedShenandoah.add(ver);
             } else {
@@ -624,7 +648,7 @@ public class Monitor {
                 if (ver < 0) {
                     pw.println("  " + MSG_WARNING + ": Unknown affected version: " + verName);
                     pw.println();
-                    actionable = actionable.mix(Actionable.CRITICAL);
+                    actions.update(Actionable.CRITICAL);
                 }
                 affectedReleases.add(ver);
             }
@@ -633,7 +657,7 @@ public class Monitor {
         if (affectedReleases.isEmpty()) {
             pw.println("  " + MSG_WARNING + ": Affected versions is not set.");
             pw.println();
-            actionable = actionable.mix(Actionable.CRITICAL);
+            actions.update(Actionable.CRITICAL);
         }
 
         List<RetryableIssuePromise> links = new ArrayList<>();
@@ -688,70 +712,70 @@ public class Monitor {
                         if (!affectedReleases.contains(7)) {
                             pw.println(MSG_NOT_AFFECTED);
                         } else if (daysAgo >= 0 && daysAgo < BAKE_TIME) {
-                            actionable = actionable.mix(Actionable.WAITING);
+                            actions.update(Actionable.WAITING);
                             pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
                         } else {
-                            actionable = actionable.mix(Actionable.MISSING);
+                            actions.update(Actionable.MISSING);
                             pw.println(MSG_MISSING);
                         }
                         break;
                     }
                     case 8: {
                         if (issue.getLabels().contains("jdk8u-fix-yes")) {
-                            actionable = actionable.mix(Actionable.PUSHABLE);
+                            actions.update(Actionable.PUSHABLE);
                             pw.println(MSG_APPROVED + ": jdk8u-fix-yes is set");
                         } else if (issue.getLabels().contains("jdk8u-fix-no")) {
                             pw.println("REJECTED: jdk8u-fix-no is set");
                         } else if (issue.getLabels().contains("jdk8u-fix-request")) {
                             pw.println("Requested: jdk8u-fix-request is set");
-                            actionable = actionable.mix(Actionable.REQUESTED);
+                            actions.update(Actionable.REQUESTED);
                         } else if (!affectedReleases.contains(8)) {
                             pw.println(MSG_NOT_AFFECTED);
                         } else if (daysAgo >= 0 && daysAgo < BAKE_TIME) {
-                            actionable = actionable.mix(Actionable.WAITING);
+                            actions.update(Actionable.WAITING);
                             pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
                         } else {
-                            actionable = actionable.mix(Actionable.MISSING);
+                            actions.update(Actionable.MISSING);
                             pw.println(MSG_MISSING);
                         }
                         break;
                     }
                     case 11: {
                         if (issue.getLabels().contains("jdk11u-fix-yes")) {
-                            actionable = actionable.mix(Actionable.PUSHABLE);
+                            actions.update(Actionable.PUSHABLE);
                             pw.println(MSG_APPROVED + ": jdk11u-fix-yes is set");
                         } else if (issue.getLabels().contains("jdk11u-fix-no")) {
                             pw.println("REJECTED: jdk11u-fix-no is set");
                         } else if (issue.getLabels().contains("jdk11u-fix-request")) {
                             pw.println("Requested: jdk11u-fix-request is set");
-                            actionable = actionable.mix(Actionable.REQUESTED);
+                            actions.update(Actionable.REQUESTED);
                         } else if (!affectedReleases.contains(11)) {
                             pw.println(MSG_NOT_AFFECTED);
                         } else if (daysAgo >= 0 && daysAgo < BAKE_TIME) {
-                            actionable = actionable.mix(Actionable.WAITING);
+                            actions.update(Actionable.WAITING);
                             pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
                         } else {
-                            actionable = actionable.mix(Actionable.MISSING);
+                            actions.update(Actionable.MISSING);
                             pw.println(MSG_MISSING);
                         }
                         break;
                     }
                     case 12: {
                         if (issue.getLabels().contains("jdk12u-fix-yes")) {
-                            actionable = actionable.mix(Actionable.PUSHABLE);
+                            actions.update(Actionable.PUSHABLE);
                             pw.println(MSG_APPROVED + ": jdk12u-fix-yes is set");
                         } else if (issue.getLabels().contains("jdk12u-fix-no")) {
                             pw.println("REJECTED: jdk12u-fix-no is set");
                         } else if (issue.getLabels().contains("jdk12u-fix-request")) {
                             pw.println("Requested: jdk12u-fix-request is set");
-                            actionable = actionable.mix(Actionable.REQUESTED);
+                            actions.update(Actionable.REQUESTED);
                         } else if (!affectedReleases.contains(12)) {
                             pw.println(MSG_NOT_AFFECTED);
                         } else if (daysAgo >= 0 && daysAgo < BAKE_TIME) {
-                            actionable = actionable.mix(Actionable.WAITING);
+                            actions.update(Actionable.WAITING);
                             pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
                         } else {
-                            actionable = actionable.mix(Actionable.MISSING);
+                            actions.update(Actionable.MISSING);
                             pw.println(MSG_MISSING);
                         }
                         break;
@@ -777,13 +801,13 @@ public class Monitor {
                 boolean affected = affectedShenandoah.contains(ver);
                 switch (ver) {
                     case 8:
-                        actionable = printHgStatus(affected, actionable, pw, synopsis,
+                        printHgStatus(affected, actions, pw, synopsis,
                                 "8-sh", "shenandoah/jdk8");
-                        actionable = printHgStatus(affected, actionable, pw, synopsis,
+                        printHgStatus(affected, actions, pw, synopsis,
                                 "8-aarch64", "aarch64-port/jdk8u-shenandoah");
                         break;
                     case 11:
-                        actionable = printHgStatus(affected, actionable, pw, synopsis,
+                        printHgStatus(affected, actions, pw, synopsis,
                                 "11-sh", "shenandoah/jdk11");
                         break;
                     default:
@@ -798,14 +822,14 @@ public class Monitor {
         printed = false;
         if (affectedReleases.contains(11)) {
             String synopsis = issue.getKey().replaceFirst("JDK-", "");
-            actionable = printHgStatus(true, actionable, pw, synopsis,
+            printHgStatus(true, actions, pw, synopsis,
                     "11-sh", "shenandoah/jdk11");
             printed = true;
         }
         if (affectedReleases.contains(8)) {
             String synopsis = issue.getKey().replaceFirst("JDK-", "");
-            actionable = printHgStatus(true, actionable, pw, synopsis,
-                         "8-aarch64", "aarch64-port/jdk8u-shenandoah");
+            printHgStatus(true, actions, pw, synopsis,
+                    "8-aarch64", "aarch64-port/jdk8u-shenandoah");
             printed = true;
         }
         if (!printed) {
@@ -814,10 +838,10 @@ public class Monitor {
 
         pw.println();
 
-        return new TrackedIssue(sw.toString(), daysAgo, actionable);
+        return new TrackedIssue(sw.toString(), daysAgo, actions);
     }
 
-    private Actionable printHgStatus(boolean affected, Actionable actionable, PrintWriter pw, String synopsis, String label, String repo) {
+    private void printHgStatus(boolean affected, Actions actions, PrintWriter pw, String synopsis, String label, String repo) {
         pw.printf("  %" + VER_INDENT + "s: ", label);
         if (!affected) {
             pw.println(MSG_NOT_AFFECTED);
@@ -836,11 +860,10 @@ public class Monitor {
                     pw.println(r.toString());
                 }
             } else {
-                actionable = actionable.mix(Actionable.MISSING);
+                actions.update(Actionable.MISSING);
                 pw.println(MSG_MISSING);
             }
         }
-        return actionable;
     }
 
     private void printDelimiterLine(PrintStream pw) {
