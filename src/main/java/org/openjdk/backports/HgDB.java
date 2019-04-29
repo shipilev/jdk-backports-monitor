@@ -150,7 +150,7 @@ public class HgDB {
 
         @Override
         public String toString() {
-            return tag + ", "+ repo + "/rev/" + hash;
+            return repo + "/rev/" + hash + ", after " + tag + "";
         }
     }
 

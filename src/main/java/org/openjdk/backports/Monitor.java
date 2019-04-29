@@ -760,20 +760,22 @@ public class Monitor {
             String synopsis = issue.getKey().replaceFirst("JDK-", "[backport] ");
 
             for (int ver : new int[]{11, 8}) {
-                pw.printf("  %8s: ", ver);
                 if (!affectedShenandoah.contains(ver)) {
                     pw.println(MSG_NOT_AFFECTED);
-                } else if (!hgDB.hasRepo("jdk" + ver)) {
-                    pw.println(MSG_WARNING + ": No Mercurial data available to judge");
                 } else {
-                    List<HgDB.Record> rs = hgDB.search("jdk" + ver, synopsis);
-                    if (!rs.isEmpty()) {
-                        for (HgDB.Record r : rs) {
-                            pw.println(r.toString());
-                        }
-                    } else {
-                        actionable = actionable.mix(Actionable.MISSING);
-                        pw.println(MSG_MISSING);
+                    switch (ver) {
+                        case 8:
+                            actionable = printHgStatus(actionable, pw, synopsis,
+                                    "8-sh", "shenandoah/jdk8");
+                            actionable = printHgStatus(actionable, pw, synopsis,
+                                    "8-aarch64", "aarch64-port/jdk8u-shenandoah");
+                            break;
+                        case 11:
+                            actionable = printHgStatus(actionable, pw, synopsis,
+                                    "11-sh", "shenandoah/jdk11");
+                            break;
+                        default:
+                            pw.println("Unknown release: " + ver);
                     }
                 }
             }
@@ -782,6 +784,22 @@ public class Monitor {
         pw.println();
 
         return new TrackedIssue(sw.toString(), daysAgo, actionable);
+    }
+
+    private Actionable printHgStatus(Actionable actionable, PrintWriter pw, String synopsis, String label, String repo) {
+        pw.printf("  %8s: ", label);
+        if (!hgDB.hasRepo(repo)) {
+            pw.println(MSG_WARNING + ": No Mercurial data available to judge");
+        } else {
+            List<HgDB.Record> rs = hgDB.search(repo, synopsis);
+            if (!rs.isEmpty()) {
+                for (HgDB.Record r : rs) pw.println(r.toString());
+            } else {
+                actionable = actionable.mix(Actionable.MISSING);
+                pw.println(MSG_MISSING);
+            }
+        }
+        return actionable;
     }
 
     private void printDelimiterLine(PrintStream pw) {
