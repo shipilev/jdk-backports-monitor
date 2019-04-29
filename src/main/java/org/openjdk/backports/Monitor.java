@@ -792,14 +792,24 @@ public class Monitor {
             }
         }
 
-        if (affectedReleases.contains(8)) {
-            pw.println();
-            pw.println("  Other Backports:");
+        pw.println();
+        pw.println("  Downstream Repositories:");
 
+        printed = false;
+        if (affectedReleases.contains(11)) {
             String synopsis = issue.getKey().replaceFirst("JDK-", "");
-
+            actionable = printHgStatus(true, actionable, pw, synopsis,
+                    "11-sh", "shenandoah/jdk11");
+            printed = true;
+        }
+        if (affectedReleases.contains(8)) {
+            String synopsis = issue.getKey().replaceFirst("JDK-", "");
             actionable = printHgStatus(true, actionable, pw, synopsis,
                          "8-aarch64", "aarch64-port/jdk8u-shenandoah");
+            printed = true;
+        }
+        if (!printed) {
+            pw.println("      None.");
         }
 
         pw.println();
