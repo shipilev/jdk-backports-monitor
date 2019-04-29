@@ -49,6 +49,8 @@ public class Monitor {
 
     private static final int VER_INDENT = 10;
 
+    private static final int[] VERSIONS_TO_CARE_FOR = {13, 12, 11, 8, 7};
+
     private final UserCache users;
     private final HgDB hgDB;
 
@@ -634,8 +636,6 @@ public class Monitor {
             actionable = actionable.mix(Actionable.CRITICAL);
         }
 
-        pw.println("  Backports and Forwardports:");
-
         List<RetryableIssuePromise> links = new ArrayList<>();
         for (IssueLink link : issue.getIssueLinks()) {
             if (link.getIssueLinkType().getName().equals("Backport")) {
@@ -650,8 +650,20 @@ public class Monitor {
         int origRel = Parsers.parseVersion(getFixVersion(issue));
         int highRel = results.isEmpty() ? origRel : results.lastKey();
 
+        for (int release : VERSIONS_TO_CARE_FOR) {
+            if (release == origRel) continue;
+            List<String> lines = results.get(release);
+            if (lines != null && !affectedReleases.contains(release)) {
+                pw.println("  " + MSG_WARNING + ": Port to " + release + " was found. No relevant affected version set.");
+                pw.println();
+                affectedReleases.add(release);
+            }
+        }
+
+        pw.println("  Backports and Forwardports:");
+
         boolean printed = false;
-        for (int release : new int[]{13, 12, 11, 8, 7}) {
+        for (int release : VERSIONS_TO_CARE_FOR) {
             List<String> lines = results.get(release);
             if (lines != null) {
                 if (release != origRel) {
