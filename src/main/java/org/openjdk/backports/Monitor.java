@@ -818,8 +818,6 @@ public class Monitor {
                     case 8:
                         printHgStatus(affected, actions, pw, synopsis,
                                 "8-sh", "shenandoah/jdk8");
-                        printHgStatus(affected, actions, pw, synopsis,
-                                "8-a64-sh", "aarch64-port/jdk8u-shenandoah");
                         break;
                     case 11:
                         printHgStatus(affected, actions, pw, synopsis,
@@ -841,7 +839,7 @@ public class Monitor {
                     "11-sh", "shenandoah/jdk11");
             printed = true;
         }
-        if (affectedReleases.contains(8)) {
+        if (affectedReleases.contains(8) || affectedShenandoah.contains(8)) {
             String synopsis = issue.getKey().replaceFirst("JDK-", "");
             printHgStatus(true, actions, pw, synopsis,
                     "8-a64-sh", "aarch64-port/jdk8u-shenandoah");
