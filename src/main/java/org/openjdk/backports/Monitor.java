@@ -52,8 +52,8 @@ public class Monitor {
     private static final int[] VERSIONS_TO_CARE_FOR = {13, 12, 11, 8, 7};
 
     // LTS backports are most important, then merges, then STS backports
-    private static int IMPORTANCE_LTS_BACKPORT = 3;
-    private static int IMPORTANCE_MERGE = 2;
+    private static int IMPORTANCE_LTS_BACKPORT = 10;
+    private static int IMPORTANCE_MERGE        = 3;
     private static int IMPORTANCE_STS_BACKPORT = 1;
 
     private final UserCache users;
