@@ -810,18 +810,14 @@ public class Monitor {
             pw.println();
             pw.println("  Shenandoah Backports:");
 
-            String synopsis = issue.getKey().replaceFirst("JDK-", "[backport] ");
-
             for (int ver : new int[]{11, 8}) {
                 boolean affected = affectedShenandoah.contains(ver);
                 switch (ver) {
                     case 8:
-                        printHgStatus(affected, actions, pw, synopsis,
-                                "8-sh", "shenandoah/jdk8");
+                        printHgStatus(affected, actions, pw, issue, "8-sh", "shenandoah/jdk8");
                         break;
                     case 11:
-                        printHgStatus(affected, actions, pw, synopsis,
-                                "11-sh", "shenandoah/jdk11");
+                        printHgStatus(affected, actions, pw, issue, "11-sh", "shenandoah/jdk11");
                         break;
                     default:
                         pw.println("Unknown release: " + ver);
@@ -834,21 +830,15 @@ public class Monitor {
 
         printed = false;
         if (affectedReleases.contains(11)) {
-            String synopsis = issue.getKey().replaceFirst("JDK-", "");
-            printHgStatus(true, actions, pw, synopsis,
-                    "11-sh", "shenandoah/jdk11");
+            printHgStatus(true, actions, pw, issue, "11-sh", "shenandoah/jdk11");
             printed = true;
         }
         if (affectedReleases.contains(8) || affectedShenandoah.contains(8)) {
-            String synopsis = issue.getKey().replaceFirst("JDK-", "");
-            printHgStatus(true, actions, pw, synopsis,
-                    "8-a64-sh", "aarch64-port/jdk8u-shenandoah");
+            printHgStatus(true, actions, pw, issue, "8-a64-sh", "aarch64-port/jdk8u-shenandoah");
             printed = true;
         }
         if (affectedReleases.contains(7)) {
-            String synopsis = issue.getKey().replaceFirst("JDK-", "");
-            printHgStatus(true, actions, pw, synopsis,
-                    "7-it-2.6", "icedtea7-forest-2.6");
+            printHgStatus(true, actions, pw, issue, "7-it-2.6", "icedtea7-forest-2.6");
             printed = true;
         }
         if (!printed) {
@@ -860,29 +850,47 @@ public class Monitor {
         return new TrackedIssue(sw.toString(), daysAgo, actions);
     }
 
-    private void printHgStatus(boolean affected, Actions actions, PrintWriter pw, String synopsis, String label, String repo) {
+    private void printHgStatus(boolean affected, Actions actions, PrintWriter pw, Issue issue, String label, String repo) {
         pw.printf("  %" + VER_INDENT + "s: ", label);
+
         if (!affected) {
             pw.println(MSG_NOT_AFFECTED);
-        } else if (!hgDB.hasRepo(repo)) {
-            pw.println(MSG_WARNING + ": No Mercurial data available to judge");
-        } else {
-            List<HgDB.Record> rs = hgDB.search(repo, synopsis);
-            if (!rs.isEmpty()) {
-                boolean first = true;
-                for (HgDB.Record r : rs) {
-                    if (first) {
-                        first = false;
-                    } else {
-                        pw.printf("  %" + VER_INDENT + "s  ", "");
-                    }
-                    pw.println(r.toString());
-                }
-            } else {
-                actions.update(Actionable.MISSING, IMPORTANCE_MERGE);
-                pw.println(MSG_MISSING);
-            }
+            return;
         }
+
+        if (!hgDB.hasRepo(repo)) {
+            pw.println(MSG_WARNING + ": No Mercurial data available to judge");
+            return;
+        }
+
+        if (tryPrintHg(pw, repo, issue.getKey().replaceFirst("JDK-", ""))) {
+            return;
+        }
+
+        if (tryPrintHg(pw, repo, issue.getKey().replaceFirst("JDK-", "[backport] "))) {
+            return;
+        }
+
+        actions.update(Actionable.MISSING, IMPORTANCE_MERGE);
+        pw.println(MSG_MISSING);
+    }
+
+    private boolean tryPrintHg(PrintWriter pw, String repo, String synopsis) {
+        List<HgDB.Record> rs = hgDB.search(repo, synopsis);
+        if (rs.isEmpty()) {
+            return false;
+        }
+
+        boolean first = true;
+        for (HgDB.Record r : rs) {
+            if (first) {
+                first = false;
+            } else {
+                pw.printf("  %" + VER_INDENT + "s  ", "");
+            }
+            pw.println(r.toString());
+        }
+        return true;
     }
 
     private void printDelimiterLine(PrintStream pw) {
