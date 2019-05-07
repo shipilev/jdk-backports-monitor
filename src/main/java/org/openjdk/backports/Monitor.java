@@ -815,10 +815,10 @@ public class Monitor {
                 boolean affected = affectedShenandoah.contains(ver);
                 switch (ver) {
                     case 8:
-                        printHgStatus(affected, actions, pw, issue, "8-sh", "shenandoah/jdk8");
+                        printHgStatus(affected, actions, pw, issue, "8", "shenandoah/jdk8");
                         break;
                     case 11:
-                        printHgStatus(affected, actions, pw, issue, "11-sh", "shenandoah/jdk11");
+                        printHgStatus(affected, actions, pw, issue, "11", "shenandoah/jdk11");
                         break;
                     default:
                         pw.println("Unknown release: " + ver);
@@ -830,7 +830,7 @@ public class Monitor {
             pw.println();
             pw.println("  AArch64 Backports:");
 
-            printHgStatus(true, actions, pw, issue, "8-a64-sh", "aarch64-port/jdk8u-shenandoah");
+            printHgStatus(true, actions, pw, issue, "8", "aarch64-port/jdk8u-shenandoah");
         }
 
         pw.println();
