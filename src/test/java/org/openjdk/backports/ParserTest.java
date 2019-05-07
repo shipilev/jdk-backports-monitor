@@ -9,10 +9,14 @@ public class ParserTest {
     public void testParseVersion() {
         Assert.assertEquals(8,  Parsers.parseVersionShenandoah("8-shenandoah"));
         Assert.assertEquals(11, Parsers.parseVersionShenandoah("11-shenandoah"));
-
+        Assert.assertEquals(-1, Parsers.parseVersionAArch64("8-shenandoah"));
+        Assert.assertEquals(-1, Parsers.parseVersionAArch64("11-shenandoah"));
         Assert.assertEquals(-1, Parsers.parseVersion("8-shenandoah"));
         Assert.assertEquals(-1, Parsers.parseVersion("11-shenandoah"));
-        Assert.assertEquals(-1, Parsers.parseVersion("11-shenandoah"));
+
+        Assert.assertEquals(-1, Parsers.parseVersionShenandoah("8-aarch64"));
+        Assert.assertEquals(8,  Parsers.parseVersionAArch64("8-aarch64"));
+        Assert.assertEquals(-1, Parsers.parseVersion("8-aarch64"));
 
         Assert.assertEquals(10, Parsers.parseVersion("10"));
         Assert.assertEquals(10, Parsers.parseVersion("10.0.2"));

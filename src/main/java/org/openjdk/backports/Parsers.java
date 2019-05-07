@@ -84,6 +84,19 @@ public class Parsers {
         }
     }
 
+    public static int parseVersionAArch64(String version) {
+        if (!version.endsWith("-aarch64")) {
+            return -1;
+        }
+
+        version = version.substring(0, version.indexOf("aarch64") - 1);
+        try {
+            return Integer.parseInt(version);
+        } catch (Exception e) {
+            return -1;
+        }
+    }
+
     public static String parseURL(String s) {
         for (String l : s.split("\n")) {
             if (l.startsWith("URL")) {

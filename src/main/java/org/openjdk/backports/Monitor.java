@@ -648,24 +648,25 @@ public class Monitor {
 
         Set<Integer> affectedReleases = new HashSet<>();
         Set<Integer> affectedShenandoah = new HashSet<>();
+        Set<Integer> affectedAArch64 = new HashSet<>();
+
         for (Version v : issue.getAffectedVersions()) {
             String verName = v.getName();
-            if (verName.endsWith("-shenandoah")) {
-                int ver = Parsers.parseVersionShenandoah(verName);
-                if (ver < 0) {
-                    pw.println("  " + MSG_WARNING + ": Unknown affected version: " + verName);
-                    pw.println();
-                    actions.update(Actionable.CRITICAL);
-                }
-                affectedShenandoah.add(ver);
-            } else {
-                int ver = Parsers.parseVersion(verName);
-                if (ver < 0) {
-                    pw.println("  " + MSG_WARNING + ": Unknown affected version: " + verName);
-                    pw.println();
-                    actions.update(Actionable.CRITICAL);
-                }
+
+            int ver = Parsers.parseVersion(verName);
+            int verSh = Parsers.parseVersionShenandoah(verName);
+            int verAarch64 = Parsers.parseVersionAArch64(verName);
+
+            if (ver > 0) {
                 affectedReleases.add(ver);
+            } else if (verSh > 0) {
+                affectedShenandoah.add(verSh);
+            } else if (verAarch64 > 0) {
+                affectedAArch64.add(verAarch64);
+            } else {
+                pw.println("  " + MSG_WARNING + ": Unknown affected version: " + verName);
+                pw.println();
+                actions.update(Actionable.CRITICAL);
             }
         }
 
@@ -825,6 +826,13 @@ public class Monitor {
             }
         }
 
+        if (!affectedAArch64.isEmpty()) {
+            pw.println();
+            pw.println("  AArch64 Backports:");
+
+            printHgStatus(true, actions, pw, issue, "8-a64-sh", "aarch64-port/jdk8u-shenandoah");
+        }
+
         pw.println();
         pw.println("  Downstream Repositories:");
 
@@ -833,7 +841,7 @@ public class Monitor {
             printHgStatus(true, actions, pw, issue, "11-sh", "shenandoah/jdk11");
             printed = true;
         }
-        if (affectedReleases.contains(8) || affectedShenandoah.contains(8)) {
+        if (affectedReleases.contains(8) || affectedShenandoah.contains(8) || affectedAArch64.contains(8)) {
             printHgStatus(true, actions, pw, issue, "8-a64-sh", "aarch64-port/jdk8u-shenandoah");
             printed = true;
         }
