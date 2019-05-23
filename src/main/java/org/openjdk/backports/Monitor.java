@@ -262,12 +262,15 @@ public class Monitor {
             bu.add(users.getDisplayName(committer), byCommitter.get(committer).size());
         }
 
-        out.printf("   %3d: <total issues>%n", byCommitter.size());
+        int total = byCommitter.size();
+        out.printf("   %3d: <total issues>%n", total);
         for (String company : Multisets.copyHighestCountFirst(byCompany).elementSet()) {
-            out.printf("      %3d: %s%n", byCompany.count(company), company);
+            String percCompany = String.format("(%.1f%%)", 100.0 * byCompany.count(company) / total);
+            out.printf("      %3d %7s: %s%n", byCompany.count(company), percCompany, company);
             Multiset<String> committers = byCompanyAndCommitter.get(company);
             for (String committer : Multisets.copyHighestCountFirst(committers).elementSet()) {
-                out.printf("         %3d: %s%n", committers.count(committer), committer);
+                String percCommitter = String.format("(%.1f%%)", 100.0 * committers.count(committer) / total);
+                out.printf("         %3d %7s: %s%n", committers.count(committer), percCommitter, committer);
             }
         }
     }
