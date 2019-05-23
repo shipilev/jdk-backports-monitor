@@ -303,8 +303,10 @@ public class Monitor {
 
         List<Issue> issues = getIssues(searchCli, issueCli, "project = JDK AND fixVersion = " + release);
 
-        Multimap<String, Issue> byComponent = TreeMultimap.create(String::compareTo, Comparator.comparing(BasicIssue::getKey));
-        Multimap<String, Issue> byCommitter = TreeMultimap.create(String::compareTo, Comparator.comparing(BasicIssue::getKey));
+        Comparator<Issue> defaultSort = Comparator.<Issue, String>comparing(t -> t.getPriority().getName()).thenComparing(BasicIssue::getKey);
+
+        Multimap<String, Issue> byComponent = TreeMultimap.create(String::compareTo, defaultSort);
+        Multimap<String, Issue> byCommitter = TreeMultimap.create(String::compareTo, defaultSort);
 
         int filteredSyncs = 0;
 
@@ -336,7 +338,7 @@ public class Monitor {
                 parents.put(i, getParent(issueCli, i));
             }
 
-            Multimap<String, Issue> byOrigRelease = TreeMultimap.create(String::compareTo, Comparator.comparing(BasicIssue::getKey));
+            Multimap<String, Issue> byOrigRelease = TreeMultimap.create(String::compareTo, defaultSort);
             for (Issue i : byComponent.get(component)) {
                 RetryableIssuePromise promise = parents.get(i);
                 if (promise != null) {
@@ -349,7 +351,7 @@ public class Monitor {
 
             for (String origRelease : byOrigRelease.keySet()) {
                 for (Issue i : byOrigRelease.get(origRelease)) {
-                    out.printf("    %15s %s: %s%n", origRelease, i.getKey(), i.getSummary());
+                    out.printf("    %15s [%2s] %s: %s%n", origRelease, i.getPriority().getName(), i.getKey(), i.getSummary());
                 }
             }
             out.println();
