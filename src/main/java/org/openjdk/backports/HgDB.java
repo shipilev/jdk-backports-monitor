@@ -61,7 +61,7 @@ public class HgDB {
 
             try {
                 List<String> lines = exec("hg", "log", "-M", "-R", repoPath, "-T",
-                        "{node|short}BACKPORT-SEPARATOR{desc|firstline}BACKPORT-SEPARATOR{author}\n");
+                        "{node|short}BACKPORT-SEPARATOR{desc|addbreaks|splitlines}BACKPORT-SEPARATOR{author}\n");
                 for (String line : lines) {
                     String[] split = line.split("BACKPORT-SEPARATOR");
                     records.add(new Record(repo, split[0], split[1], split[2]));
@@ -104,7 +104,7 @@ public class HgDB {
     public List<Record> search(String repo, String synopsis) {
         List<Record> result = new ArrayList<>();
         for (Record record : records) {
-            if (record.repo.contains(repo) && record.synopsis.startsWith(synopsis)) {
+            if (record.repo.contains(repo) && record.synopsisStartsWith(synopsis)) {
                 result.add(record);
             }
         }
@@ -118,13 +118,13 @@ public class HgDB {
     public static class Record {
         final String repo;
         final String hash;
-        final String synopsis;
+        final String[] synopsis;
         final String author;
 
         private Record(String repo, String hash, String synopsis, String author) {
             this.repo = repo;
             this.hash = hash;
-            this.synopsis = synopsis;
+            this.synopsis = synopsis.split("<br/> ");
             this.author = author;
         }
 
@@ -149,6 +149,13 @@ public class HgDB {
         @Override
         public String toString() {
             return repo + "/rev/" + hash;
+        }
+
+        public boolean synopsisStartsWith(String needle) {
+            for (String syn : synopsis) {
+                if (syn.startsWith(needle)) return true;
+            }
+            return false;
         }
     }
 
