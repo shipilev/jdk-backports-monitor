@@ -52,6 +52,7 @@ public class Monitor {
     private static final int[] VERSIONS_TO_CARE_FOR = {13, 12, 11, 8, 7};
 
     // LTS backports are most important, then merges, then STS backports
+    private static int IMPORTANCE_LTS_BACKPORT_CRITICAL = 20;
     private static int IMPORTANCE_LTS_BACKPORT = 10;
     private static int IMPORTANCE_MERGE        = 3;
     private static int IMPORTANCE_STS_BACKPORT = 1;
@@ -742,11 +743,17 @@ public class Monitor {
                         break;
                     }
                     case 8: {
-                        if (issue.getLabels().contains("jdk8u-fix-yes")) {
+                        if (issue.getLabels().contains("jdk8u-critical-yes")) {
+                            actions.update(Actionable.PUSHABLE, IMPORTANCE_LTS_BACKPORT_CRITICAL);
+                            pw.println(MSG_APPROVED + ": jdk8u-critical-yes is set");
+                        } else if (issue.getLabels().contains("jdk8u-fix-yes")) {
                             actions.update(Actionable.PUSHABLE, IMPORTANCE_LTS_BACKPORT);
                             pw.println(MSG_APPROVED + ": jdk8u-fix-yes is set");
                         } else if (issue.getLabels().contains("jdk8u-fix-no")) {
                             pw.println("REJECTED: jdk8u-fix-no is set");
+                        } else if (issue.getLabels().contains("jdk8u-critical-request")) {
+                            pw.println("Requested: jdk8u-critical-request is set");
+                            actions.update(Actionable.REQUESTED);
                         } else if (issue.getLabels().contains("jdk8u-fix-request")) {
                             pw.println("Requested: jdk8u-fix-request is set");
                             actions.update(Actionable.REQUESTED);
@@ -762,11 +769,17 @@ public class Monitor {
                         break;
                     }
                     case 11: {
-                        if (issue.getLabels().contains("jdk11u-fix-yes")) {
+                        if (issue.getLabels().contains("jdk11u-critical-yes")) {
+                            actions.update(Actionable.PUSHABLE, IMPORTANCE_LTS_BACKPORT_CRITICAL);
+                            pw.println(MSG_APPROVED + ": jdk11u-critical-yes is set");
+                        } else if (issue.getLabels().contains("jdk11u-fix-yes")) {
                             actions.update(Actionable.PUSHABLE, IMPORTANCE_LTS_BACKPORT);
                             pw.println(MSG_APPROVED + ": jdk11u-fix-yes is set");
                         } else if (issue.getLabels().contains("jdk11u-fix-no")) {
                             pw.println("REJECTED: jdk11u-fix-no is set");
+                        } else if (issue.getLabels().contains("jdk11u-critical-request")) {
+                            pw.println("Requested: jdk11u-critical-request is set");
+                            actions.update(Actionable.REQUESTED);
                         } else if (issue.getLabels().contains("jdk11u-fix-request")) {
                             pw.println("Requested: jdk11u-fix-request is set");
                             actions.update(Actionable.REQUESTED);
