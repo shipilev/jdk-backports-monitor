@@ -30,6 +30,9 @@ public class ParserTest {
         Assert.assertEquals(12, Parsers.parseVersion("12.0.2"));
 
         Assert.assertEquals(13, Parsers.parseVersion("13"));
+        Assert.assertEquals(13, Parsers.parseVersion("13.0.1"));
+
+        Assert.assertEquals(14, Parsers.parseVersion("14"));
 
         Assert.assertEquals(7, Parsers.parseVersion("7"));
         Assert.assertEquals(7, Parsers.parseVersion("7u40"));
