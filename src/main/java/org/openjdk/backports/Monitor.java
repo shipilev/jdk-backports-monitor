@@ -27,8 +27,6 @@ package org.openjdk.backports;
 import com.atlassian.jira.rest.client.api.*;
 import com.atlassian.jira.rest.client.api.domain.*;
 import com.google.common.collect.*;
-import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
 import org.openjdk.backports.hg.HgDB;
 import org.openjdk.backports.hg.HgRecord;
 import org.openjdk.backports.jira.*;
@@ -196,15 +194,15 @@ public class Monitor {
         Multiset<String> byPriority = TreeMultiset.create();
         Multiset<String> byComponent = HashMultiset.create();
         Multimap<String, Issue> byCommitter = TreeMultimap.create(String::compareTo, Comparator.comparing(BasicIssue::getKey));
-        Set<Issue> byTime = new TreeSet<>(Comparator.comparing(Monitor::getPushSecondsAgo).thenComparing(Issue::getKey));
+        Set<Issue> byTime = new TreeSet<>(Comparator.comparing(Accessors::getPushSecondsAgo).thenComparing(Issue::getKey));
 
         int filteredSyncs = 0;
 
         for (Issue issue : issues) {
-            String committer = getPushUser(issue);
+            String committer = Accessors.getPushUser(issue);
             if (!committer.equals("N/A")) { // Skip automatic syncs
                 byPriority.add(issue.getPriority().getName());
-                byComponent.add(extractComponents(issue));
+                byComponent.add(Accessors.extractComponents(issue));
                 byCommitter.put(committer, issue);
                 byTime.add(issue);
             } else {
@@ -235,9 +233,9 @@ public class Monitor {
         out.println();
 
         for (Issue i : byTime) {
-            String pushUser = getPushUser(i);
+            String pushUser = Accessors.getPushUser(i);
             out.printf("  %3d day(s) ago, %" + users.maxDisplayName() + "s, %" + users.maxAffiliation() + "s, %s: %s%n",
-                    TimeUnit.SECONDS.toDays(getPushSecondsAgo(i)),
+                    TimeUnit.SECONDS.toDays(Accessors.getPushSecondsAgo(i)),
                     users.getDisplayName(pushUser), users.getAffiliation(pushUser),
                     i.getKey(), i.getSummary());
         }
@@ -279,23 +277,6 @@ public class Monitor {
         }
     }
 
-    private RetryableIssuePromise getParent(IssueRestClient cli, Issue start) {
-        List<RetryableIssuePromise> backports = new ArrayList<>();
-        for (IssueLink link : start.getIssueLinks()) {
-            if (link.getIssueLinkType().getName().equals("Backport")) {
-                String linkKey = link.getTargetIssueKey();
-                backports.add(new RetryableIssuePromise(cli, linkKey));
-            }
-        }
-
-        // If there is only a single "Backport link", report it as parent
-        if (backports.size() == 1) {
-            return backports.get(0);
-        } else {
-            return null;
-        }
-    }
-
     public void runReleaseNotesReport(JiraRestClient restClient, String release) throws URISyntaxException {
         SearchRestClient searchCli = restClient.getSearchClient();
         IssueRestClient issueCli = restClient.getIssueClient();
@@ -318,9 +299,9 @@ public class Monitor {
         int filteredSyncs = 0;
 
         for (Issue issue : issues) {
-            String committer = getPushUser(issue);
+            String committer = Accessors.getPushUser(issue);
             if (!committer.equals("N/A")) { // Skip automatic syncs
-                byComponent.put(extractComponents(issue), issue);
+                byComponent.put(Accessors.extractComponents(issue), issue);
                 byCommitter.put(committer, issue);
             } else {
                 filteredSyncs++;
@@ -342,7 +323,7 @@ public class Monitor {
 
             Map<Issue, RetryableIssuePromise> parents = new HashMap<>();
             for (Issue i : byComponent.get(component)) {
-                parents.put(i, getParent(issueCli, i));
+                parents.put(i, Accessors.getParent(issueCli, i));
             }
 
             Multimap<String, Issue> byOrigRelease = TreeMultimap.create(String::compareTo, defaultSort);
@@ -350,7 +331,7 @@ public class Monitor {
                 RetryableIssuePromise promise = parents.get(i);
                 if (promise != null) {
                     Issue p = promise.claim();
-                    byOrigRelease.put("(" + getFixVersion(p) + ")", i);
+                    byOrigRelease.put("(" + Accessors.getFixVersion(p) + ")", i);
                 } else {
                     byOrigRelease.put("", i);
                 }
@@ -455,80 +436,6 @@ public class Monitor {
         return issues;
     }
 
-    private String getFixVersion(Issue issue) {
-        Iterator<Version> it = issue.getFixVersions().iterator();
-        if (!it.hasNext()) {
-            return "N/A";
-        }
-        Version fixVersion = it.next();
-        if (it.hasNext()) {
-            throw new IllegalStateException("Multiple fix versions");
-        }
-        return fixVersion.getName();
-    }
-
-    private String getPushURL(Issue issue) {
-        for (Comment c : issue.getComments()) {
-            if (c.getAuthor().getName().equals("hgupdate")) {
-                return Parsers.parseURL(c.getBody());
-            }
-        }
-        return "N/A";
-    }
-
-    private String getPushDate(Issue issue) {
-        for (Comment c : issue.getComments()) {
-            if (c.getAuthor().getName().equals("hgupdate")) {
-                return Parsers.parseDaysAgo(c.getBody()) + " day(s) ago";
-            }
-        }
-        return "N/A";
-    }
-
-    private String getPushUser(Issue issue) {
-        for (Comment c : issue.getComments()) {
-            if (c.getAuthor().getName().equals("hgupdate")) {
-                return Parsers.parseUser(c.getBody());
-            }
-        }
-        return "N/A";
-    }
-
-    private static long getPushDaysAgo(Issue issue) {
-        for (Comment c : issue.getComments()) {
-            if (c.getAuthor().getName().equals("hgupdate")) {
-                return Parsers.parseDaysAgo(c.getBody());
-            }
-        }
-        return -1;
-    }
-
-    private static long getPushSecondsAgo(Issue issue) {
-        for (Comment c : issue.getComments()) {
-            if (c.getAuthor().getName().equals("hgupdate")) {
-                return Parsers.parseSecondsAgo(c.getBody());
-            }
-        }
-        return -1;
-    }
-
-    private String extractComponents(Issue issue) {
-        StringJoiner joiner = new StringJoiner("/");
-        for (BasicComponent c : issue.getComponents()) {
-            joiner.add(c.getName());
-        }
-        IssueField subcomponent = issue.getFieldByName("Subcomponent");
-        if (subcomponent != null && subcomponent.getValue() != null) {
-            try {
-                JSONObject o = new JSONObject(subcomponent.getValue().toString());
-                joiner.add(o.get("name").toString());
-            } catch (JSONException e) {
-                // Do nothing
-            }
-        }
-        return joiner.toString();
-    }
-
     private TrackedIssue parseIssue(Issue issue, IssueRestClient cli) {
         Actions actions = new Actions();
 
@@ -543,16 +450,16 @@ public class Monitor {
         pw.println("      Reporter: " + (issue.getReporter() != null ? issue.getReporter().getDisplayName() : "None"));
         pw.println("      Assignee: " + (issue.getAssignee() != null ? issue.getAssignee().getDisplayName() : "None"));
         pw.println("      Priority: " + issue.getPriority().getName());
-        pw.println("      Components: " + extractComponents(issue));
+        pw.println("      Components: " + Accessors.extractComponents(issue));
         pw.println();
 
         SortedMap<Integer, List<String>> results = new TreeMap<>();
 
         pw.println("  Original Fix:");
 
-        long daysAgo = getPushDaysAgo(issue);
+        long daysAgo = Accessors.getPushDaysAgo(issue);
 
-        pw.printf("  %" + VER_INDENT + "s: %10s, %s, %s%n", getFixVersion(issue), issue.getKey(), getPushURL(issue), getPushDate(issue));
+        pw.printf("  %" + VER_INDENT + "s: %10s, %s, %s%n", Accessors.getFixVersion(issue), issue.getKey(), Accessors.getPushURL(issue), Accessors.getPushDate(issue));
         recordIssue(results, issue, true);
         pw.println();
 
@@ -597,7 +504,7 @@ public class Monitor {
             recordIssue(results, p.claim(), true);
         }
 
-        int origRel = Parsers.parseVersion(getFixVersion(issue));
+        int origRel = Parsers.parseVersion(Accessors.getFixVersion(issue));
         int highRel = results.isEmpty() ? origRel : results.lastKey();
 
         for (int release : VERSIONS_TO_CARE_FOR) {
@@ -832,12 +739,12 @@ public class Monitor {
     }
 
     private void recordIssue(Map<Integer, List<String>> results, Issue issue, boolean bypassEmpty) {
-        String fixVersion = getFixVersion(issue);
+        String fixVersion = Accessors.getFixVersion(issue);
 
         // This is Oracle-internal push. Ignore.
         if (fixVersion.contains("-oracle")) return;
 
-        String pushURL = getPushURL(issue);
+        String pushURL = Accessors.getPushURL(issue);
 
         if (pushURL.equals("N/A")) {
             switch (fixVersion) {
@@ -856,7 +763,7 @@ public class Monitor {
             return;
         }
 
-        String line = String.format("%s, %10s, %s, %s", fixVersion, issue.getKey(), pushURL, getPushDate(issue));
+        String line = String.format("%s, %10s, %s, %s", fixVersion, issue.getKey(), pushURL, Accessors.getPushDate(issue));
         int ver = Parsers.parseVersion(fixVersion);
         List<String> list = results.computeIfAbsent(ver, k -> new ArrayList<>());
         list.add(line);
