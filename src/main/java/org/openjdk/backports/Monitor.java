@@ -27,7 +27,6 @@ package org.openjdk.backports;
 import com.atlassian.jira.rest.client.api.*;
 import com.atlassian.jira.rest.client.api.domain.*;
 import com.google.common.collect.*;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.openjdk.backports.hg.HgDB;
 import org.openjdk.backports.hg.HgRecord;
@@ -665,21 +664,17 @@ public class Monitor {
         pw.println();
 
         List<String> relNotes = Accessors.getReleaseNote(cli, issue);
-
-        pw.println("  Release Notes:");
         if (!relNotes.isEmpty()) {
+            pw.println("  Release Notes:");
             int i = 1;
             for (String relNote : relNotes) {
                 pw.println("    #" + i + ":");
-                String wrap = WordUtils.wrap(relNote.replaceAll("\r", "").replaceAll("\n\n", "<BREAK>").replaceAll("\n", " ").replaceAll("<BREAK>", "\n"), 80);
-                pw.println("      " + wrap.replaceAll("\n", "\n      "));
+                pw.println(StringUtils.leftPad(StringUtils.rewrap(relNote, 100), 6));
                 pw.println();
                 i++;
             }
-        } else {
-            pw.println("      None.");
+            pw.println();
         }
-        pw.println();
 
         return new TrackedIssue(sw.toString(), daysAgo, actions);
     }
