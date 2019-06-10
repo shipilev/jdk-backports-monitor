@@ -122,6 +122,12 @@ public class Accessors {
     }
     public static List<String> getReleaseNotes(IssueRestClient cli, Issue start) {
         List<RetryableIssuePromise> relnotes = new ArrayList<>();
+        List<String> releaseNotes = new ArrayList<>();
+
+        // Direct hit?
+        if (start.getLabels().contains("release-note")) {
+            releaseNotes.add(start.getDescription());
+        }
 
         // Search in sub-tasks
         for (Subtask link : start.getSubtasks()) {
@@ -130,18 +136,11 @@ public class Accessors {
         }
 
         // Search in related issues
-//        for (IssueLink link : start.getIssueLinks()) {
-//            if (link.getIssueLinkType().getName().equals("Relates")) {
-//                String linkKey = link.getTargetIssueKey();
-//                relnotes.add(new RetryableIssuePromise(cli, linkKey));
-//            }
-//        }
-
-        List<String> releaseNotes = new ArrayList<>();
-
-        // Direct hit?
-        if (start.getLabels().contains("release-note")) {
-            releaseNotes.add(start.getDescription());
+        for (IssueLink link : start.getIssueLinks()) {
+            if (link.getIssueLinkType().getName().equals("Relates")) {
+                String linkKey = link.getTargetIssueKey();
+                relnotes.add(new RetryableIssuePromise(cli, linkKey));
+            }
         }
 
         for (RetryableIssuePromise p : relnotes) {
