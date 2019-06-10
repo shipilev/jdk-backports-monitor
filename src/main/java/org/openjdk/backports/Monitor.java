@@ -334,22 +334,24 @@ public class Monitor {
 
                 RetryableIssuePromise promise = parents.get(i);
                 Issue rnRoot = i;
+                int fixVer = -1;
                 if (promise != null) {
                     Issue p = promise.claim();
                     rnRoot = p;
-                    sb.append("(from " + Accessors.getFixVersion(p) + ") ");
+                    fixVer = Parsers.parseVersion(Accessors.getFixVersion(p));
+                    sb.append("(" + fixVer + ") ");
                 }
 
                 sb.append(i.getKey() + ": " + i.getSummary() + "\n");
 
                 boolean hasRn = false;
                 for (String rn : Accessors.getReleaseNotes(issueCli, rnRoot)) {
-                    sb.append(StringUtils.leftPad(StringUtils.rewrap(rn, 100), 10));
+                    sb.append(StringUtils.leftPad(StringUtils.rewrap(rn, 100), 6));
                     sb.append("\n\n");
                     hasRn = true;
                 }
 
-                rnIssues.add(new RelNotesIssue(sb.toString(), rnRoot.getPriority().getName(), hasRn));
+                rnIssues.add(new RelNotesIssue(sb.toString(), rnRoot.getPriority().getName(), fixVer, hasRn));
             }
 
             for (RelNotesIssue i : rnIssues) {

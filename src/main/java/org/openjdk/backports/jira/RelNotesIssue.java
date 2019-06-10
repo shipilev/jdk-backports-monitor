@@ -27,11 +27,13 @@ package org.openjdk.backports.jira;
 public class RelNotesIssue implements Comparable<RelNotesIssue> {
     final String output;
     final String priority;
+    final int fixVer;
     final boolean hasNotes;
 
-    public RelNotesIssue(String output, String priority, boolean hasNotes) {
+    public RelNotesIssue(String output, String priority, int fixVer, boolean hasNotes) {
         this.output = output;
         this.priority = priority;
+        this.fixVer = fixVer;
         this.hasNotes = hasNotes;
     }
 
@@ -45,9 +47,15 @@ public class RelNotesIssue implements Comparable<RelNotesIssue> {
         if (v1 != 0) {
             return v1;
         }
-        int v2 = priority.compareTo(other.priority);
+
+        int v2 = Integer.compare(other.fixVer, fixVer);
         if (v2 != 0) {
             return v2;
+        }
+
+        int v3 = priority.compareTo(other.priority);
+        if (v3 != 0) {
+            return v3;
         }
 
         return this.output.compareTo(other.output);
