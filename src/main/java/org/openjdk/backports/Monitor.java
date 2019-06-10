@@ -380,32 +380,10 @@ public class Monitor {
         }
     }
 
-    private String rewrap(String src, int width) {
-        StringBuilder result = new StringBuilder();
-        String[] words = src.split("[ \n]");
-        String line = "";
-        int cols = 0;
-        for (String w : words) {
-            cols += w.length();
-            line += w + " ";
-            if (cols > width) {
-                result.append(line);
-                result.append("\n");
-                line = "";
-                cols = 0;
-            }
-        }
-        if (!line.trim().isEmpty()) {
-            result.append(line);
-            result.append("\n");
-        }
-        return result.toString();
-    }
-
     private List<Issue> getIssues(SearchRestClient searchCli, IssueRestClient cli, String query) {
         List<Issue> issues = new ArrayList<>();
 
-        System.out.println("JIRA Query: " + rewrap(query, 80));
+        System.out.println("JIRA Query: " + StringUtils.rewrap(query, 80));
         System.out.println();
 
         SearchResult poll = new RetryableSearchPromise(searchCli, query, 1, 0).claim();
