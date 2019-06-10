@@ -312,7 +312,6 @@ public class Monitor {
         out.println("Filtered " + filteredSyncs + " automatic syncs, " + byComponent.size() + " pushes left.");
         out.println();
 
-        out.println("Hint: Parentheses mention the release version for the original fix.");
         out.println("Hint: Prefix bug IDs with " + Main.JIRA_URL + "browse/ to reach the relevant JIRA entry.");
         out.println();
 
@@ -327,21 +326,34 @@ public class Monitor {
                 parents.put(i, Accessors.getParent(issueCli, i));
             }
 
-            Multimap<String, Issue> byOrigRelease = TreeMultimap.create(String::compareTo, defaultSort);
+            SortedSet<RelNotesIssue> rnIssues = new TreeSet<>();
+
             for (Issue i : byComponent.get(component)) {
+                StringBuilder sb = new StringBuilder();
+                sb.append("    *) [" + i.getPriority().getName() + "] " + i.getKey() + ": " + i.getSummary());
+
                 RetryableIssuePromise promise = parents.get(i);
+                Issue rnRoot = i;
                 if (promise != null) {
                     Issue p = promise.claim();
-                    byOrigRelease.put("(" + Accessors.getFixVersion(p) + ")", i);
-                } else {
-                    byOrigRelease.put("", i);
+                    rnRoot = p;
+                    sb.append(" (backported from " + Accessors.getFixVersion(p) + ")");
                 }
+
+                sb.append("\n");
+
+                boolean hasRn = false;
+                for (String rn : Accessors.getReleaseNotes(issueCli, rnRoot)) {
+                    sb.append(StringUtils.leftPad(StringUtils.rewrap(rn, 100), 10));
+                    sb.append("\n\n");
+                    hasRn = true;
+                }
+
+                rnIssues.add(new RelNotesIssue(sb.toString(), rnRoot.getPriority().getName(), hasRn));
             }
 
-            for (String origRelease : byOrigRelease.keySet()) {
-                for (Issue i : byOrigRelease.get(origRelease)) {
-                    out.printf("    %15s [%2s] %s: %s%n", origRelease, i.getPriority().getName(), i.getKey(), i.getSummary());
-                }
+            for (RelNotesIssue i : rnIssues) {
+                out.print(i.getOutput());
             }
             out.println();
         }
@@ -662,19 +674,6 @@ public class Monitor {
         }
 
         pw.println();
-
-        List<String> relNotes = Accessors.getReleaseNote(cli, issue);
-        if (!relNotes.isEmpty()) {
-            pw.println("  Release Notes:");
-            int i = 1;
-            for (String relNote : relNotes) {
-                pw.println("    #" + i + ":");
-                pw.println(StringUtils.leftPad(StringUtils.rewrap(relNote, 100), 6));
-                pw.println();
-                i++;
-            }
-            pw.println();
-        }
 
         return new TrackedIssue(sw.toString(), daysAgo, actions);
     }

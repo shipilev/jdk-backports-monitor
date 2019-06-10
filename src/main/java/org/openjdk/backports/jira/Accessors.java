@@ -126,7 +126,7 @@ public class Accessors {
             return null;
         }
     }
-    public static List<String> getReleaseNote(IssueRestClient cli, Issue start) {
+    public static List<String> getReleaseNotes(IssueRestClient cli, Issue start) {
         List<RetryableIssuePromise> relnotes = new ArrayList<>();
 
         // Search in sub-tasks
