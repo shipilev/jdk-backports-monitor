@@ -126,5 +126,38 @@ public class Accessors {
             return null;
         }
     }
+    public static List<String> getReleaseNote(IssueRestClient cli, Issue start) {
+        List<RetryableIssuePromise> relnotes = new ArrayList<>();
+
+        // Search in sub-tasks
+        for (Subtask link : start.getSubtasks()) {
+            String linkKey = link.getIssueKey();
+            relnotes.add(new RetryableIssuePromise(cli, linkKey));
+        }
+
+        // Search in related issues
+//        for (IssueLink link : start.getIssueLinks()) {
+//            if (link.getIssueLinkType().getName().equals("Relates")) {
+//                String linkKey = link.getTargetIssueKey();
+//                relnotes.add(new RetryableIssuePromise(cli, linkKey));
+//            }
+//        }
+
+        List<String> releaseNotes = new ArrayList<>();
+
+        // Direct hit?
+        if (start.getLabels().contains("release-note")) {
+            releaseNotes.add(start.getDescription());
+        }
+
+        for (RetryableIssuePromise p : relnotes) {
+            Issue i = p.claim();
+            if (i.getLabels().contains("release-note")) {
+                releaseNotes.add(i.getDescription());
+            }
+        }
+
+        return releaseNotes;
+    }
 
 }

@@ -27,6 +27,8 @@ package org.openjdk.backports;
 import com.atlassian.jira.rest.client.api.*;
 import com.atlassian.jira.rest.client.api.domain.*;
 import com.google.common.collect.*;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.text.WordUtils;
 import org.openjdk.backports.hg.HgDB;
 import org.openjdk.backports.hg.HgRecord;
 import org.openjdk.backports.jira.*;
@@ -383,7 +385,7 @@ public class Monitor {
     private List<Issue> getIssues(SearchRestClient searchCli, IssueRestClient cli, String query) {
         List<Issue> issues = new ArrayList<>();
 
-        System.out.println("JIRA Query: " + StringUtils.rewrap(query, 80));
+        System.out.println("JIRA Query: " + WordUtils.wrap(query, 80));
         System.out.println();
 
         SearchResult poll = new RetryableSearchPromise(searchCli, query, 1, 0).claim();
@@ -660,6 +662,23 @@ public class Monitor {
             pw.println("      None.");
         }
 
+        pw.println();
+
+        List<String> relNotes = Accessors.getReleaseNote(cli, issue);
+
+        pw.println("  Release Notes:");
+        if (!relNotes.isEmpty()) {
+            int i = 1;
+            for (String relNote : relNotes) {
+                pw.println("    #" + i + ":");
+                String wrap = WordUtils.wrap(relNote.replaceAll("\r", "").replaceAll("\n\n", "<BREAK>").replaceAll("\n", " ").replaceAll("<BREAK>", "\n"), 80);
+                pw.println("      " + wrap.replaceAll("\n", "\n      "));
+                pw.println();
+                i++;
+            }
+        } else {
+            pw.println("      None.");
+        }
         pw.println();
 
         return new TrackedIssue(sw.toString(), daysAgo, actions);
