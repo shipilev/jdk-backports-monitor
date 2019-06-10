@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2019, Red Hat, Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,38 +22,48 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package org.openjdk.backports;
+package org.openjdk.backports.hg;
 
-import com.atlassian.jira.rest.client.api.IssueRestClient;
-import com.atlassian.jira.rest.client.api.domain.Issue;
-import com.atlassian.util.concurrent.Promise;
+public class HgRecord {
+    final String repo;
+    final String hash;
+    final String[] synopsis;
+    final String author;
 
-import java.util.concurrent.TimeUnit;
-
-class RetryableIssuePromise {
-    private final IssueRestClient cli;
-    private final String key;
-    private Promise<Issue> cur;
-
-    public RetryableIssuePromise(IssueRestClient cli, String key) {
-        this.cli = cli;
-        this.key = key;
-        this.cur = cli.getIssue(key);
+    HgRecord(String repo, String hash, String synopsis, String author) {
+        this.repo = repo;
+        this.hash = hash;
+        this.synopsis = synopsis.split("<br/> ");
+        this.author = author;
     }
 
-    public Issue claim() {
-        for (int t = 0; t < 10; t++) {
-            try {
-                return cur.claim();
-            } catch (Exception e) {
-                try {
-                    TimeUnit.MILLISECONDS.sleep((1 + t*t)*100);
-                } catch (InterruptedException ie) {
-                    ie.printStackTrace();
-                }
-                cur = cli.getIssue(key);
-            }
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        HgRecord record = (HgRecord) o;
+
+        if (!repo.equals(record.repo)) return false;
+        return hash.equals(record.hash);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = repo.hashCode();
+        result = 31 * result + hash.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return repo + "/rev/" + hash;
+    }
+
+    public boolean synopsisStartsWith(String needle) {
+        for (String syn : synopsis) {
+            if (syn.startsWith(needle)) return true;
         }
-        return cur.claim();
+        return false;
     }
 }

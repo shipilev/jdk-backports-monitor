@@ -22,31 +22,26 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package org.openjdk.backports;
+package org.openjdk.backports.jira;
 
-import com.atlassian.jira.rest.client.api.SearchRestClient;
-import com.atlassian.jira.rest.client.api.domain.SearchResult;
+import com.atlassian.jira.rest.client.api.IssueRestClient;
+import com.atlassian.jira.rest.client.api.domain.Issue;
 import com.atlassian.util.concurrent.Promise;
 
 import java.util.concurrent.TimeUnit;
 
-class RetryableSearchPromise {
+public class RetryableIssuePromise {
+    private final IssueRestClient cli;
+    private final String key;
+    private Promise<Issue> cur;
 
-    private final SearchRestClient searchCli;
-    private final String query;
-    private final int pageSize;
-    private final int cnt;
-    private Promise<SearchResult> cur;
-
-    public RetryableSearchPromise(SearchRestClient searchCli, String query, int pageSize, int cnt) {
-        this.searchCli = searchCli;
-        this.query = query;
-        this.pageSize = pageSize;
-        this.cnt = cnt;
-        this.cur = searchCli.searchJql(query, pageSize, cnt, null);
+    public RetryableIssuePromise(IssueRestClient cli, String key) {
+        this.cli = cli;
+        this.key = key;
+        this.cur = cli.getIssue(key);
     }
 
-    public SearchResult claim() {
+    public Issue claim() {
         for (int t = 0; t < 10; t++) {
             try {
                 return cur.claim();
@@ -56,7 +51,7 @@ class RetryableSearchPromise {
                 } catch (InterruptedException ie) {
                     ie.printStackTrace();
                 }
-                cur = searchCli.searchJql(query, pageSize, cnt, null);
+                cur = cli.getIssue(key);
             }
         }
         return cur.claim();

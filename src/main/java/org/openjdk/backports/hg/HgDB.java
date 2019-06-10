@@ -22,14 +22,14 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package org.openjdk.backports;
+package org.openjdk.backports.hg;
 
 import java.io.*;
 import java.util.*;
 
 public class HgDB {
 
-    private final Set<Record> records;
+    private final Set<HgRecord> records;
 
     public HgDB() {
         this.records = new HashSet<>();
@@ -64,7 +64,7 @@ public class HgDB {
                         "{node|short}BACKPORT-SEPARATOR{desc|addbreaks|splitlines}BACKPORT-SEPARATOR{author}\n");
                 for (String line : lines) {
                     String[] split = line.split("BACKPORT-SEPARATOR");
-                    records.add(new Record(repo, split[0], split[1], split[2]));
+                    records.add(new HgRecord(repo, split[0], split[1], split[2]));
                 }
 
                 pw.println(" " + lines.size() + " loaded.");
@@ -93,7 +93,7 @@ public class HgDB {
     }
 
     public boolean hasRepo(String repo) {
-        for (Record record : records) {
+        for (HgRecord record : records) {
             if (record.repo.contains(repo)) {
                 return true;
             }
@@ -101,9 +101,9 @@ public class HgDB {
         return false;
     }
 
-    public List<Record> search(String repo, String synopsis) {
-        List<Record> result = new ArrayList<>();
-        for (Record record : records) {
+    public List<HgRecord> search(String repo, String synopsis) {
+        List<HgRecord> result = new ArrayList<>();
+        for (HgRecord record : records) {
             if (record.repo.contains(repo) && record.synopsisStartsWith(synopsis)) {
                 result.add(record);
             }
@@ -111,52 +111,8 @@ public class HgDB {
         return result;
     }
 
-    public Iterable<Record> records() {
+    public Iterable<HgRecord> records() {
         return records;
-    }
-
-    public static class Record {
-        final String repo;
-        final String hash;
-        final String[] synopsis;
-        final String author;
-
-        private Record(String repo, String hash, String synopsis, String author) {
-            this.repo = repo;
-            this.hash = hash;
-            this.synopsis = synopsis.split("<br/> ");
-            this.author = author;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            Record record = (Record) o;
-
-            if (!repo.equals(record.repo)) return false;
-            return hash.equals(record.hash);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = repo.hashCode();
-            result = 31 * result + hash.hashCode();
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return repo + "/rev/" + hash;
-        }
-
-        public boolean synopsisStartsWith(String needle) {
-            for (String syn : synopsis) {
-                if (syn.startsWith(needle)) return true;
-            }
-            return false;
-        }
     }
 
 }

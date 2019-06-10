@@ -2,6 +2,7 @@ package org.openjdk.backports;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.openjdk.backports.jira.Parsers;
 
 public class ParserTest {
 

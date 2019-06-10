@@ -29,6 +29,9 @@ import com.atlassian.jira.rest.client.api.domain.*;
 import com.google.common.collect.*;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
+import org.openjdk.backports.hg.HgDB;
+import org.openjdk.backports.hg.HgRecord;
+import org.openjdk.backports.jira.*;
 
 import java.io.*;
 import java.net.URISyntaxException;
@@ -102,8 +105,8 @@ public class Monitor {
         int count = 0;
         printDelimiterLine(out);
         for (TrackedIssue i : issues) {
-            if (i.actions.actionable.ordinal() < minLevel.ordinal()) continue;
-            out.println(i.output);
+            if (i.getActions().actionable.ordinal() < minLevel.ordinal()) continue;
+            out.println(i.getOutput());
             printDelimiterLine(out);
             count++;
         }
@@ -130,7 +133,7 @@ public class Monitor {
         TrackedIssue trackedIssue = parseIssue(issue, issueCli);
 
         printDelimiterLine(out);
-        out.println(trackedIssue.output);
+        out.println(trackedIssue.getOutput());
     }
 
     public void runPendingPushReport(JiraRestClient restClient, String release) throws URISyntaxException {
@@ -168,7 +171,7 @@ public class Monitor {
 
         printDelimiterLine(out);
         for (TrackedIssue i : issues) {
-            out.println(i.output);
+            out.println(i.getOutput());
             printDelimiterLine(out);
         }
     }
@@ -396,51 +399,6 @@ public class Monitor {
         }
     }
 
-    static class UserCache {
-        private final UserRestClient client;
-        private final Map<String, User> users;
-        private final Map<String, String> displayNames;
-        private final Map<String, String> affiliations;
-
-        public UserCache(UserRestClient client) {
-            this.client = client;
-            this.users = new HashMap<>();
-            this.displayNames = new HashMap<>();
-            this.affiliations = new HashMap<>();
-        }
-
-        public User getUser(String id) {
-            return users.computeIfAbsent(id, u -> client.getUser(u).claim());
-        }
-
-        public String getDisplayName(String id) {
-            return displayNames.computeIfAbsent(id, u -> getUser(u).getDisplayName());
-        }
-
-        public String getAffiliation(String id) {
-            return affiliations.computeIfAbsent(id, u -> {
-                String email = getUser(u).getEmailAddress();
-                return email.substring(email.indexOf("@"));
-            });
-        }
-
-        public int maxAffiliation() {
-            int r = 0;
-            for (String v : affiliations.values()) {
-                r = Math.max(r, v.length());
-            }
-            return r;
-        }
-
-        public int maxDisplayName() {
-            int r = 0;
-            for (String v : displayNames.values()) {
-                r = Math.max(r, v.length());
-            }
-            return r;
-        }
-    }
-
     private String rewrap(String src, int width) {
         StringBuilder result = new StringBuilder();
         String[] words = src.split("[ \n]");
@@ -569,60 +527,6 @@ public class Monitor {
             }
         }
         return joiner.toString();
-    }
-
-    private static class TrackedIssue implements Comparable<TrackedIssue> {
-        final String output;
-        final long age;
-        final Actions actions;
-
-        public TrackedIssue(String output, long age, Actions actions) {
-            this.output = output;
-            this.age = age;
-            this.actions = actions;
-        }
-
-        @Override
-        public int compareTo(TrackedIssue other) {
-            int v1 = other.actions.compareTo(actions);
-            if (v1 != 0) {
-                return v1;
-            }
-            int v2 = Long.compare(other.age, this.age);
-            if (v2 != 0) {
-                return v2;
-            }
-            return this.output.compareTo(other.output);
-        }
-    }
-
-    private static class Actions implements Comparable<Actions> {
-        Actionable actionable;
-        int importance;
-
-        public Actions() {
-            actionable = Actionable.NONE;
-        }
-
-        public void update(Actionable act) {
-            update(act, 0);
-        }
-
-        public void update(Actionable act, int impt) {
-            actionable = actionable.mix(act);
-            if (act.ordinal() > Actionable.NONE.ordinal()) {
-                importance += impt;
-            }
-        }
-
-        @Override
-        public int compareTo(Actions other) {
-            int v1 = Integer.compare(actionable.ordinal(), other.actionable.ordinal());
-            if (v1 != 0) {
-                return v1;
-            }
-            return Integer.compare(importance, other.importance);
-        }
     }
 
     private TrackedIssue parseIssue(Issue issue, IssueRestClient cli) {
@@ -902,13 +806,13 @@ public class Monitor {
     }
 
     private boolean tryPrintHg(PrintWriter pw, String repo, String synopsis) {
-        List<HgDB.Record> rs = hgDB.search(repo, synopsis);
+        List<HgRecord> rs = hgDB.search(repo, synopsis);
         if (rs.isEmpty()) {
             return false;
         }
 
         boolean first = true;
-        for (HgDB.Record r : rs) {
+        for (HgRecord r : rs) {
             if (first) {
                 first = false;
             } else {

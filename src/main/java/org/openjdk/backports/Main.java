@@ -27,6 +27,7 @@ package org.openjdk.backports;
 import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.atlassian.jira.rest.client.api.JiraRestClientFactory;
 import com.atlassian.jira.rest.client.internal.async.AsynchronousJiraRestClientFactory;
+import org.openjdk.backports.hg.HgDB;
 
 import java.io.FileInputStream;
 import java.io.IOException;
