@@ -111,20 +111,14 @@ public class Accessors {
     }
 
     public static RetryableIssuePromise getParent(IssueRestClient cli, Issue start) {
-        List<RetryableIssuePromise> backports = new ArrayList<>();
         for (IssueLink link : start.getIssueLinks()) {
-            if (link.getIssueLinkType().getName().equals("Backport")) {
+            IssueLinkType type = link.getIssueLinkType();
+            if (type.getName().equals("Backport") && type.getDirection() == IssueLinkType.Direction.INBOUND) {
                 String linkKey = link.getTargetIssueKey();
-                backports.add(new RetryableIssuePromise(cli, linkKey));
+                return new RetryableIssuePromise(cli, linkKey);
             }
         }
-
-        // If there is only a single "Backport link", report it as parent
-        if (backports.size() == 1) {
-            return backports.get(0);
-        } else {
-            return null;
-        }
+        return null;
     }
     public static List<String> getReleaseNotes(IssueRestClient cli, Issue start) {
         List<RetryableIssuePromise> relnotes = new ArrayList<>();
