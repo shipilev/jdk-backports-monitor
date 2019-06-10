@@ -330,17 +330,17 @@ public class Monitor {
 
             for (Issue i : byComponent.get(component)) {
                 StringBuilder sb = new StringBuilder();
-                sb.append("    *) [" + i.getPriority().getName() + "] " + i.getKey() + ": " + i.getSummary());
+                sb.append("    [" + i.getPriority().getName() + "] ");
 
                 RetryableIssuePromise promise = parents.get(i);
                 Issue rnRoot = i;
                 if (promise != null) {
                     Issue p = promise.claim();
                     rnRoot = p;
-                    sb.append(" (backported from " + Accessors.getFixVersion(p) + ")");
+                    sb.append("(from " + Accessors.getFixVersion(p) + ") ");
                 }
 
-                sb.append("\n");
+                sb.append(i.getKey() + ": " + i.getSummary() + "\n");
 
                 boolean hasRn = false;
                 for (String rn : Accessors.getReleaseNotes(issueCli, rnRoot)) {
