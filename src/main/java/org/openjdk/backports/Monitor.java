@@ -358,10 +358,6 @@ public class Monitor {
             out.println();
         }
         out.println();
-
-        out.println("Distribution by email/name:");
-        printByEmailName(out, byCommitter);
-        out.println();
     }
 
     public void runFilterReport(JiraRestClient restClient, long filterId) throws URISyntaxException {
