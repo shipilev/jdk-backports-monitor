@@ -290,7 +290,14 @@ public class Monitor {
         out.println("Notes generated: " + new Date());
         out.println();
 
-        List<Issue> issues = getIssues(searchCli, issueCli, "project = JDK AND fixVersion = " + release);
+        List<Issue> issues = getIssues(searchCli, issueCli, "project = JDK" +
+                " AND (status in (Closed, Resolved))" +
+                " AND (resolution not in (\"Won't Fix\", Duplicate, \"Cannot Reproduce\", \"Not an Issue\", Withdrawn))" +
+                " AND (labels not in (release-note, testbug, openjdk-na, testbug) OR labels is EMPTY)" +
+                " AND (summary !~ 'testbug')" +
+                " AND (summary !~ 'problemlist') AND (summary !~ 'problem list')" +
+                " AND (issuetype != CSR)" +
+                " AND fixVersion = " + release);
 
         Comparator<Issue> defaultSort = Comparator.<Issue, String>comparing(t -> t.getPriority().getName()).thenComparing(BasicIssue::getKey);
 
