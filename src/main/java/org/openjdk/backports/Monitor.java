@@ -299,7 +299,7 @@ public class Monitor {
                 " AND (issuetype != CSR)" +
                 " AND fixVersion = " + release);
 
-        Comparator<Issue> defaultSort = Comparator.<Issue, String>comparing(t -> t.getPriority().getName()).thenComparing(BasicIssue::getKey);
+        Comparator<Issue> defaultSort = Comparator.<Issue, String>comparing(i -> i.getSummary().trim().toLowerCase());
 
         Multimap<String, Issue> byComponent = TreeMultimap.create(String::compareTo, defaultSort);
         Multimap<String, Issue> byCommitter = TreeMultimap.create(String::compareTo, defaultSort);
@@ -322,47 +322,41 @@ public class Monitor {
         out.println("Hint: Prefix bug IDs with " + Main.JIRA_URL + "browse/ to reach the relevant JIRA entry.");
         out.println();
 
-        out.println("Changes by component:");
+        out.println("FIXED ISSUES WITH RELEASE NOTES, BY COMPONENT:");
         out.println();
 
         for (String component : byComponent.keySet()) {
-            out.println("  " + component + ":");
-
             Map<Issue, RetryableIssuePromise> parents = new HashMap<>();
             for (Issue i : byComponent.get(component)) {
                 parents.put(i, Accessors.getParent(issueCli, i));
             }
 
-            SortedSet<RelNotesIssue> rnIssues = new TreeSet<>();
-
+            boolean printed = false;
             for (Issue i : byComponent.get(component)) {
-                StringBuilder sb = new StringBuilder();
-                sb.append("    [" + i.getPriority().getName() + "] ");
-
                 RetryableIssuePromise promise = parents.get(i);
-                Issue rnRoot = i;
-                int fixVer = -1;
-                if (promise != null) {
-                    Issue p = promise.claim();
-                    rnRoot = p;
-                    fixVer = Parsers.parseVersion(Accessors.getFixVersion(p));
-                    sb.append("(" + fixVer + ") ");
-                }
+                Issue rnRoot = (promise != null) ? promise.claim() : i;
 
-                sb.append(i.getKey() + ": " + i.getSummary() + "\n");
-
-                boolean hasRn = false;
                 for (String rn : Accessors.getReleaseNotes(issueCli, rnRoot)) {
-                    sb.append(StringUtils.leftPad(StringUtils.rewrap(rn, 100), 6));
-                    sb.append("\n\n");
-                    hasRn = true;
+                    if (!printed) {
+                        out.println("  " + component + ":");
+                        printed = true;
+                    }
+
+                    out.println("    " + i.getKey() + ": " + i.getSummary());
+                    out.println(StringUtils.leftPad(StringUtils.rewrap(rn, 100), 6));
+                    out.println();
                 }
-
-                rnIssues.add(new RelNotesIssue(sb.toString(), rnRoot.getPriority().getName(), fixVer, hasRn));
             }
+        }
+        out.println();
 
-            for (RelNotesIssue i : rnIssues) {
-                out.print(i.getOutput());
+        out.println("FIXED ISSUES, BY COMPONENT:");
+        out.println();
+
+        for (String component : byComponent.keySet()) {
+            out.println("  " + component + ":");
+            for (Issue i : byComponent.get(component)) {
+                out.println("    " + i.getKey() + ": " + i.getSummary());
             }
             out.println();
         }
