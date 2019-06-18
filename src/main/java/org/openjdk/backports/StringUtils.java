@@ -29,11 +29,22 @@ import org.apache.commons.lang3.text.WordUtils;
 public class StringUtils {
 
     public static String rewrap(String str, int width) {
-        String t = str.replaceAll("\r", "")
-                .replaceAll("\n\n", "<BREAK>")
-                .replaceAll("\n", " ")
-                .replaceAll("<BREAK>", "\n\n");
-        return WordUtils.wrap(t, width);
+        String[] split = str.replaceAll("\r", "").split("\n\n");
+        StringBuilder sb = new StringBuilder();
+
+        boolean first = true;
+        for (String paragraph : split) {
+            if (!first) {
+                sb.append(System.lineSeparator());
+                sb.append(System.lineSeparator());
+            } else {
+                first = false;
+            }
+            paragraph = paragraph.replaceAll("\n", " ");
+            sb.append(WordUtils.wrap(paragraph, width));
+
+        }
+        return sb.toString();
     }
 
     public static String leftPad(String str, int pad) {
