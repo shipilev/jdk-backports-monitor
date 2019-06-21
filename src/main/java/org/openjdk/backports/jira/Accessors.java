@@ -30,9 +30,12 @@ import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.StringJoiner;
+import java.util.TreeSet;
 
 public class Accessors {
 
@@ -120,9 +123,9 @@ public class Accessors {
         }
         return null;
     }
-    public static List<String> getReleaseNotes(IssueRestClient cli, Issue start) {
+    public static Collection<String> getReleaseNotes(IssueRestClient cli, Issue start) {
         List<RetryableIssuePromise> relnotes = new ArrayList<>();
-        List<String> releaseNotes = new ArrayList<>();
+        Set<String> releaseNotes = new TreeSet<>();
 
         // Direct hit?
         if (start.getLabels().contains("release-note")) {

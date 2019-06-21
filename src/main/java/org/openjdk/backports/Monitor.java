@@ -336,13 +336,19 @@ public class Monitor {
                 RetryableIssuePromise promise = parents.get(i);
                 Issue rnRoot = (promise != null) ? promise.claim() : i;
 
-                for (String rn : Accessors.getReleaseNotes(issueCli, rnRoot)) {
-                    if (!printed) {
-                        out.println("  " + component + ":");
-                        printed = true;
-                    }
+                Collection<String> relNotes = Accessors.getReleaseNotes(issueCli, rnRoot);
+                if (relNotes.isEmpty()) continue;
 
-                    out.println("    " + i.getKey() + ": " + i.getSummary());
+                if (!printed) {
+                    out.println(component + ":");
+                    out.println();
+                    printed = true;
+                }
+
+                out.println("  " + i.getKey() + ": " + i.getSummary());
+                out.println();
+
+                for (String rn : relNotes) {
                     out.println(StringUtils.leftPad(StringUtils.rewrap(rn, 100), 6));
                     out.println();
                 }
@@ -354,9 +360,9 @@ public class Monitor {
         out.println();
 
         for (String component : byComponent.keySet()) {
-            out.println("  " + component + ":");
+            out.println(component + ":");
             for (Issue i : byComponent.get(component)) {
-                out.println("    " + i.getKey() + ": " + i.getSummary());
+                out.println("  " + i.getKey() + ": " + i.getSummary());
             }
             out.println();
         }
