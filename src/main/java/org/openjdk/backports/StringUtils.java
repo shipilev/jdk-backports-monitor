@@ -29,22 +29,28 @@ import org.apache.commons.lang3.text.WordUtils;
 public class StringUtils {
 
     public static String rewrap(String str, int width) {
-        String[] split = str.replaceAll("\r", "").split("\n\n");
+        return rewrap(str, width, Integer.MAX_VALUE);
+    }
+
+    public static String rewrap(String str, int width, int maxParagraphs) {
         StringBuilder sb = new StringBuilder();
 
-        boolean first = true;
-        for (String paragraph : split) {
-            if (!first) {
+        int pCount = 0;
+        for (String paragraph : paragraphs(str)) {
+            if (pCount >= maxParagraphs) break;
+            if (pCount != 0) {
                 sb.append(System.lineSeparator());
                 sb.append(System.lineSeparator());
-            } else {
-                first = false;
             }
             paragraph = paragraph.replaceAll("\n", " ");
             sb.append(WordUtils.wrap(paragraph, width));
-
+            pCount++;
         }
         return sb.toString();
+    }
+
+    public static String[] paragraphs(String str) {
+        return str.replaceAll("\r", "").split("\n\n");
     }
 
     public static String leftPad(String str, int pad) {

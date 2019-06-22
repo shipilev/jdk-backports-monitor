@@ -290,7 +290,7 @@ public class Monitor {
         out.println("Notes generated: " + new Date());
         out.println();
 
-        List<Issue> issues = getIssues(searchCli, issueCli, "project = JDK" +
+        List<Issue> regularIssues = getIssues(searchCli, issueCli, "project = JDK" +
                 " AND (status in (Closed, Resolved))" +
                 " AND (resolution not in (\"Won't Fix\", Duplicate, \"Cannot Reproduce\", \"Not an Issue\", Withdrawn))" +
                 " AND (labels not in (release-note, testbug, openjdk-na, testbug) OR labels is EMPTY)" +
@@ -299,18 +299,20 @@ public class Monitor {
                 " AND (issuetype != CSR)" +
                 " AND fixVersion = " + release);
 
+        List<Issue> jepIssues = getIssues(searchCli, issueCli, "project = JDK AND issuetype = JEP" +
+                " AND fixVersion = " + release + "" +
+                " ORDER BY summary ASC");
+
         Comparator<Issue> defaultSort = Comparator.<Issue, String>comparing(i -> i.getSummary().trim().toLowerCase());
 
         Multimap<String, Issue> byComponent = TreeMultimap.create(String::compareTo, defaultSort);
-        Multimap<String, Issue> byCommitter = TreeMultimap.create(String::compareTo, defaultSort);
 
         int filteredSyncs = 0;
 
-        for (Issue issue : issues) {
+        for (Issue issue : regularIssues) {
             String committer = Accessors.getPushUser(issue);
             if (!committer.equals("N/A")) { // Skip automatic syncs
                 byComponent.put(Accessors.extractComponents(issue), issue);
-                byCommitter.put(committer, issue);
             } else {
                 filteredSyncs++;
             }
@@ -322,7 +324,29 @@ public class Monitor {
         out.println("Hint: Prefix bug IDs with " + Main.JIRA_URL + "browse/ to reach the relevant JIRA entry.");
         out.println();
 
-        out.println("FIXED ISSUES WITH RELEASE NOTES, BY COMPONENT:");
+        out.println("JAVA ENHANCEMENT PROPOSALS (JEP):");
+        out.println();
+
+        if (jepIssues.isEmpty()) {
+            out.println("  None.");
+        }
+
+        for (Issue i : jepIssues) {
+            out.println("  " + i.getSummary());
+            out.println();
+
+            String[] par = StringUtils.paragraphs(i.getDescription());
+            if (par.length > 2) {
+                // Second one is summary
+                out.println(StringUtils.leftPad(StringUtils.rewrap(par[1], 100, 2), 6));
+            } else {
+                out.println(StringUtils.leftPad("No description.", 6));
+            }
+            out.println();
+        }
+        out.println();
+
+        out.println("RELEASE NOTES, BY COMPONENT:");
         out.println();
 
         for (String component : byComponent.keySet()) {
@@ -356,7 +380,7 @@ public class Monitor {
         }
         out.println();
 
-        out.println("FIXED ISSUES, BY COMPONENT:");
+        out.println("ALL FIXED ISSUES, BY COMPONENT:");
         out.println();
 
         for (String component : byComponent.keySet()) {
