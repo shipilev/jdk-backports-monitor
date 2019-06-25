@@ -39,7 +39,7 @@ public class Options {
     private Long filterReport;
     private String hgRepos;
     private Actionable minLevel;
-
+    private boolean includeDownstream;
 
     public Options(String[] args) {
         this.args = args;
@@ -75,6 +75,8 @@ public class Options {
         OptionSpec<Actionable> optMinLevel = parser.accepts("min-level", "Minimal actionable level to print")
                 .withRequiredArg().ofType(Actionable.class).describedAs("level").defaultsTo(Actionable.NONE);
 
+        OptionSpec<Void> optIncludeDownstream = parser.accepts("include-downstream", "Include downstream repos in reports");
+
         parser.accepts("h", "Print this help.");
 
         OptionSet set;
@@ -101,6 +103,7 @@ public class Options {
         releaseNotesReport = optReleaseNotesReport.value(set);
         hgRepos = optUpdateHgDB.value(set);
         minLevel = optMinLevel.value(set);
+        includeDownstream = set.has(optIncludeDownstream);
 
         return true;
     }
@@ -136,5 +139,7 @@ public class Options {
     public String getHgRepos() { return hgRepos; }
 
     public Actionable getMinLevel() { return minLevel; }
+
+    public boolean includeDownstream() { return includeDownstream; }
 
 }

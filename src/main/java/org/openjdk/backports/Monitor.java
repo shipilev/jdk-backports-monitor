@@ -61,10 +61,12 @@ public class Monitor {
 
     private final UserCache users;
     private final HgDB hgDB;
+    private final boolean includeDownstream;
 
-    public Monitor(JiraRestClient restClient, HgDB hgDB) {
+    public Monitor(JiraRestClient restClient, HgDB hgDB, boolean includeDownstream) {
         this.hgDB = hgDB;
         this.users = new UserCache(restClient.getUserClient());
+        this.includeDownstream = includeDownstream;
     }
 
     public void runLabelReport(JiraRestClient restClient, String label, Actionable minLevel) throws URISyntaxException {
@@ -682,24 +684,26 @@ public class Monitor {
             printHgStatus(true, actions, pw, issue, "8", "aarch64-port/jdk8u-shenandoah");
         }
 
-        pw.println();
-        pw.println("  Downstream Repositories:");
+        if (includeDownstream) {
+            pw.println();
+            pw.println("  Downstream Repositories:");
 
-        printed = false;
-        if (affectedReleases.contains(11)) {
-            printHgStatus(true, actions, pw, issue, "11-sh", "shenandoah/jdk11");
-            printed = true;
-        }
-        if (affectedReleases.contains(8) || affectedShenandoah.contains(8) || affectedAArch64.contains(8)) {
-            printHgStatus(true, actions, pw, issue, "8-a64-sh", "aarch64-port/jdk8u-shenandoah");
-            printed = true;
-        }
-        if (affectedReleases.contains(7)) {
-            printHgStatus(true, actions, pw, issue, "7-it-2.6", "icedtea7-forest-2.6");
-            printed = true;
-        }
-        if (!printed) {
-            pw.println("      None.");
+            printed = false;
+            if (affectedReleases.contains(11)) {
+                printHgStatus(true, actions, pw, issue, "11-sh", "shenandoah/jdk11");
+                printed = true;
+            }
+            if (affectedReleases.contains(8) || affectedShenandoah.contains(8) || affectedAArch64.contains(8)) {
+                printHgStatus(true, actions, pw, issue, "8-a64-sh", "aarch64-port/jdk8u-shenandoah");
+                printed = true;
+            }
+            if (affectedReleases.contains(7)) {
+                printHgStatus(true, actions, pw, issue, "7-it-2.6", "icedtea7-forest-2.6");
+                printed = true;
+            }
+            if (!printed) {
+                pw.println("      None.");
+            }
         }
 
         pw.println();

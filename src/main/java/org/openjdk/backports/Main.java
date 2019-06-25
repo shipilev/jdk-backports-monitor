@@ -68,7 +68,7 @@ public class Main {
                 try {
                     restClient = factory.createWithBasicHttpAuthentication(new URI(JIRA_URL), user, pass);
 
-                    Monitor m = new Monitor(restClient, hgDB);
+                    Monitor m = new Monitor(restClient, hgDB, options.includeDownstream());
 
                     if (options.getLabelReport() != null) {
                         m.runLabelReport(restClient, options.getLabelReport(), options.getMinLevel());
