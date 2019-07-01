@@ -123,12 +123,20 @@ public class Accessors {
         }
         return null;
     }
+
+    public static boolean isReleaseNote(Issue issue) {
+        // Brilliant, we cannot trust "release-note" tags?
+        //   See: https://mail.openjdk.java.net/pipermail/jdk-dev/2019-July/003083.html
+        return issue.getLabels().contains("release-note") ||
+               issue.getSummary().toLowerCase().startsWith("release note");
+    }
+
     public static Collection<String> getReleaseNotes(IssueRestClient cli, Issue start) {
         List<RetryableIssuePromise> relnotes = new ArrayList<>();
         Set<String> releaseNotes = new TreeSet<>();
 
         // Direct hit?
-        if (start.getLabels().contains("release-note")) {
+        if (isReleaseNote(start)) {
             releaseNotes.add(start.getDescription());
         }
 
@@ -148,7 +156,7 @@ public class Accessors {
 
         for (RetryableIssuePromise p : relnotes) {
             Issue i = p.claim();
-            if (i.getLabels().contains("release-note")) {
+            if (isReleaseNote(i)) {
                 releaseNotes.add(i.getDescription());
             }
         }

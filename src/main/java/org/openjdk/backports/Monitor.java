@@ -297,7 +297,7 @@ public class Monitor {
                 " AND (resolution not in (\"Won't Fix\", Duplicate, \"Cannot Reproduce\", \"Not an Issue\", Withdrawn))" +
                 " AND (labels not in (release-note, testbug, openjdk-na, testbug) OR labels is EMPTY)" +
                 " AND (summary !~ 'testbug')" +
-                " AND (summary !~ 'problemlist') AND (summary !~ 'problem list')" +
+                " AND (summary !~ 'problemlist') AND (summary !~ 'problem list') AND (summary !~ 'release note')" +
                 " AND (issuetype != CSR)" +
                 " AND fixVersion = " + release);
 
