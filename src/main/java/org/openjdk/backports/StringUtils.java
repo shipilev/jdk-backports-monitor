@@ -61,4 +61,8 @@ public class StringUtils {
         String sPad = sb.toString();
         return sPad + str.replaceAll("\n", "\n" + sPad);
     }
+
+    public static String stripNull(String v) {
+        return (v != null) ? v : "";
+    }
 }

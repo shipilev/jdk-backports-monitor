@@ -28,6 +28,7 @@ import com.atlassian.jira.rest.client.api.IssueRestClient;
 import com.atlassian.jira.rest.client.api.domain.*;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
+import org.openjdk.backports.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -124,11 +125,15 @@ public class Accessors {
         return null;
     }
 
+    public static boolean isReleaseNoteTag(Issue issue) {
+        return issue.getLabels().contains("release-note");
+    }
+
     public static boolean isReleaseNote(Issue issue) {
         // Brilliant, we cannot trust "release-note" tags?
         //   See: https://mail.openjdk.java.net/pipermail/jdk-dev/2019-July/003083.html
-        return issue.getLabels().contains("release-note") ||
-               issue.getSummary().toLowerCase().startsWith("release note");
+        return isReleaseNoteTag(issue) ||
+               issue.getSummary().toLowerCase().trim().startsWith("release note");
     }
 
     public static Collection<String> getReleaseNotes(IssueRestClient cli, Issue start) {
@@ -137,7 +142,10 @@ public class Accessors {
 
         // Direct hit?
         if (isReleaseNote(start)) {
-            releaseNotes.add(start.getDescription());
+            if (!isReleaseNoteTag(start)) {
+                releaseNotes.add("WARNING: no 'release-note' tag on " + start.getKey());
+            }
+            releaseNotes.add(StringUtils.stripNull(start.getDescription()));
         }
 
         // Search in sub-tasks
@@ -157,7 +165,10 @@ public class Accessors {
         for (RetryableIssuePromise p : relnotes) {
             Issue i = p.claim();
             if (isReleaseNote(i)) {
-                releaseNotes.add(i.getDescription());
+                if (!isReleaseNoteTag(i)) {
+                    releaseNotes.add("WARNING: no 'release-note' tag on " + i.getKey());
+                }
+                releaseNotes.add(StringUtils.stripNull(i.getDescription()));
             }
         }
 
