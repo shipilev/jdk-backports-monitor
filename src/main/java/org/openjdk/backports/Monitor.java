@@ -647,8 +647,29 @@ public class Monitor {
                         }
                         break;
                     }
+                    case 13: {
+                        if (issue.getLabels().contains("jdk13u-fix-yes")) {
+                            actions.update(Actionable.PUSHABLE, IMPORTANCE_STS_BACKPORT);
+                            pw.println(MSG_APPROVED + ": jdk13u-fix-yes is set");
+                        } else if (issue.getLabels().contains("jdk13u-fix-no")) {
+                            pw.println("REJECTED: jdk13u-fix-no is set");
+                        } else if (issue.getLabels().contains("jdk13u-fix-request")) {
+                            pw.println("Requested: jdk13u-fix-request is set");
+                            actions.update(Actionable.REQUESTED);
+                        } else if (!affectedReleases.contains(13)) {
+                            pw.println(MSG_NOT_AFFECTED);
+                        } else if (daysAgo >= 0 && daysAgo < BAKE_TIME) {
+                            actions.update(Actionable.WAITING);
+                            pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
+                        } else {
+                            actions.update(Actionable.MISSING, IMPORTANCE_STS_BACKPORT);
+                            pw.println(MSG_MISSING);
+                        }
+                        break;
+                    }
                     default:
                         pw.println("Unknown release: " + release);
+                        actions.update(Actionable.CRITICAL);
                 }
                 printed = true;
             }
