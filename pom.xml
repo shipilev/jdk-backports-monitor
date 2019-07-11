@@ -125,7 +125,7 @@ questions.
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <version.jersey>1.19.4</version.jersey>
-        <version.jira-client>2.0.0-m25</version.jira-client>
+        <version.jira-client>4.0.0</version.jira-client>
         <version.jopt-simple>4.9</version.jopt-simple>
         <version.slf4j>1.7.2</version.slf4j>
     </properties>
@@ -152,9 +152,9 @@ questions.
             <version>${version.jira-client}</version>
         </dependency>
         <dependency>
-            <groupId>com.atlassian.jira</groupId>
-            <artifactId>jira-rest-java-client-api</artifactId>
-            <version>${version.jira-client}</version>
+            <groupId>com.atlassian.fugue</groupId>
+            <artifactId>fugue</artifactId>
+            <version>2.6.1</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
