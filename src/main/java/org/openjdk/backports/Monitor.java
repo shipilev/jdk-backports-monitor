@@ -441,15 +441,9 @@ public class Monitor {
 
         for (RetryableSearchPromise sp : searchPromises) {
             SearchResult found = sp.claim();
-
-            List<RetryableIssuePromise> batch = new ArrayList<>();
-            for (BasicIssue i : found.getIssues()) {
-                batch.add(new RetryableIssuePromise(cli, i.getKey()));
+            for (Issue i : found.getIssues()) {
+                issues.add(i);
             }
-            for (RetryableIssuePromise ip : batch) {
-                issues.add(ip.claim());
-            }
-
             System.out.println("Loaded " + issues.size() + "/" + total + " matching issues.");
         }
 
