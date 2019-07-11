@@ -25,13 +25,11 @@
 package org.openjdk.backports;
 
 import com.atlassian.jira.rest.client.api.JiraRestClient;
-import com.atlassian.jira.rest.client.api.JiraRestClientFactory;
-import com.atlassian.jira.rest.client.internal.async.AsynchronousJiraRestClientFactory;
 import org.openjdk.backports.hg.HgDB;
+import org.openjdk.backports.jira.Connect;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.URI;
 import java.util.Properties;
 
 public class Main {
@@ -62,11 +60,10 @@ public class Main {
                     throw new IllegalStateException("user/pass keys are missing in auth file: " + options.getAuthProps());
                 }
 
-                JiraRestClientFactory factory = new AsynchronousJiraRestClientFactory();
                 JiraRestClient restClient = null;
 
                 try {
-                    restClient = factory.createWithBasicHttpAuthentication(new URI(JIRA_URL), user, pass);
+                    restClient = Connect.getJiraRestClient(JIRA_URL, user, pass);
 
                     Monitor m = new Monitor(restClient, hgDB, options.includeDownstream());
 
