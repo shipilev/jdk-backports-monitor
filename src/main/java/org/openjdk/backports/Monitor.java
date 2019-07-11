@@ -411,7 +411,7 @@ public class Monitor {
         out.println("Report generated: " + new Date());
         out.println();
 
-        List<Issue> issues = getIssues(searchCli, issueCli, filter.getJql());
+        List<Issue> issues = getBasicIssues(searchCli, issueCli, filter.getJql());
 
         out.println("Filter: " + filter.getName());
         out.println("Filter URL: " + Main.JIRA_URL + "issues/?filter=" + filterId);
@@ -425,6 +425,28 @@ public class Monitor {
     }
 
     private List<Issue> getIssues(SearchRestClient searchCli, IssueRestClient cli, String query) {
+        List<Issue> basicIssues = getBasicIssues(searchCli, cli, query);
+
+        List<RetryableIssuePromise> batch = new ArrayList<>();
+        for (Issue i : basicIssues) {
+            batch.add(new RetryableIssuePromise(cli, i.getKey()));
+        }
+
+        int count = 0;
+        List<Issue> issues = new ArrayList<>();
+        for (RetryableIssuePromise ip : batch) {
+            issues.add(ip.claim());
+            if ((++count % 50) == 0) {
+                System.out.println("Resolved " + issues.size() + "/" + basicIssues.size() + " matching issues.");
+            }
+        }
+        System.out.println("Resolved " + issues.size() + "/" + basicIssues.size() + " matching issues.");
+        System.out.println();
+
+        return issues;
+    }
+
+    private List<Issue> getBasicIssues(SearchRestClient searchCli, IssueRestClient cli, String query) {
         List<Issue> issues = new ArrayList<>();
 
         System.out.println("JIRA Query: " + WordUtils.wrap(query, 80));
