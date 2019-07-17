@@ -30,6 +30,7 @@ import com.atlassian.jira.rest.client.api.domain.Issue;
 import com.atlassian.jira.rest.client.api.domain.SearchResult;
 import org.apache.commons.lang3.text.WordUtils;
 
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,16 +38,57 @@ public class Issues {
 
     private static final int PAGE_SIZE = 50;
 
+    private final PrintStream out;
     private final SearchRestClient searchCli;
     private final IssueRestClient issueCli;
 
-    public Issues(SearchRestClient searchCli, IssueRestClient issueCli) {
+    public Issues(PrintStream out, SearchRestClient searchCli, IssueRestClient issueCli) {
+        this.out = out;
         this.searchCli = searchCli;
         this.issueCli = issueCli;
     }
 
+    /**
+     * Reply with basic issues for a given JIRA query.
+     * Basic issues have only a few populated fields, and are much faster to acquire.
+     *
+     * @param query query
+     * @return list of issues
+     */
+    public List<Issue> getBasicIssues(String query) {
+        out.println("JIRA Query: " + WordUtils.wrap(query, 80));
+        out.println();
+
+        SearchResult poll = new RetryableSearchPromise(searchCli, query, 1, 0).claim();
+        int total = poll.getTotal();
+
+        List<RetryableSearchPromise> searchPromises = new ArrayList<>();
+        for (int cnt = 0; cnt < total; cnt += PAGE_SIZE) {
+            out.println("Acquiring page [" + cnt + ", " + (cnt + PAGE_SIZE) + "] (total: " + total + ")");
+            searchPromises.add(new RetryableSearchPromise(searchCli, query, PAGE_SIZE, cnt));
+        }
+
+        List<Issue> issues = new ArrayList<>();
+        for (RetryableSearchPromise sp : searchPromises) {
+            for (Issue i : sp.claim().getIssues()) {
+                issues.add(i);
+            }
+            out.println("Loaded " + issues.size() + "/" + total + " matching issues.");
+        }
+
+        return issues;
+    }
+
+    /**
+     * Reply with resolved issues for a given JIRA query.
+     * Resolved issues have all their fields filled in.
+     *
+     * @param query query
+     * @return list of issues
+     */
     public List<Issue> getIssues(String query) {
         List<Issue> basicIssues = getBasicIssues(query);
+        int total = basicIssues.size();
 
         List<RetryableIssuePromise> batch = new ArrayList<>();
         for (Issue i : basicIssues) {
@@ -57,72 +99,54 @@ public class Issues {
         List<Issue> issues = new ArrayList<>();
         for (RetryableIssuePromise ip : batch) {
             issues.add(ip.claim());
-            if ((++count % 50) == 0) {
-                System.out.println("Resolved " + issues.size() + "/" + basicIssues.size() + " matching issues.");
+            if ((++count % PAGE_SIZE) == 0) {
+                out.println("Resolved " + issues.size() + "/" + total + " matching issues.");
             }
         }
-        System.out.println("Resolved " + issues.size() + "/" + basicIssues.size() + " matching issues.");
+        out.println("Resolved " + issues.size() + "/" + total + " matching issues.");
 
         return issues;
     }
 
+    /**
+     * Reply with parent issues for a given JIRA query.
+     * For every issue that has a parent, its parent is returned. If issue has no
+     * parents, the issue itself is replied.
+     *
+     * @param query query
+     * @return list issues
+     */
     public List<Issue> getParentIssues(String query) {
         List<Issue> basicIssues = getBasicIssues(query);
+        int totalSize = basicIssues.size();
 
-        List<RetryableIssuePromise> layer1 = new ArrayList<>();
+        List<RetryableIssuePromise> basicPromises = new ArrayList<>();
         for (Issue i : basicIssues) {
-            layer1.add(new RetryableIssuePromise(issueCli, i.getKey()));
+            basicPromises.add(new RetryableIssuePromise(issueCli, i.getKey()));
         }
 
         int c1 = 0;
-        List<RetryableIssuePromise> layer2 = new ArrayList<>();
-        for (RetryableIssuePromise issue1 : layer1) {
-            RetryableIssuePromise parent = Accessors.getParent(issueCli, issue1.claim());
-            layer2.add(parent != null ? parent : issue1);
-            if ((++c1 % 50) == 0) {
-                System.out.println("Resolved " + layer2.size() + "/" + basicIssues.size() + " matching issues.");
+        List<RetryableIssuePromise> parentPromises = new ArrayList<>();
+        for (RetryableIssuePromise ip : basicPromises) {
+            RetryableIssuePromise parent = Accessors.getParent(issueCli, ip.claim());
+            parentPromises.add(parent != null ? parent : ip);
+            if ((++c1 % PAGE_SIZE) == 0) {
+                out.println("Resolved " + parentPromises.size() + "/" + totalSize + " matching issues.");
             }
         }
-        System.out.println("Resolved " + layer2.size() + "/" + basicIssues.size() + " matching issues.");
+        out.println("Resolved " + parentPromises.size() + "/" + totalSize + " matching issues.");
 
         int c2 = 0;
         List<Issue> issues = new ArrayList<>();
-        for (RetryableIssuePromise issue2 : layer2) {
-            issues.add(issue2.claim());
-            if ((++c2 % 50) == 0) {
-                System.out.println("Resolved parents for " + issues.size() + "/" + basicIssues.size() + " matching issues.");
+        for (RetryableIssuePromise ip : parentPromises) {
+            issues.add(ip.claim());
+            if ((++c2 % PAGE_SIZE) == 0) {
+                out.println("Resolved parents for " + issues.size() + "/" + totalSize + " matching issues.");
             }
         }
-        System.out.println("Resolved parents for " + issues.size() + "/" + basicIssues.size() + " matching issues.");
+        out.println("Resolved parents for " + issues.size() + "/" + totalSize + " matching issues.");
 
         return issues;
     }
-
-    public List<Issue> getBasicIssues(String query) {
-        List<Issue> issues = new ArrayList<>();
-
-        System.out.println("JIRA Query: " + WordUtils.wrap(query, 80));
-        System.out.println();
-
-        SearchResult poll = new RetryableSearchPromise(searchCli, query, 1, 0).claim();
-        int total = poll.getTotal();
-
-        List<RetryableSearchPromise> searchPromises = new ArrayList<>();
-        for (int cnt = 0; cnt < total; cnt += PAGE_SIZE) {
-            searchPromises.add(new RetryableSearchPromise(searchCli, query, PAGE_SIZE, cnt));
-            System.out.println("Acquiring page [" + cnt + ", " + (cnt + PAGE_SIZE) + "] (total: " + total + ")");
-        }
-
-        for (RetryableSearchPromise sp : searchPromises) {
-            SearchResult found = sp.claim();
-            for (Issue i : found.getIssues()) {
-                issues.add(i);
-            }
-            System.out.println("Loaded " + issues.size() + "/" + total + " matching issues.");
-        }
-
-        return issues;
-    }
-
 
 }

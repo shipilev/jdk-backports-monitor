@@ -69,7 +69,7 @@ public class Monitor {
         this.out = System.out;
         this.searchCli = restClient.getSearchClient();
         this.issueCli = restClient.getIssueClient();
-        this.jiraIssues = new Issues(searchCli, issueCli);
+        this.jiraIssues = new Issues(out, searchCli, issueCli);
         this.users = new UserCache(restClient.getUserClient());
         this.includeDownstream = includeDownstream;
     }
