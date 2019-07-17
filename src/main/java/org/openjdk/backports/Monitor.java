@@ -103,6 +103,8 @@ public class Monitor {
             issues.add(parseIssue(i, issueCli));
         }
 
+        out.println();
+
         int count = 0;
         printDelimiterLine(out);
         for (TrackedIssue i : issues) {
@@ -170,6 +172,7 @@ public class Monitor {
             issues.add(parseIssue(i, issueCli));
         }
 
+        out.println();
         printDelimiterLine(out);
         for (TrackedIssue i : issues) {
             out.println(i.getOutput());
@@ -213,6 +216,7 @@ public class Monitor {
             }
         }
 
+        out.println();
         out.println("Filtered " + filteredSyncs + " automatic syncs, " + byPriority.size() + " pushes left.");
         out.println();
 
@@ -292,7 +296,7 @@ public class Monitor {
         out.println("Notes generated: " + new Date());
         out.println();
 
-        List<Issue> regularIssues = getIssues(searchCli, issueCli, "project = JDK" +
+        List<Issue> regularIssues = getParentIssues(searchCli, issueCli, "project = JDK" +
                 " AND (status in (Closed, Resolved))" +
                 " AND (resolution not in (\"Won't Fix\", Duplicate, \"Cannot Reproduce\", \"Not an Issue\", Withdrawn))" +
                 " AND (labels not in (release-note, testbug, openjdk-na, testbug) OR labels is EMPTY)" +
@@ -301,7 +305,9 @@ public class Monitor {
                 " AND (issuetype != CSR)" +
                 " AND fixVersion = " + release);
 
-        List<Issue> jepIssues = getIssues(searchCli, issueCli, "project = JDK AND issuetype = JEP" +
+        out.println();
+
+        List<Issue> jepIssues = getParentIssues(searchCli, issueCli, "project = JDK AND issuetype = JEP" +
                 " AND fixVersion = " + release + "" +
                 " ORDER BY summary ASC");
 
@@ -320,6 +326,7 @@ public class Monitor {
             }
         }
 
+        out.println();
         out.println("Filtered " + filteredSyncs + " automatic syncs, " + byComponent.size() + " pushes left.");
         out.println();
 
@@ -352,17 +359,9 @@ public class Monitor {
         out.println();
 
         for (String component : byComponent.keySet()) {
-            Map<Issue, RetryableIssuePromise> parents = new HashMap<>();
-            for (Issue i : byComponent.get(component)) {
-                parents.put(i, Accessors.getParent(issueCli, i));
-            }
-
             boolean printed = false;
             for (Issue i : byComponent.get(component)) {
-                RetryableIssuePromise promise = parents.get(i);
-                Issue rnRoot = (promise != null) ? promise.claim() : i;
-
-                Collection<String> relNotes = Accessors.getReleaseNotes(issueCli, rnRoot);
+                Collection<String> relNotes = Accessors.getReleaseNotes(issueCli, i);
                 if (relNotes.isEmpty()) continue;
 
                 if (!printed) {
@@ -413,6 +412,7 @@ public class Monitor {
 
         List<Issue> issues = getBasicIssues(searchCli, issueCli, filter.getJql());
 
+        out.println();
         out.println("Filter: " + filter.getName());
         out.println("Filter URL: " + Main.JIRA_URL + "issues/?filter=" + filterId);
         out.println();
@@ -441,7 +441,38 @@ public class Monitor {
             }
         }
         System.out.println("Resolved " + issues.size() + "/" + basicIssues.size() + " matching issues.");
-        System.out.println();
+
+        return issues;
+    }
+
+    private List<Issue> getParentIssues(SearchRestClient searchCli, IssueRestClient cli, String query) {
+        List<Issue> basicIssues = getBasicIssues(searchCli, cli, query);
+
+        List<RetryableIssuePromise> layer1 = new ArrayList<>();
+        for (Issue i : basicIssues) {
+            layer1.add(new RetryableIssuePromise(cli, i.getKey()));
+        }
+
+        int c1 = 0;
+        List<RetryableIssuePromise> layer2 = new ArrayList<>();
+        for (RetryableIssuePromise issue1 : layer1) {
+            RetryableIssuePromise parent = Accessors.getParent(cli, issue1.claim());
+            layer2.add(parent != null ? parent : issue1);
+            if ((++c1 % 50) == 0) {
+                System.out.println("Resolved " + layer2.size() + "/" + basicIssues.size() + " matching issues.");
+            }
+        }
+        System.out.println("Resolved " + layer2.size() + "/" + basicIssues.size() + " matching issues.");
+
+        int c2 = 0;
+        List<Issue> issues = new ArrayList<>();
+        for (RetryableIssuePromise issue2 : layer2) {
+            issues.add(issue2.claim());
+            if ((++c2 % 50) == 0) {
+                System.out.println("Resolved parents for " + issues.size() + "/" + basicIssues.size() + " matching issues.");
+            }
+        }
+        System.out.println("Resolved parents for " + issues.size() + "/" + basicIssues.size() + " matching issues.");
 
         return issues;
     }
@@ -468,8 +499,6 @@ public class Monitor {
             }
             System.out.println("Loaded " + issues.size() + "/" + total + " matching issues.");
         }
-
-        System.out.println();
 
         return issues;
     }
