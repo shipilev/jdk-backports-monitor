@@ -68,27 +68,27 @@ public class Main {
                     Monitor m = new Monitor(restClient, hgDB, options.includeDownstream());
 
                     if (options.getLabelReport() != null) {
-                        m.runLabelReport(restClient, options.getLabelReport(), options.getMinLevel());
+                        m.runLabelReport(options.getLabelReport(), options.getMinLevel());
                     }
 
                     if (options.getPushesReport() != null) {
-                        m.runPushesReport(restClient, options.getPushesReport());
+                        m.runPushesReport(options.getPushesReport());
                     }
 
                     if (options.getPendingPushReport() != null) {
-                        m.runPendingPushReport(restClient, options.getPendingPushReport());
+                        m.runPendingPushReport(options.getPendingPushReport());
                     }
 
                     if (options.getFilterReport() != null) {
-                        m.runFilterReport(restClient, options.getFilterReport());
+                        m.runFilterReport(options.getFilterReport());
                     }
 
                     if (options.getIssueReport() != null) {
-                        m.runIssueReport(restClient, options.getIssueReport());
+                        m.runIssueReport(options.getIssueReport());
                     }
 
                     if (options.getReleaseNotesReport() != null) {
-                        m.runReleaseNotesReport(restClient, options.getReleaseNotesReport());
+                        m.runReleaseNotesReport(options.getReleaseNotesReport());
                     }
                 } finally {
                     if (restClient != null) {

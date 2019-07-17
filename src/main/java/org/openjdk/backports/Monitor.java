@@ -59,19 +59,22 @@ public class Monitor {
     private final UserCache users;
     private final HgDB hgDB;
     private final boolean includeDownstream;
+    private final SearchRestClient searchCli;
+    private final IssueRestClient issueCli;
+    private final PrintStream out;
+    private final Issues jiraIssues;
 
     public Monitor(JiraRestClient restClient, HgDB hgDB, boolean includeDownstream) {
         this.hgDB = hgDB;
+        this.out = System.out;
+        this.searchCli = restClient.getSearchClient();
+        this.issueCli = restClient.getIssueClient();
+        this.jiraIssues = new Issues(searchCli, issueCli);
         this.users = new UserCache(restClient.getUserClient());
         this.includeDownstream = includeDownstream;
     }
 
-    public void runLabelReport(JiraRestClient restClient, String label, Actionable minLevel) throws URISyntaxException {
-        SearchRestClient searchCli = restClient.getSearchClient();
-        IssueRestClient issueCli = restClient.getIssueClient();
-
-        PrintStream out = System.out;
-
+    public void runLabelReport(String label, Actionable minLevel) throws URISyntaxException {
         out.println("JDK BACKPORTS LABEL REPORT: " + label);
         printMajorDelimiterLine(out);
         out.println();
@@ -90,14 +93,14 @@ public class Monitor {
         out.println("  \"" + MSG_BAKING + "\"");
         out.println();
 
-        List<Issue> found = Issues.getIssues(searchCli, issueCli, "labels = " + label +
+        List<Issue> found = jiraIssues.getIssues("labels = " + label +
                 " AND (status in (Closed, Resolved))" +
                 " AND (resolution not in (\"Won't Fix\", Duplicate, \"Cannot Reproduce\", \"Not an Issue\", Withdrawn))" +
                 " AND type != Backport");
 
         SortedSet<TrackedIssue> issues = new TreeSet<>();
         for (Issue i : found) {
-            issues.add(parseIssue(i, issueCli));
+            issues.add(parseIssue(i));
         }
 
         out.println();
@@ -115,11 +118,7 @@ public class Monitor {
         out.println("" + count + " issues shown.");
     }
 
-    public void runIssueReport(JiraRestClient restClient, String issueId) throws URISyntaxException {
-        IssueRestClient issueCli = restClient.getIssueClient();
-
-        PrintStream out = System.out;
-
+    public void runIssueReport(String issueId) throws URISyntaxException {
         out.println("JDK BACKPORTS ISSUE REPORT: " + issueId);
         printMajorDelimiterLine(out);
         out.println();
@@ -130,18 +129,13 @@ public class Monitor {
 
         Issue issue = issueCli.getIssue(issueId).claim();
 
-        TrackedIssue trackedIssue = parseIssue(issue, issueCli);
+        TrackedIssue trackedIssue = parseIssue(issue);
 
         printDelimiterLine(out);
         out.println(trackedIssue.getOutput());
     }
 
-    public void runPendingPushReport(JiraRestClient restClient, String release) throws URISyntaxException {
-        SearchRestClient searchCli = restClient.getSearchClient();
-        IssueRestClient issueCli = restClient.getIssueClient();
-
-        PrintStream out = System.out;
-
+    public void runPendingPushReport(String release) throws URISyntaxException {
         out.println("JDK BACKPORTS PENDING PUSH REPORT: " + release);
         printMajorDelimiterLine(out);
         out.println();
@@ -162,11 +156,11 @@ public class Monitor {
                 query += " AND issue not in linked-subquery(\"issue in subquery(\\\"fixVersion ~ '" + release + ".*' AND fixVersion !~ '*oracle' AND (status = Closed OR status = Resolved)\\\")\")";
         }
 
-        List<Issue> found = Issues.getIssues(searchCli, issueCli, query);
+        List<Issue> found = jiraIssues.getIssues(query);
 
         SortedSet<TrackedIssue> issues = new TreeSet<>();
         for (Issue i : found) {
-            issues.add(parseIssue(i, issueCli));
+            issues.add(parseIssue(i));
         }
 
         out.println();
@@ -177,12 +171,7 @@ public class Monitor {
         }
     }
 
-    public void runPushesReport(JiraRestClient restClient, String release) throws URISyntaxException {
-        SearchRestClient searchCli = restClient.getSearchClient();
-        IssueRestClient issueCli = restClient.getIssueClient();
-
-        PrintStream out = System.out;
-
+    public void runPushesReport(String release) throws URISyntaxException {
         out.println("JDK BACKPORTS PUSHES REPORT: " + release);
         printMajorDelimiterLine(out);
         out.println();
@@ -192,7 +181,7 @@ public class Monitor {
         out.println("Report generated: " + new Date());
         out.println();
 
-        List<Issue> issues = Issues.getIssues(searchCli, issueCli, "project = JDK AND fixVersion = " + release);
+        List<Issue> issues = jiraIssues.getIssues("project = JDK AND fixVersion = " + release);
 
         Multiset<String> byPriority = TreeMultiset.create();
         Multiset<String> byComponent = HashMultiset.create();
@@ -281,19 +270,14 @@ public class Monitor {
         }
     }
 
-    public void runReleaseNotesReport(JiraRestClient restClient, String release) throws URISyntaxException {
-        SearchRestClient searchCli = restClient.getSearchClient();
-        IssueRestClient issueCli = restClient.getIssueClient();
-
-        PrintStream out = System.out;
-
+    public void runReleaseNotesReport(String release) throws URISyntaxException {
         out.println("RELEASE NOTES FOR: " + release);
         printMajorDelimiterLine(out);
         out.println();
         out.println("Notes generated: " + new Date());
         out.println();
 
-        List<Issue> regularIssues = Issues.getParentIssues(searchCli, issueCli, "project = JDK" +
+        List<Issue> regularIssues = jiraIssues.getParentIssues("project = JDK" +
                 " AND (status in (Closed, Resolved))" +
                 " AND (resolution not in (\"Won't Fix\", Duplicate, \"Cannot Reproduce\", \"Not an Issue\", Withdrawn))" +
                 " AND (labels not in (release-note, testbug, openjdk-na, testbug) OR labels is EMPTY)" +
@@ -304,7 +288,7 @@ public class Monitor {
 
         out.println();
 
-        List<Issue> jepIssues = Issues.getParentIssues(searchCli, issueCli, "project = JDK AND issuetype = JEP" +
+        List<Issue> jepIssues = jiraIssues.getParentIssues("project = JDK AND issuetype = JEP" +
                 " AND fixVersion = " + release + "" +
                 " ORDER BY summary ASC");
 
@@ -391,12 +375,7 @@ public class Monitor {
         out.println();
     }
 
-    public void runFilterReport(JiraRestClient restClient, long filterId) throws URISyntaxException {
-        SearchRestClient searchCli = restClient.getSearchClient();
-        IssueRestClient issueCli = restClient.getIssueClient();
-
-        PrintStream out = System.out;
-
+    public void runFilterReport(long filterId) throws URISyntaxException {
         Filter filter = searchCli.getFilter(filterId).claim();
 
         out.println("JDK BACKPORTS FILTER REPORT");
@@ -407,7 +386,7 @@ public class Monitor {
         out.println("Report generated: " + new Date());
         out.println();
 
-        List<Issue> issues = Issues.getBasicIssues(searchCli, filter.getJql());
+        List<Issue> issues = jiraIssues.getBasicIssues(filter.getJql());
 
         out.println();
         out.println("Filter: " + filter.getName());
@@ -421,7 +400,7 @@ public class Monitor {
         }
     }
 
-    private TrackedIssue parseIssue(Issue issue, IssueRestClient cli) {
+    private TrackedIssue parseIssue(Issue issue) {
         Actions actions = new Actions();
 
         StringWriter sw = new StringWriter();
@@ -482,7 +461,7 @@ public class Monitor {
         for (IssueLink link : issue.getIssueLinks()) {
             if (link.getIssueLinkType().getName().equals("Backport")) {
                 String linkKey = link.getTargetIssueKey();
-                links.add(new RetryableIssuePromise(cli, linkKey));
+                links.add(new RetryableIssuePromise(issueCli, linkKey));
             }
         }
         for (RetryableIssuePromise p : links) {

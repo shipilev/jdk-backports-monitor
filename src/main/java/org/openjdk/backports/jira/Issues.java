@@ -37,12 +37,20 @@ public class Issues {
 
     private static final int PAGE_SIZE = 50;
 
-    public static List<Issue> getIssues(SearchRestClient searchCli, IssueRestClient cli, String query) {
-        List<Issue> basicIssues = getBasicIssues(searchCli, query);
+    private final SearchRestClient searchCli;
+    private final IssueRestClient issueCli;
+
+    public Issues(SearchRestClient searchCli, IssueRestClient issueCli) {
+        this.searchCli = searchCli;
+        this.issueCli = issueCli;
+    }
+
+    public List<Issue> getIssues(String query) {
+        List<Issue> basicIssues = getBasicIssues(query);
 
         List<RetryableIssuePromise> batch = new ArrayList<>();
         for (Issue i : basicIssues) {
-            batch.add(new RetryableIssuePromise(cli, i.getKey()));
+            batch.add(new RetryableIssuePromise(issueCli, i.getKey()));
         }
 
         int count = 0;
@@ -58,18 +66,18 @@ public class Issues {
         return issues;
     }
 
-    public static List<Issue> getParentIssues(SearchRestClient searchCli, IssueRestClient cli, String query) {
-        List<Issue> basicIssues = getBasicIssues(searchCli, query);
+    public List<Issue> getParentIssues(String query) {
+        List<Issue> basicIssues = getBasicIssues(query);
 
         List<RetryableIssuePromise> layer1 = new ArrayList<>();
         for (Issue i : basicIssues) {
-            layer1.add(new RetryableIssuePromise(cli, i.getKey()));
+            layer1.add(new RetryableIssuePromise(issueCli, i.getKey()));
         }
 
         int c1 = 0;
         List<RetryableIssuePromise> layer2 = new ArrayList<>();
         for (RetryableIssuePromise issue1 : layer1) {
-            RetryableIssuePromise parent = Accessors.getParent(cli, issue1.claim());
+            RetryableIssuePromise parent = Accessors.getParent(issueCli, issue1.claim());
             layer2.add(parent != null ? parent : issue1);
             if ((++c1 % 50) == 0) {
                 System.out.println("Resolved " + layer2.size() + "/" + basicIssues.size() + " matching issues.");
@@ -90,7 +98,7 @@ public class Issues {
         return issues;
     }
 
-    public static List<Issue> getBasicIssues(SearchRestClient searchCli, String query) {
+    public List<Issue> getBasicIssues(String query) {
         List<Issue> issues = new ArrayList<>();
 
         System.out.println("JIRA Query: " + WordUtils.wrap(query, 80));
