@@ -27,7 +27,6 @@ package org.openjdk.backports;
 import com.atlassian.jira.rest.client.api.*;
 import com.atlassian.jira.rest.client.api.domain.*;
 import com.google.common.collect.*;
-import org.apache.commons.lang3.text.WordUtils;
 import org.openjdk.backports.hg.HgDB;
 import org.openjdk.backports.hg.HgRecord;
 import org.openjdk.backports.jira.*;
@@ -46,8 +45,6 @@ public class Monitor {
     private static final String MSG_WARNING = "WARNING";
 
     private static final int BAKE_TIME = 10; // days
-
-    private static final int PAGE_SIZE = 50;
 
     private static final int VER_INDENT = 9; // spaces
 
@@ -93,7 +90,7 @@ public class Monitor {
         out.println("  \"" + MSG_BAKING + "\"");
         out.println();
 
-        List<Issue> found = getIssues(searchCli, issueCli, "labels = " + label +
+        List<Issue> found = Issues.getIssues(searchCli, issueCli, "labels = " + label +
                 " AND (status in (Closed, Resolved))" +
                 " AND (resolution not in (\"Won't Fix\", Duplicate, \"Cannot Reproduce\", \"Not an Issue\", Withdrawn))" +
                 " AND type != Backport");
@@ -165,7 +162,7 @@ public class Monitor {
                 query += " AND issue not in linked-subquery(\"issue in subquery(\\\"fixVersion ~ '" + release + ".*' AND fixVersion !~ '*oracle' AND (status = Closed OR status = Resolved)\\\")\")";
         }
 
-        List<Issue> found = getIssues(searchCli, issueCli, query);
+        List<Issue> found = Issues.getIssues(searchCli, issueCli, query);
 
         SortedSet<TrackedIssue> issues = new TreeSet<>();
         for (Issue i : found) {
@@ -195,7 +192,7 @@ public class Monitor {
         out.println("Report generated: " + new Date());
         out.println();
 
-        List<Issue> issues = getIssues(searchCli, issueCli, "project = JDK AND fixVersion = " + release);
+        List<Issue> issues = Issues.getIssues(searchCli, issueCli, "project = JDK AND fixVersion = " + release);
 
         Multiset<String> byPriority = TreeMultiset.create();
         Multiset<String> byComponent = HashMultiset.create();
@@ -296,7 +293,7 @@ public class Monitor {
         out.println("Notes generated: " + new Date());
         out.println();
 
-        List<Issue> regularIssues = getParentIssues(searchCli, issueCli, "project = JDK" +
+        List<Issue> regularIssues = Issues.getParentIssues(searchCli, issueCli, "project = JDK" +
                 " AND (status in (Closed, Resolved))" +
                 " AND (resolution not in (\"Won't Fix\", Duplicate, \"Cannot Reproduce\", \"Not an Issue\", Withdrawn))" +
                 " AND (labels not in (release-note, testbug, openjdk-na, testbug) OR labels is EMPTY)" +
@@ -307,7 +304,7 @@ public class Monitor {
 
         out.println();
 
-        List<Issue> jepIssues = getParentIssues(searchCli, issueCli, "project = JDK AND issuetype = JEP" +
+        List<Issue> jepIssues = Issues.getParentIssues(searchCli, issueCli, "project = JDK AND issuetype = JEP" +
                 " AND fixVersion = " + release + "" +
                 " ORDER BY summary ASC");
 
@@ -410,7 +407,7 @@ public class Monitor {
         out.println("Report generated: " + new Date());
         out.println();
 
-        List<Issue> issues = getBasicIssues(searchCli, filter.getJql());
+        List<Issue> issues = Issues.getBasicIssues(searchCli, filter.getJql());
 
         out.println();
         out.println("Filter: " + filter.getName());
@@ -422,85 +419,6 @@ public class Monitor {
         for (Issue i : issues) {
             out.println("  " + i.getKey() + ": " + i.getSummary());
         }
-    }
-
-    private List<Issue> getIssues(SearchRestClient searchCli, IssueRestClient cli, String query) {
-        List<Issue> basicIssues = getBasicIssues(searchCli, query);
-
-        List<RetryableIssuePromise> batch = new ArrayList<>();
-        for (Issue i : basicIssues) {
-            batch.add(new RetryableIssuePromise(cli, i.getKey()));
-        }
-
-        int count = 0;
-        List<Issue> issues = new ArrayList<>();
-        for (RetryableIssuePromise ip : batch) {
-            issues.add(ip.claim());
-            if ((++count % 50) == 0) {
-                System.out.println("Resolved " + issues.size() + "/" + basicIssues.size() + " matching issues.");
-            }
-        }
-        System.out.println("Resolved " + issues.size() + "/" + basicIssues.size() + " matching issues.");
-
-        return issues;
-    }
-
-    private List<Issue> getParentIssues(SearchRestClient searchCli, IssueRestClient cli, String query) {
-        List<Issue> basicIssues = getBasicIssues(searchCli, query);
-
-        List<RetryableIssuePromise> layer1 = new ArrayList<>();
-        for (Issue i : basicIssues) {
-            layer1.add(new RetryableIssuePromise(cli, i.getKey()));
-        }
-
-        int c1 = 0;
-        List<RetryableIssuePromise> layer2 = new ArrayList<>();
-        for (RetryableIssuePromise issue1 : layer1) {
-            RetryableIssuePromise parent = Accessors.getParent(cli, issue1.claim());
-            layer2.add(parent != null ? parent : issue1);
-            if ((++c1 % 50) == 0) {
-                System.out.println("Resolved " + layer2.size() + "/" + basicIssues.size() + " matching issues.");
-            }
-        }
-        System.out.println("Resolved " + layer2.size() + "/" + basicIssues.size() + " matching issues.");
-
-        int c2 = 0;
-        List<Issue> issues = new ArrayList<>();
-        for (RetryableIssuePromise issue2 : layer2) {
-            issues.add(issue2.claim());
-            if ((++c2 % 50) == 0) {
-                System.out.println("Resolved parents for " + issues.size() + "/" + basicIssues.size() + " matching issues.");
-            }
-        }
-        System.out.println("Resolved parents for " + issues.size() + "/" + basicIssues.size() + " matching issues.");
-
-        return issues;
-    }
-
-    private List<Issue> getBasicIssues(SearchRestClient searchCli, String query) {
-        List<Issue> issues = new ArrayList<>();
-
-        System.out.println("JIRA Query: " + WordUtils.wrap(query, 80));
-        System.out.println();
-
-        SearchResult poll = new RetryableSearchPromise(searchCli, query, 1, 0).claim();
-        int total = poll.getTotal();
-
-        List<RetryableSearchPromise> searchPromises = new ArrayList<>();
-        for (int cnt = 0; cnt < total; cnt += PAGE_SIZE) {
-            searchPromises.add(new RetryableSearchPromise(searchCli, query, PAGE_SIZE, cnt));
-            System.out.println("Acquiring page [" + cnt + ", " + (cnt + PAGE_SIZE) + "] (total: " + total + ")");
-        }
-
-        for (RetryableSearchPromise sp : searchPromises) {
-            SearchResult found = sp.claim();
-            for (Issue i : found.getIssues()) {
-                issues.add(i);
-            }
-            System.out.println("Loaded " + issues.size() + "/" + total + " matching issues.");
-        }
-
-        return issues;
     }
 
     private TrackedIssue parseIssue(Issue issue, IssueRestClient cli) {
