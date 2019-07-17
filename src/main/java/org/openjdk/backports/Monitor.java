@@ -410,7 +410,7 @@ public class Monitor {
         out.println("Report generated: " + new Date());
         out.println();
 
-        List<Issue> issues = getBasicIssues(searchCli, issueCli, filter.getJql());
+        List<Issue> issues = getBasicIssues(searchCli, filter.getJql());
 
         out.println();
         out.println("Filter: " + filter.getName());
@@ -425,7 +425,7 @@ public class Monitor {
     }
 
     private List<Issue> getIssues(SearchRestClient searchCli, IssueRestClient cli, String query) {
-        List<Issue> basicIssues = getBasicIssues(searchCli, cli, query);
+        List<Issue> basicIssues = getBasicIssues(searchCli, query);
 
         List<RetryableIssuePromise> batch = new ArrayList<>();
         for (Issue i : basicIssues) {
@@ -446,7 +446,7 @@ public class Monitor {
     }
 
     private List<Issue> getParentIssues(SearchRestClient searchCli, IssueRestClient cli, String query) {
-        List<Issue> basicIssues = getBasicIssues(searchCli, cli, query);
+        List<Issue> basicIssues = getBasicIssues(searchCli, query);
 
         List<RetryableIssuePromise> layer1 = new ArrayList<>();
         for (Issue i : basicIssues) {
@@ -477,7 +477,7 @@ public class Monitor {
         return issues;
     }
 
-    private List<Issue> getBasicIssues(SearchRestClient searchCli, IssueRestClient cli, String query) {
+    private List<Issue> getBasicIssues(SearchRestClient searchCli, String query) {
         List<Issue> issues = new ArrayList<>();
 
         System.out.println("JIRA Query: " + WordUtils.wrap(query, 80));
