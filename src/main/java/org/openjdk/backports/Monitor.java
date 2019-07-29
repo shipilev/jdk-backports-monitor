@@ -400,6 +400,10 @@ public class Monitor {
         }
     }
 
+    private static <T> Iterable<T> orEmpty(Iterable<T> it) {
+        return (it != null) ? it : Collections.emptyList();
+    }
+
     private TrackedIssue parseIssue(Issue issue) {
         Actions actions = new Actions();
 
@@ -431,7 +435,7 @@ public class Monitor {
         Set<Integer> affectedShenandoah = new HashSet<>();
         Set<Integer> affectedAArch64 = new HashSet<>();
 
-        for (Version v : issue.getAffectedVersions()) {
+        for (Version v : orEmpty(issue.getAffectedVersions())) {
             String verName = v.getName();
 
             int ver = Parsers.parseVersion(verName);
@@ -458,7 +462,7 @@ public class Monitor {
         }
 
         List<RetryableIssuePromise> links = new ArrayList<>();
-        for (IssueLink link : issue.getIssueLinks()) {
+        for (IssueLink link : orEmpty(issue.getIssueLinks())) {
             if (link.getIssueLinkType().getName().equals("Backport")) {
                 String linkKey = link.getTargetIssueKey();
                 links.add(new RetryableIssuePromise(issueCli, linkKey));
