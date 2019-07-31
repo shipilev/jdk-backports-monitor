@@ -47,6 +47,15 @@ public class Parsers {
             return -1;
         }
 
+        if (version.endsWith("-pool")) {
+            int dashIdx = version.lastIndexOf("-");
+            try {
+                return Integer.parseInt(version.substring(0, dashIdx));
+            } catch (Exception e) {
+                return -1;
+            }
+        }
+
         int dotIdx = version.indexOf(".");
         if (dotIdx != -1) {
             try {

@@ -22,18 +22,23 @@ public class ParserTest {
         Assert.assertEquals(10, Parsers.parseVersion("10"));
         Assert.assertEquals(10, Parsers.parseVersion("10.0.2"));
         Assert.assertEquals(10, Parsers.parseVersion("10u-open"));
+        Assert.assertEquals(10, Parsers.parseVersion("10-pool"));
 
         Assert.assertEquals(11, Parsers.parseVersion("11"));
         Assert.assertEquals(11, Parsers.parseVersion("11.0.3"));
         Assert.assertEquals(11, Parsers.parseVersion("11.0.3-oracle"));
+        Assert.assertEquals(11, Parsers.parseVersion("11-pool"));
 
         Assert.assertEquals(12, Parsers.parseVersion("12"));
         Assert.assertEquals(12, Parsers.parseVersion("12.0.2"));
+        Assert.assertEquals(12, Parsers.parseVersion("12-pool"));
 
         Assert.assertEquals(13, Parsers.parseVersion("13"));
         Assert.assertEquals(13, Parsers.parseVersion("13.0.1"));
+        Assert.assertEquals(13, Parsers.parseVersion("13-pool"));
 
         Assert.assertEquals(14, Parsers.parseVersion("14"));
+        Assert.assertEquals(14, Parsers.parseVersion("14-pool"));
 
         Assert.assertEquals(7, Parsers.parseVersion("7"));
         Assert.assertEquals(7, Parsers.parseVersion("7u40"));
@@ -44,9 +49,11 @@ public class ParserTest {
         Assert.assertEquals(8, Parsers.parseVersion("8"));
         Assert.assertEquals(8, Parsers.parseVersion("8u40"));
         Assert.assertEquals(8, Parsers.parseVersion("8u111"));
+        Assert.assertEquals(8, Parsers.parseVersion("8-pool"));
 
         Assert.assertEquals(9, Parsers.parseVersion("9"));
         Assert.assertEquals(9, Parsers.parseVersion("9.0.4"));
+        Assert.assertEquals(9, Parsers.parseVersion("9-pool"));
 
         Assert.assertEquals(6, Parsers.parseVersion("OpenJDK6"));
         Assert.assertEquals(7, Parsers.parseVersion("openjdk7u"));
