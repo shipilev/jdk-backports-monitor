@@ -35,6 +35,7 @@ public class Options {
     private String pushesReport;
     private String pendingPushReport;
     private String releaseNotesReport;
+    private String affiliationReport;
     private String issueReport;
     private Long filterReport;
     private String hgRepos;
@@ -77,6 +78,8 @@ public class Options {
 
         OptionSpec<Void> optIncludeDownstream = parser.accepts("include-downstream", "Include downstream repos in reports");
 
+        OptionSpec<Void> optAffiliationReport = parser.accepts("affiliation", "Create affiliation report");
+
         parser.accepts("h", "Print this help.");
 
         OptionSet set;
@@ -101,6 +104,7 @@ public class Options {
         issueReport = optIssueReport.value(set);
         filterReport = optFilterReport.value(set);
         releaseNotesReport = optReleaseNotesReport.value(set);
+        affiliationReport = set.has(optAffiliationReport) ? "yes" : "no";
         hgRepos = optUpdateHgDB.value(set);
         minLevel = optMinLevel.value(set);
         includeDownstream = set.has(optIncludeDownstream);
@@ -130,6 +134,10 @@ public class Options {
 
     public String getIssueReport() {
         return issueReport;
+    }
+
+    public String getAffiliationReport() {
+        return affiliationReport;
     }
 
     public Long getFilterReport() {

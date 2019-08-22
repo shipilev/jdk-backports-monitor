@@ -27,6 +27,7 @@ package org.openjdk.backports;
 import com.atlassian.jira.rest.client.api.*;
 import com.atlassian.jira.rest.client.api.domain.*;
 import com.google.common.collect.*;
+import org.openjdk.backports.census.Census;
 import org.openjdk.backports.hg.HgDB;
 import org.openjdk.backports.hg.HgRecord;
 import org.openjdk.backports.jira.*;
@@ -397,6 +398,36 @@ public class Monitor {
 
         for (Issue i : issues) {
             out.println("  " + i.getKey() + ": " + i.getSummary());
+        }
+    }
+
+    public void runAffiliationReport() throws URISyntaxException {
+        out.println("AFFILIATION REPORT");
+        printMajorDelimiterLine(out);
+        out.println();
+        out.println("Report generated: " + new Date());
+        out.println();
+
+        List<String> userIds = Census.userIds();
+
+        // Start async resolve
+        for (String uid : userIds) {
+            users.getUserAsync(uid);
+        }
+
+        // Get all data and compute column widths
+        int maxUid = 0;
+        for (String uid : userIds) {
+            users.getDisplayName(uid);
+            users.getAffiliation(uid);
+            maxUid = Math.max(maxUid, uid.length());
+        }
+
+        int maxDisplayName = users.maxDisplayName();
+        int maxAffiliation = users.maxAffiliation();
+        for (String uid : userIds) {
+            out.printf("%" + maxUid + "s, %" + maxDisplayName + "s, %" + maxAffiliation + "s%n",
+                    uid, users.getDisplayName(uid), users.getAffiliation(uid));
         }
     }
 

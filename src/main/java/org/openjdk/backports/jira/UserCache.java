@@ -43,8 +43,18 @@ public class UserCache {
         this.affiliations = new HashMap<>();
     }
 
+    public void getUserAsync(String id) {
+        client.getUser(id).done(u -> users.put(id, u));
+    }
+
     public User getUser(String id) {
-        return users.computeIfAbsent(id, u -> client.getUser(u).claim());
+        return users.computeIfAbsent(id, u -> {
+            try {
+                return client.getUser(u).claim();
+            } catch (Exception e) {
+                return client.getUser("duke").claim();
+            }
+        });
     }
 
     public String getDisplayName(String id) {
@@ -73,4 +83,5 @@ public class UserCache {
         }
         return r;
     }
+
 }

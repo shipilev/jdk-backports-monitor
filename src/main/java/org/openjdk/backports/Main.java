@@ -90,6 +90,10 @@ public class Main {
                     if (options.getReleaseNotesReport() != null) {
                         m.runReleaseNotesReport(options.getReleaseNotesReport());
                     }
+
+                    if (options.getAffiliationReport() != null) {
+                        m.runAffiliationReport();
+                    }
                 } finally {
                     if (restClient != null) {
                         restClient.close();
