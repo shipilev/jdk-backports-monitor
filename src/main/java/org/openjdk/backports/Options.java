@@ -104,7 +104,7 @@ public class Options {
         issueReport = optIssueReport.value(set);
         filterReport = optFilterReport.value(set);
         releaseNotesReport = optReleaseNotesReport.value(set);
-        affiliationReport = set.has(optAffiliationReport) ? "yes" : "no";
+        affiliationReport = set.has(optAffiliationReport) ? "yes" : null;
         hgRepos = optUpdateHgDB.value(set);
         minLevel = optMinLevel.value(set);
         includeDownstream = set.has(optIncludeDownstream);
