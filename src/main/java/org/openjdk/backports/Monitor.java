@@ -604,26 +604,6 @@ public class Monitor {
                         }
                         break;
                     }
-                    case 12: {
-                        if (issue.getLabels().contains("jdk12u-fix-yes")) {
-                            actions.update(Actionable.PUSHABLE, IMPORTANCE_STS_BACKPORT);
-                            pw.println(MSG_APPROVED + ": jdk12u-fix-yes is set");
-                        } else if (issue.getLabels().contains("jdk12u-fix-no")) {
-                            pw.println("REJECTED: jdk12u-fix-no is set");
-                        } else if (issue.getLabels().contains("jdk12u-fix-request")) {
-                            pw.println("Requested: jdk12u-fix-request is set");
-                            actions.update(Actionable.REQUESTED);
-                        } else if (!affectedReleases.contains(12)) {
-                            pw.println(MSG_NOT_AFFECTED);
-                        } else if (daysAgo >= 0 && daysAgo < BAKE_TIME) {
-                            actions.update(Actionable.WAITING);
-                            pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
-                        } else {
-                            actions.update(Actionable.MISSING, IMPORTANCE_STS_BACKPORT);
-                            pw.println(MSG_MISSING);
-                        }
-                        break;
-                    }
                     case 13: {
                         if (issue.getLabels().contains("jdk13u-fix-yes")) {
                             actions.update(Actionable.PUSHABLE, IMPORTANCE_STS_BACKPORT);
@@ -772,6 +752,7 @@ public class Monitor {
             switch (fixVersion) {
                 case "11.0.1":
                 case "12.0.1":
+                case "13.0.1":
                     // Oh yeah, issues would have these versions set as "fix", but there would
                     // be no public pushes until CPU releases. Awesome.
                     pushURL = "<'kinda open, but not quite' backport>";
