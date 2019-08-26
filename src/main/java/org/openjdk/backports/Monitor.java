@@ -49,7 +49,7 @@ public class Monitor {
 
     private static final int VER_INDENT = 9; // spaces
 
-    private static final int[] VERSIONS_TO_CARE_FOR = {14, 13, 11, 8, 7};
+    private static final int[] VERSIONS_TO_CARE_FOR = {14, 11, 8, 7};
 
     // LTS backports are most important, then merges, then STS backports
     private static int IMPORTANCE_LTS_BACKPORT_CRITICAL = 20;
