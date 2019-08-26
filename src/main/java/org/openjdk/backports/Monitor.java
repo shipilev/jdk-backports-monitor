@@ -184,9 +184,11 @@ public class Monitor {
 
         List<Issue> issues = jiraIssues.getIssues("project = JDK AND fixVersion = " + release);
 
+        Comparator<Issue> defaultSort = Comparator.<Issue, String>comparing(i -> i.getSummary().trim().toLowerCase());
+
         Multiset<String> byPriority = TreeMultiset.create();
         Multiset<String> byComponent = HashMultiset.create();
-        Multimap<String, Issue> byCommitter = TreeMultimap.create(String::compareTo, Comparator.comparing(BasicIssue::getKey));
+        Multimap<String, Issue> byCommitter = TreeMultimap.create(String::compareTo, defaultSort);
         Set<Issue> byTime = new TreeSet<>(Comparator.comparing(Accessors::getPushSecondsAgo).thenComparing(Issue::getKey));
 
         int filteredSyncs = 0;
