@@ -189,7 +189,7 @@ public class Monitor {
         Multiset<String> byPriority = TreeMultiset.create();
         Multiset<String> byComponent = HashMultiset.create();
         Multimap<String, Issue> byCommitter = TreeMultimap.create(String::compareTo, defaultSort);
-        Set<Issue> byTime = new TreeSet<>(Comparator.comparing(Accessors::getPushSecondsAgo).thenComparing(Issue::getKey));
+        Set<Issue> byTime = new TreeSet<>(Comparator.comparing(Accessors::getPushSecondsAgo).thenComparing(Comparator.comparing(Issue::getKey).reversed()));
 
         int filteredSyncs = 0;
 
