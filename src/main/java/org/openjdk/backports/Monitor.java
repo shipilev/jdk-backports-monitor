@@ -59,6 +59,10 @@ public class Monitor {
     private static int IMPORTANCE_MERGE        = 3;
     private static int IMPORTANCE_STS_BACKPORT = 1;
 
+    // Sort issues by synopsis, alphabetically. This would cluster similar issues
+    // together, even when they are separated by large difference in IDs.
+    private static final Comparator<Issue> DEFAULT_ISSUE_SORT = Comparator.comparing(i -> i.getSummary().trim().toLowerCase());
+
     private final UserCache users;
     private final HgDB hgDB;
     private final boolean includeDownstream;
@@ -186,11 +190,9 @@ public class Monitor {
 
         List<Issue> issues = jiraIssues.getIssues("project = JDK AND fixVersion = " + release);
 
-        Comparator<Issue> defaultSort = Comparator.<Issue, String>comparing(i -> i.getSummary().trim().toLowerCase());
-
         Multiset<String> byPriority = TreeMultiset.create();
         Multiset<String> byComponent = HashMultiset.create();
-        Multimap<String, Issue> byCommitter = TreeMultimap.create(String::compareTo, defaultSort);
+        Multimap<String, Issue> byCommitter = TreeMultimap.create(String::compareTo, DEFAULT_ISSUE_SORT);
         Set<Issue> byTime = new TreeSet<>(Comparator.comparing(Accessors::getPushSecondsAgo).thenComparing(Comparator.comparing(Issue::getKey).reversed()));
 
         int filteredSyncs = 0;
@@ -297,9 +299,7 @@ public class Monitor {
                 " AND fixVersion = " + release + "" +
                 " ORDER BY summary ASC");
 
-        Comparator<Issue> defaultSort = Comparator.<Issue, String>comparing(i -> i.getSummary().trim().toLowerCase());
-
-        Multimap<String, Issue> byComponent = TreeMultimap.create(String::compareTo, defaultSort);
+        Multimap<String, Issue> byComponent = TreeMultimap.create(String::compareTo, DEFAULT_ISSUE_SORT);
 
         int filteredSyncs = 0;
 
@@ -399,6 +399,8 @@ public class Monitor {
         out.println();
         out.println("Hint: Prefix bug IDs with " + Main.JIRA_URL + "browse/ to reach the relevant JIRA entry.");
         out.println();
+
+        Collections.sort(issues, DEFAULT_ISSUE_SORT);
 
         for (Issue i : issues) {
             out.println("  " + i.getKey() + ": " + i.getSummary());
