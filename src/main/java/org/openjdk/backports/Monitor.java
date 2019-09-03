@@ -478,7 +478,9 @@ public class Monitor {
             int verSh = Parsers.parseVersionShenandoah(verName);
             int verAarch64 = Parsers.parseVersionAArch64(verName);
 
-            if (ver > 0) {
+            if (ver == 0) {
+                // Special case: odd version, ignore it
+            } else if (ver > 0) {
                 affectedReleases.add(ver);
             } else if (verSh > 0) {
                 affectedShenandoah.add(verSh);
