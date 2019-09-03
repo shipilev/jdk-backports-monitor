@@ -80,6 +80,24 @@ public class Parsers {
         }
     }
 
+    public static int parseSubversion(String version) {
+        if (version.startsWith("openjdk")) {
+            return -1;
+        }
+
+        // Only for 8u now.
+        int uIdx = version.indexOf("u");
+        if (uIdx != -1) {
+            try {
+                return Integer.parseInt(version.substring(uIdx+1));
+            } catch (Exception e) {
+                e.printStackTrace();
+                return -1;
+            }
+        }
+        return -1;
+    }
+
     public static int parseVersionShenandoah(String version) {
         if (!version.endsWith("-shenandoah")) {
             return -1;

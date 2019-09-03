@@ -42,6 +42,7 @@ public class Monitor {
     private static final String MSG_NOT_AFFECTED = "Not affected";
     private static final String MSG_BAKING = "WAITING for patch to bake a little";
     private static final String MSG_MISSING = "MISSING";
+    private static final String MSG_MISSING_ORACLE = "MISSING (+ on Oracle backport list)";
     private static final String MSG_APPROVED = "APPROVED";
     private static final String MSG_WARNING = "WARNING";
 
@@ -52,7 +53,8 @@ public class Monitor {
     private static final int[] VERSIONS_TO_CARE_FOR = {14, 11, 8};
 
     // LTS backports are most important, then merges, then STS backports
-    private static int IMPORTANCE_LTS_BACKPORT_CRITICAL = 20;
+    private static int IMPORTANCE_LTS_BACKPORT_CRITICAL = 30;
+    private static int IMPORTANCE_LTS_BACKPORT_ORACLE = 20;
     private static int IMPORTANCE_LTS_BACKPORT = 10;
     private static int IMPORTANCE_MERGE        = 3;
     private static int IMPORTANCE_STS_BACKPORT = 1;
@@ -455,6 +457,7 @@ public class Monitor {
         pw.println();
 
         SortedMap<Integer, List<String>> results = new TreeMap<>();
+        Set<Integer> oracleBackports = new HashSet<>();
 
         pw.println("  Original Fix:");
 
@@ -502,7 +505,9 @@ public class Monitor {
             }
         }
         for (RetryableIssuePromise p : links) {
-            recordIssue(results, p.claim(), true);
+            Issue subIssue = p.claim();
+            recordIssue(results, subIssue, true);
+            recordOracleStatus(oracleBackports, subIssue);
         }
 
         int origRel = Parsers.parseVersion(Accessors.getFixVersion(issue));
@@ -574,6 +579,9 @@ public class Monitor {
                         } else if (daysAgo >= 0 && daysAgo < BAKE_TIME) {
                             actions.update(Actionable.WAITING);
                             pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
+                        } else if (oracleBackports.contains(8)) {
+                            actions.update(Actionable.MISSING, IMPORTANCE_LTS_BACKPORT_ORACLE);
+                            pw.println(MSG_MISSING_ORACLE);
                         } else {
                             actions.update(Actionable.MISSING, IMPORTANCE_LTS_BACKPORT);
                             pw.println(MSG_MISSING);
@@ -600,6 +608,9 @@ public class Monitor {
                         } else if (daysAgo >= 0 && daysAgo < BAKE_TIME) {
                             actions.update(Actionable.WAITING);
                             pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
+                        } else if (oracleBackports.contains(11)) {
+                            actions.update(Actionable.MISSING, IMPORTANCE_LTS_BACKPORT_ORACLE);
+                            pw.println(MSG_MISSING_ORACLE);
                         } else {
                             actions.update(Actionable.MISSING, IMPORTANCE_LTS_BACKPORT);
                             pw.println(MSG_MISSING);
@@ -740,6 +751,24 @@ public class Monitor {
 
     private void printMajorDelimiterLine(PrintStream pw) {
         pw.println("===================================================================================================================");
+    }
+
+    private void recordOracleStatus(Set<Integer> results, Issue issue) {
+        String fixVersion = Accessors.getFixVersion(issue);
+
+        int ver = Parsers.parseVersion(fixVersion);
+        switch (ver) {
+            case 8:
+                if (Parsers.parseSubversion(fixVersion) <= 212) return;
+                break;
+            case 11:
+                if (!fixVersion.contains("-oracle")) return;
+                break;
+            default:
+                return;
+        }
+
+        results.add(ver);
     }
 
     private void recordIssue(Map<Integer, List<String>> results, Issue issue, boolean bypassEmpty) {

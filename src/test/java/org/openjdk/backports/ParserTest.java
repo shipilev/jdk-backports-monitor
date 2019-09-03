@@ -63,6 +63,28 @@ public class ParserTest {
         Assert.assertEquals(0, Parsers.parseVersion("solaris_10u7"));
     }
 
+    @Test
+    public void testParseSubversion() {
+        Assert.assertEquals(-1,  Parsers.parseSubversion("8-shenandoah"));
+        Assert.assertEquals(-1,  Parsers.parseSubversion("11-shenandoah"));
+        Assert.assertEquals(-1,  Parsers.parseSubversion("8-aarch64"));
+        Assert.assertEquals(-1,  Parsers.parseSubversion("11.0.3"));
+
+        Assert.assertEquals(-1,  Parsers.parseSubversion("7"));
+        Assert.assertEquals(40,  Parsers.parseSubversion("7u40"));
+        Assert.assertEquals(231, Parsers.parseSubversion("7u231"));
+
+        Assert.assertEquals(-1,  Parsers.parseSubversion("8"));
+        Assert.assertEquals(40,  Parsers.parseSubversion("8u40"));
+        Assert.assertEquals(111, Parsers.parseSubversion("8u111"));
+        Assert.assertEquals(-1,  Parsers.parseSubversion("8-pool"));
+
+        Assert.assertEquals(-1,  Parsers.parseSubversion("OpenJDK6"));
+        Assert.assertEquals(-1,  Parsers.parseSubversion("openjdk7u"));
+        Assert.assertEquals(-1,  Parsers.parseSubversion("openjdk8u"));
+        Assert.assertEquals(-1,  Parsers.parseSubversion("openjdk8u212"));
+    }
+
     static String SAMPLE_COMMENT = "URL: http://hg.openjdk.java.net/jdk/jdk/rev/66f5241da404\n" +
             "User: shade\n" +
             "Date: 2019-04-15 16:22:25 +0000";
