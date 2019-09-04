@@ -107,22 +107,21 @@ public class Monitor {
 
         SortedSet<TrackedIssue> issues = new TreeSet<>();
         for (Issue i : found) {
-            issues.add(parseIssue(i));
+            TrackedIssue trackedIssue = parseIssue(i);
+            if (trackedIssue.getActions().actionable.ordinal() >= minLevel.ordinal()) {
+                issues.add(trackedIssue);
+            }
         }
-
         out.println();
 
-        int count = 0;
         printDelimiterLine(out);
         for (TrackedIssue i : issues) {
-            if (i.getActions().actionable.ordinal() < minLevel.ordinal()) continue;
             out.println(i.getOutput());
             printDelimiterLine(out);
-            count++;
         }
 
         out.println();
-        out.println("" + count + " issues shown.");
+        out.println("" + issues.size() + " issues shown.");
     }
 
     public void runIssueReport(String issueId) throws URISyntaxException {
