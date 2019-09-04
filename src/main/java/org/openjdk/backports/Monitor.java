@@ -530,7 +530,7 @@ public class Monitor {
         {
             boolean foundInPublic = false;
 
-            for (String repo : new String[] {"jdk/jdk", "jdk-updates/jdk11u", "jdk8u/jdk8u"}) {
+            for (String repo : new String[] {"jdk/jdk", "jdk-updates/jdk11u", "jdk8u/jdk8u", "jdk7u/jdk7u"}) {
                 if (!hgDB.hasRepo(repo)) {
                     pw.println("  " + MSG_WARNING + ": " + repo + " repository is not available to check changeset");
                     pw.println();
