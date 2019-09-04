@@ -26,13 +26,14 @@ package org.openjdk.backports.hg;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class HgDB {
 
     private final Set<HgRecord> records;
 
     public HgDB() {
-        this.records = new HashSet<>();
+        this.records = Collections.newSetFromMap(new ConcurrentHashMap<>());
     }
 
     public void load(String hgRepos) {
@@ -42,39 +43,40 @@ public class HgDB {
             return;
         }
 
-        for (String repoPath : hgRepos.split(",")) {
-            pw.print("Loading changeset metadata from " + repoPath + "... ");
-
-            String repo = "N/A";
-
-            try {
-                List<String> lines = exec("hg", "paths", "-R", repoPath);
-                for (String line : lines) {
-                    if (line.startsWith("default = ")) {
-                        String[] split = line.split(" = ");
-                        repo = split[1];
-                    }
-                }
-            } catch (Exception e) {
-                pw.println("Cannot figure out repo url");
-            }
-
-            try {
-                List<String> lines = exec("hg", "log", "-M", "-R", repoPath, "-T",
-                        "{node|short}BACKPORT-SEPARATOR{desc|addbreaks|splitlines}BACKPORT-SEPARATOR{author}\n");
-                for (String line : lines) {
-                    String[] split = line.split("BACKPORT-SEPARATOR");
-                    records.add(new HgRecord(repo, split[0], split[1], split[2]));
-                }
-
-                pw.println(" " + lines.size() + " loaded.");
-            } catch (Exception e) {
-                pw.println("Cannot get changeset log");
-            }
-        }
+        Arrays.stream(hgRepos.split(",")).parallel().forEach(r -> loadRepo(pw, r));
 
         pw.println("HG DB has " + records.size() + " records.");
         pw.println();
+    }
+
+    private void loadRepo(PrintStream pw, String repoPath) {
+        String repo = "N/A";
+        try {
+            List<String> lines = exec("hg", "paths", "-R", repoPath);
+            for (String line : lines) {
+                if (line.startsWith("default = ")) {
+                    String[] split = line.split(" = ");
+                    repo = split[1];
+                }
+            }
+        } catch (Exception e) {
+            pw.println("Cannot figure out repo url for " + repoPath);
+            return;
+        }
+
+        try {
+            List<String> lines = exec("hg", "log", "-M", "-R", repoPath, "-T",
+                    "{node|short}BACKPORT-SEPARATOR{desc|addbreaks|splitlines}BACKPORT-SEPARATOR{author}\n");
+            for (String line : lines) {
+                String[] split = line.split("BACKPORT-SEPARATOR");
+                records.add(new HgRecord(repo, split[0], split[1], split[2]));
+            }
+
+            pw.println("Loaded " +  lines.size() + " changesets from " + repoPath);
+        } catch (Exception e) {
+            pw.println("Cannot get changeset log for " + repoPath);
+            return;
+        }
     }
 
     private List<String> exec(String... command) throws IOException, InterruptedException {
@@ -109,10 +111,6 @@ public class HgDB {
             }
         }
         return result;
-    }
-
-    public Iterable<HgRecord> records() {
-        return records;
     }
 
 }
