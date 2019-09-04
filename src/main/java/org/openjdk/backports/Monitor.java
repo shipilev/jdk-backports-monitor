@@ -36,6 +36,7 @@ import java.io.*;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class Monitor {
 
@@ -104,15 +105,15 @@ public class Monitor {
                 " AND (status in (Closed, Resolved))" +
                 " AND (resolution not in (\"Won't Fix\", Duplicate, \"Cannot Reproduce\", \"Not an Issue\", Withdrawn))" +
                 " AND type != Backport");
-
-        SortedSet<TrackedIssue> issues = new TreeSet<>();
-        for (Issue i : found) {
-            TrackedIssue trackedIssue = parseIssue(i);
-            if (trackedIssue.getActions().actionable.ordinal() >= minLevel.ordinal()) {
-                issues.add(trackedIssue);
-            }
-        }
         out.println();
+
+        List<TrackedIssue> issues = found
+                .parallelStream()
+                .map(this::parseIssue)
+                .filter(ti -> ti.getActions().actionable.ordinal() >= minLevel.ordinal())
+                .collect(Collectors.toList());
+
+        Collections.sort(issues);
 
         printDelimiterLine(out);
         for (TrackedIssue i : issues) {
