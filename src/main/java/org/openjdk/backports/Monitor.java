@@ -346,19 +346,20 @@ public class Monitor {
 
         Multimap<String, Issue> byComponent = TreeMultimap.create(String::compareTo, DEFAULT_ISSUE_SORT);
 
-        int filteredSyncs = 0;
+        SortedSet<Issue> noChangesets = new TreeSet<>(DEFAULT_ISSUE_SORT);
 
         for (Issue issue : regularIssues) {
             String committer = Accessors.getPushUser(issue);
-            if (!committer.equals("N/A")) { // Skip automatic syncs
-                byComponent.put(Accessors.extractComponents(issue), issue);
+            if (committer.equals("N/A")) {
+                // These are pushes to internal repos
+                noChangesets.add(issue);
             } else {
-                filteredSyncs++;
+                byComponent.put(Accessors.extractComponents(issue), issue);
             }
         }
 
         out.println();
-        out.println("Filtered " + filteredSyncs + " automatic syncs, " + byComponent.size() + " pushes left.");
+        out.println("Filtered " + noChangesets.size() + " issues without pushes, " + byComponent.size() + " pushes left.");
         out.println();
 
         out.println("Hint: Prefix bug IDs with " + Main.JIRA_URL + "browse/ to reach the relevant JIRA entry.");
@@ -421,6 +422,14 @@ public class Monitor {
                 out.println("  " + i.getKey() + ": " + i.getSummary());
             }
             out.println();
+        }
+        out.println();
+
+        out.println("NO CHANGESETS RECORDED:");
+        out.println();
+        for (Issue i : noChangesets) {
+            out.printf("  %s: %s%n",
+                    i.getKey(), i.getSummary());
         }
         out.println();
     }
