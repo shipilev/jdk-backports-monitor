@@ -227,9 +227,7 @@ public class Monitor {
         out.println();
 
         out.println("Distribution by components:");
-        for (String comp : Multisets.copyHighestCountFirst(byComponent).elementSet()) {
-            out.printf("   %3d: %s%n", byComponent.count(comp), comp);
-        }
+        printByComponent(out, byComponent);
         out.println();
 
         out.println("Distribution by email/name:");
@@ -296,6 +294,30 @@ public class Monitor {
             for (String committer : Multisets.copyHighestCountFirst(committers).elementSet()) {
                 String percCommitter = String.format("(%.1f%%)", 100.0 * committers.count(committer) / total);
                 out.printf("         %3d %7s: %s%n", committers.count(committer), percCommitter, committer);
+            }
+        }
+    }
+
+    private void printByComponent(PrintStream out, Multiset<String> byComponent) {
+        Multiset<String> firsts = TreeMultiset.create();
+        Map<String, Multiset<String>> seconds = new HashMap<>();
+
+        for (String component : byComponent.elementSet()) {
+            String first = component.split("/")[0];
+            Multiset<String> bu = seconds.computeIfAbsent(first, k -> HashMultiset.create());
+            bu.add(component, byComponent.count(component));
+            firsts.add(first);
+        }
+
+        int total = byComponent.size();
+        out.printf("   %3d: <total issues>%n", total);
+        for (String first : Multisets.copyHighestCountFirst(firsts).elementSet()) {
+            String percFirst = String.format("(%.1f%%)", 100.0 * firsts.count(first) / total);
+            out.printf("      %3d %7s: %s%n", firsts.count(first), percFirst, first);
+            Multiset<String> ms = seconds.get(first);
+            for (String component : Multisets.copyHighestCountFirst(ms).elementSet()) {
+                String percComponent = String.format("(%.1f%%)", 100.0 * ms.count(component) / total);
+                out.printf("         %3d %7s: %s%n", ms.count(component), percComponent, component);
             }
         }
     }
