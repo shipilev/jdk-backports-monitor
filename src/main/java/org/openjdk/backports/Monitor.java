@@ -67,12 +67,13 @@ public class Monitor {
     private final UserCache users;
     private final HgDB hgDB;
     private final boolean includeDownstream;
+    private final boolean directOnly;
     private final SearchRestClient searchCli;
     private final IssueRestClient issueCli;
     private final PrintStream out;
     private final Issues jiraIssues;
 
-    public Monitor(JiraRestClient restClient, HgDB hgDB, boolean includeDownstream) {
+    public Monitor(JiraRestClient restClient, HgDB hgDB, boolean includeDownstream, boolean directOnly) {
         this.hgDB = hgDB;
         this.out = System.out;
         this.searchCli = restClient.getSearchClient();
@@ -80,6 +81,7 @@ public class Monitor {
         this.jiraIssues = new Issues(out, searchCli, issueCli);
         this.users = new UserCache(restClient.getUserClient());
         this.includeDownstream = includeDownstream;
+        this.directOnly = directOnly;
     }
 
     public void runLabelReport(String label, Actionable minLevel) throws URISyntaxException {
@@ -188,7 +190,12 @@ public class Monitor {
         out.println("Report generated: " + new Date());
         out.println();
 
-        List<Issue> issues = jiraIssues.getIssues("project = JDK AND fixVersion = " + release);
+        List<Issue> issues = jiraIssues.getIssues("project = JDK" +
+                " AND (status in (Closed, Resolved))" +
+                " AND (resolution not in (\"Won't Fix\", Duplicate, \"Cannot Reproduce\", \"Not an Issue\", Withdrawn, Other))" +
+                (directOnly ? " AND type != Backport" : "") +
+                " AND (issuetype != CSR)" +
+                " AND fixVersion = " + release);
 
         Comparator<Issue> chronologicalCompare = Comparator.comparing(Accessors::getPushSecondsAgo).thenComparing(Comparator.comparing(Issue::getKey).reversed());
 

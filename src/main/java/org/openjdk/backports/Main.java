@@ -65,7 +65,7 @@ public class Main {
                 try {
                     restClient = Connect.getJiraRestClient(JIRA_URL, user, pass);
 
-                    Monitor m = new Monitor(restClient, hgDB, options.includeDownstream());
+                    Monitor m = new Monitor(restClient, hgDB, options.includeDownstream(), options.directOnly());
 
                     if (options.getLabelReport() != null) {
                         m.runLabelReport(options.getLabelReport(), options.getMinLevel());

@@ -41,6 +41,7 @@ public class Options {
     private String hgRepos;
     private Actionable minLevel;
     private boolean includeDownstream;
+    private boolean directOnly;
 
     public Options(String[] args) {
         this.args = args;
@@ -80,6 +81,8 @@ public class Options {
 
         OptionSpec<Void> optAffiliationReport = parser.accepts("affiliation", "Create affiliation report");
 
+        OptionSpec<Void> optDirectOnly = parser.accepts("direct-only", "For pushes, do direct pushes only");
+
         parser.accepts("h", "Print this help.");
 
         OptionSet set;
@@ -108,6 +111,7 @@ public class Options {
         hgRepos = optUpdateHgDB.value(set);
         minLevel = optMinLevel.value(set);
         includeDownstream = set.has(optIncludeDownstream);
+        directOnly = set.has(optDirectOnly);
 
         return true;
     }
@@ -149,5 +153,7 @@ public class Options {
     public Actionable getMinLevel() { return minLevel; }
 
     public boolean includeDownstream() { return includeDownstream; }
+
+    public boolean directOnly() { return directOnly; }
 
 }
