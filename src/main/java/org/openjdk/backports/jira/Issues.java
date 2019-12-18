@@ -104,7 +104,7 @@ public class Issues {
         }
 
         int count = 0;
-        out.println("Resolving issues (" + total + " total): ");
+        out.print("Resolving issues (" + total + " total): ");
         List<Issue> issues = new ArrayList<>();
         for (RetryableIssuePromise ip : batch) {
             issues.add(ip.claim());
