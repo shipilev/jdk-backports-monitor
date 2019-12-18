@@ -419,9 +419,13 @@ public class Monitor {
                 out.println("  " + i.getKey() + ": " + i.getSummary());
                 out.println();
 
+                Set<String> dup = new HashSet<>();
                 for (String rn : relNotes) {
-                    out.println(StringUtils.leftPad(StringUtils.rewrap(rn, StringUtils.DEFAULT_WIDTH - 6), 6));
-                    out.println();
+                    String fmtd = StringUtils.leftPad(StringUtils.rewrap(rn, StringUtils.DEFAULT_WIDTH - 6), 6);
+                    if (dup.add(fmtd)) {
+                        out.println(fmtd);
+                        out.println();
+                    }
                 }
             }
         }
