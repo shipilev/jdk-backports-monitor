@@ -81,7 +81,6 @@ public class Connect {
         @Override public void unregisterAll() {}
     }
 
-    @SuppressWarnings("deprecation")
     private static class MyApplicationProperties implements ApplicationProperties {
         private final String url;
 

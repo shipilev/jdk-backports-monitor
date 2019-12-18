@@ -54,11 +54,11 @@ public class Monitor {
     private static final int[] VERSIONS_TO_CARE_FOR = {14, 11, 8};
 
     // LTS backports are most important, then merges, then STS backports
-    private static int IMPORTANCE_LTS_BACKPORT_CRITICAL = 50;
-    private static int IMPORTANCE_LTS_BACKPORT_ORACLE = 30;
-    private static int IMPORTANCE_LTS_BACKPORT = 10;
-    private static int IMPORTANCE_MERGE        = 3;
-    private static int IMPORTANCE_STS_BACKPORT = 1;
+    private static final int IMPORTANCE_LTS_BACKPORT_CRITICAL = 50;
+    private static final int IMPORTANCE_LTS_BACKPORT_ORACLE = 30;
+    private static final int IMPORTANCE_LTS_BACKPORT = 10;
+    private static final int IMPORTANCE_MERGE        = 3;
+    private static final int IMPORTANCE_STS_BACKPORT = 1;
 
     // Sort issues by synopsis, alphabetically. This would cluster similar issues
     // together, even when they are separated by large difference in IDs.
@@ -84,7 +84,7 @@ public class Monitor {
         this.directOnly = directOnly;
     }
 
-    public void runLabelReport(String label, Actionable minLevel) throws URISyntaxException {
+    public void runLabelReport(String label, Actionable minLevel) {
         out.println("JDK BACKPORTS LABEL REPORT: " + label);
         printMajorDelimiterLine(out);
         out.println();
@@ -127,7 +127,7 @@ public class Monitor {
         out.println("" + issues.size() + " issues shown.");
     }
 
-    public void runIssueReport(String issueId) throws URISyntaxException {
+    public void runIssueReport(String issueId) {
         out.println("JDK BACKPORTS ISSUE REPORT: " + issueId);
         printMajorDelimiterLine(out);
         out.println();
@@ -144,7 +144,7 @@ public class Monitor {
         out.println(trackedIssue.getOutput());
     }
 
-    public void runPendingPushReport(String release) throws URISyntaxException {
+    public void runPendingPushReport(String release) {
         out.println("JDK BACKPORTS PENDING PUSH REPORT: " + release);
         printMajorDelimiterLine(out);
         out.println();
@@ -180,7 +180,7 @@ public class Monitor {
         }
     }
 
-    public void runPushesReport(String release) throws URISyntaxException {
+    public void runPushesReport(String release) {
         out.println("JDK BACKPORTS PUSHES REPORT: " + release);
         printMajorDelimiterLine(out);
         out.println();
@@ -329,7 +329,7 @@ public class Monitor {
         }
     }
 
-    public void runReleaseNotesReport(String release) throws URISyntaxException {
+    public void runReleaseNotesReport(String release) {
         out.println("RELEASE NOTES FOR: " + release);
         printMajorDelimiterLine(out);
         out.println();
@@ -471,7 +471,7 @@ public class Monitor {
         out.println();
     }
 
-    public void runFilterReport(long filterId) throws URISyntaxException {
+    public void runFilterReport(long filterId) {
         Filter filter = searchCli.getFilter(filterId).claim();
 
         out.println("JDK BACKPORTS FILTER REPORT");
@@ -498,7 +498,7 @@ public class Monitor {
         }
     }
 
-    public void runAffiliationReport() throws URISyntaxException {
+    public void runAffiliationReport() {
         out.println("AFFILIATION REPORT");
         printMajorDelimiterLine(out);
         out.println();
@@ -557,7 +557,7 @@ public class Monitor {
         long daysAgo = Accessors.getPushDaysAgo(issue);
 
         pw.printf("  %" + VER_INDENT + "s: %10s, %s, %s%n", Accessors.getFixVersion(issue), issue.getKey(), Accessors.getPushURL(issue), Accessors.getPushDate(issue));
-        recordIssue(results, issue, true);
+        recordIssue(results, issue);
         pw.println();
 
         Set<Integer> affectedReleases = new HashSet<>();
@@ -601,7 +601,7 @@ public class Monitor {
         }
         for (RetryableIssuePromise p : links) {
             Issue subIssue = p.claim();
-            recordIssue(results, subIssue, true);
+            recordIssue(results, subIssue);
             recordOracleStatus(oracleBackports, subIssue);
         }
 
@@ -909,7 +909,7 @@ public class Monitor {
         results.add(ver);
     }
 
-    private void recordIssue(Map<Integer, List<String>> results, Issue issue, boolean bypassEmpty) {
+    private void recordIssue(Map<Integer, List<String>> results, Issue issue) {
         String fixVersion = Accessors.getFixVersion(issue);
 
         // This is Oracle-internal push. Ignore.
@@ -931,7 +931,7 @@ public class Monitor {
             }
         }
 
-        if (bypassEmpty && pushURL.equals("N/A")) {
+        if (pushURL.equals("N/A")) {
             return;
         }
 

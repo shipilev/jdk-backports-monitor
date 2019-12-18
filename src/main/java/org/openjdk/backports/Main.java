@@ -60,11 +60,7 @@ public class Main {
                     throw new IllegalStateException("user/pass keys are missing in auth file: " + options.getAuthProps());
                 }
 
-                JiraRestClient restClient = null;
-
-                try {
-                    restClient = Connect.getJiraRestClient(JIRA_URL, user, pass);
-
+                try (JiraRestClient restClient = Connect.getJiraRestClient(JIRA_URL, user, pass)) {
                     Monitor m = new Monitor(restClient, hgDB, options.includeDownstream(), options.directOnly());
 
                     if (options.getLabelReport() != null) {
@@ -93,10 +89,6 @@ public class Main {
 
                     if (options.getAffiliationReport() != null) {
                         m.runAffiliationReport();
-                    }
-                } finally {
-                    if (restClient != null) {
-                        restClient.close();
                     }
                 }
             }

@@ -28,7 +28,7 @@ import org.apache.commons.lang3.text.WordUtils;
 
 public class StringUtils {
 
-    public static int DEFAULT_WIDTH = 100;
+    public static final int DEFAULT_WIDTH = 100;
 
     public static String rewrap(String str, int width) {
         return rewrap(str, width, Integer.MAX_VALUE);
