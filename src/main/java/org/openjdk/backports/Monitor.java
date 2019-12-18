@@ -493,9 +493,20 @@ public class Monitor {
 
         Collections.sort(issues, DEFAULT_ISSUE_SORT);
 
-        for (Issue i : issues) {
-            out.println("  " + i.getKey() + ": " + i.getSummary());
+        Multimap<String, Issue> byComponent = TreeMultimap.create(String::compareTo, DEFAULT_ISSUE_SORT);
+
+        for (Issue issue : issues) {
+            byComponent.put(Accessors.extractComponents(issue), issue);
         }
+
+        for (String component : byComponent.keySet()) {
+            out.println(component + ":");
+            for (Issue i : byComponent.get(component)) {
+                out.println("  " + i.getKey() + ": " + i.getSummary());
+            }
+            out.println();
+        }
+        out.println();
     }
 
     public void runAffiliationReport() {
