@@ -85,7 +85,7 @@ public class Monitor {
     }
 
     public void runLabelReport(String label, Actionable minLevel) {
-        out.println("JDK BACKPORTS LABEL REPORT: " + label);
+        out.println("LABEL REPORT: " + label);
         printMajorDelimiterLine(out);
         out.println();
         out.println("This report shows bugs with the given label, along with their backporting status.");
@@ -128,7 +128,7 @@ public class Monitor {
     }
 
     public void runIssueReport(String issueId) {
-        out.println("JDK BACKPORTS ISSUE REPORT: " + issueId);
+        out.println("ISSUE REPORT: " + issueId);
         printMajorDelimiterLine(out);
         out.println();
         out.println("This report shows a single issue status.");
@@ -145,7 +145,7 @@ public class Monitor {
     }
 
     public void runPendingPushReport(String release) {
-        out.println("JDK BACKPORTS PENDING PUSH REPORT: " + release);
+        out.println("PENDING PUSH REPORT: " + release);
         printMajorDelimiterLine(out);
         out.println();
         out.println("This report shows backports that were approved, but not yet pushed.");
@@ -181,7 +181,7 @@ public class Monitor {
     }
 
     public void runPushesReport(String release) {
-        out.println("JDK BACKPORTS PUSHES REPORT: " + release);
+        out.println("PUSHES REPORT: " + release);
         printMajorDelimiterLine(out);
         out.println();
         out.println("This report shows who pushed the backports to the given release.");
@@ -474,7 +474,7 @@ public class Monitor {
     public void runFilterReport(long filterId) {
         Filter filter = searchCli.getFilter(filterId).claim();
 
-        out.println("JDK BACKPORTS FILTER REPORT");
+        out.println("FILTER REPORT");
         printMajorDelimiterLine(out);
         out.println();
         out.println("This report shows brief list of issues matching the filter.");
