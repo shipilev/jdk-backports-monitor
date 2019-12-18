@@ -439,6 +439,10 @@ public class Monitor {
 
         out.println("NO CHANGESETS RECORDED:");
         out.println();
+        if (noChangesets.isEmpty()) {
+            out.println("  None.");
+        }
+
         for (Issue i : noChangesets) {
             out.printf("  %s: %s%n",
                     i.getKey(), i.getSummary());
@@ -447,6 +451,10 @@ public class Monitor {
 
         out.println("CARRIED OVER FROM PREVIOUS RELEASES:");
         out.println();
+        if (carriedOver.isEmpty()) {
+            out.println("  None.");
+        }
+
         for (Issue i : carriedOver) {
             out.printf("  %s: %s%n",
                     i.getKey(), i.getSummary());
