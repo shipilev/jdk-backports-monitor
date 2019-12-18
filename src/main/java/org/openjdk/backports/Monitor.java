@@ -481,12 +481,12 @@ public class Monitor {
         out.println();
         out.println("Report generated: " + new Date());
         out.println();
+        out.println("Filter: " + filter.getName());
+        out.println("Filter URL: " + Main.JIRA_URL + "issues/?filter=" + filterId);
+        out.println();
 
         List<Issue> issues = jiraIssues.getBasicIssues(filter.getJql());
 
-        out.println();
-        out.println("Filter: " + filter.getName());
-        out.println("Filter URL: " + Main.JIRA_URL + "issues/?filter=" + filterId);
         out.println();
         out.println("Hint: Prefix bug IDs with " + Main.JIRA_URL + "browse/ to reach the relevant JIRA entry.");
         out.println();
