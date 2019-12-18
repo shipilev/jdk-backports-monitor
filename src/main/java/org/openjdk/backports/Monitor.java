@@ -402,11 +402,13 @@ public class Monitor {
         out.println("RELEASE NOTES, BY COMPONENT:");
         out.println();
 
+        boolean haveRelNotes = false;
         for (String component : byComponent.keySet()) {
             boolean printed = false;
             for (Issue i : byComponent.get(component)) {
                 Collection<String> relNotes = Accessors.getReleaseNotes(issueCli, i);
                 if (relNotes.isEmpty()) continue;
+                haveRelNotes = true;
 
                 if (!printed) {
                     out.println(component + ":");
@@ -422,6 +424,9 @@ public class Monitor {
                     out.println();
                 }
             }
+        }
+        if (!haveRelNotes) {
+            out.println("  None.");
         }
         out.println();
 
