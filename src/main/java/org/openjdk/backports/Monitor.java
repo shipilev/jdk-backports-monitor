@@ -354,19 +354,24 @@ public class Monitor {
         Multimap<String, Issue> byComponent = TreeMultimap.create(String::compareTo, DEFAULT_ISSUE_SORT);
 
         SortedSet<Issue> noChangesets = new TreeSet<>(DEFAULT_ISSUE_SORT);
+        SortedSet<Issue> carriedOver = new TreeSet<>(DEFAULT_ISSUE_SORT);
 
         for (Issue issue : regularIssues) {
             String committer = Accessors.getPushUser(issue);
             if (committer.equals("N/A")) {
                 // These are pushes to internal repos
                 noChangesets.add(issue);
+            } else if (Parsers.parseVersion(Accessors.getFixVersion(issue)) < Parsers.parseVersion(release)) {
+                // These are parent issues that have "accidental" forward port to requested release.
+                // Filter them out as "carried over".
+                carriedOver.add(issue);
             } else {
                 byComponent.put(Accessors.extractComponents(issue), issue);
             }
         }
 
         out.println();
-        out.println("Filtered " + noChangesets.size() + " issues without pushes, " + byComponent.size() + " pushes left.");
+        out.println("Filtered " + noChangesets.size() + " issues without pushes, " + carriedOver.size() + " issues carried over, " + byComponent.size() + " pushes left.");
         out.println();
 
         out.println("Hint: Prefix bug IDs with " + Main.JIRA_URL + "browse/ to reach the relevant JIRA entry.");
@@ -435,6 +440,14 @@ public class Monitor {
         out.println("NO CHANGESETS RECORDED:");
         out.println();
         for (Issue i : noChangesets) {
+            out.printf("  %s: %s%n",
+                    i.getKey(), i.getSummary());
+        }
+        out.println();
+
+        out.println("CARRIED OVER FROM PREVIOUS RELEASES:");
+        out.println();
+        for (Issue i : carriedOver) {
             out.printf("  %s: %s%n",
                     i.getKey(), i.getSummary());
         }
