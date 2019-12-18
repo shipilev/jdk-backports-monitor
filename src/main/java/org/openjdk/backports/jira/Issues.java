@@ -62,19 +62,25 @@ public class Issues {
         SearchResult poll = new RetryableSearchPromise(searchCli, query, 1, 0).claim();
         int total = poll.getTotal();
 
+        out.print("Acquiring pages (" + total + " total): ");
         List<RetryableSearchPromise> searchPromises = new ArrayList<>();
         for (int cnt = 0; cnt < total; cnt += PAGE_SIZE) {
-            out.println("Acquiring page [" + cnt + ", " + (cnt + PAGE_SIZE) + "] (total: " + total + ")");
             searchPromises.add(new RetryableSearchPromise(searchCli, query, PAGE_SIZE, cnt));
+            out.print(".");
+            out.flush();
         }
+        out.println(" done");
 
+        out.print("Loading issues (" + total + " total): ");
         List<Issue> issues = new ArrayList<>();
         for (RetryableSearchPromise sp : searchPromises) {
             for (Issue i : sp.claim().getIssues()) {
                 issues.add(i);
             }
-            out.println("Loaded " + issues.size() + "/" + total + " matching issues.");
+            out.print(".");
+            out.flush();
         }
+        out.println(" done");
 
         return issues;
     }
@@ -96,14 +102,16 @@ public class Issues {
         }
 
         int count = 0;
+        out.println("Resolving issues (" + total + " total): ");
         List<Issue> issues = new ArrayList<>();
         for (RetryableIssuePromise ip : batch) {
             issues.add(ip.claim());
             if ((++count % PAGE_SIZE) == 0) {
-                out.println("Resolved " + issues.size() + "/" + total + " matching issues.");
+                out.print(".");
+                out.flush();
             }
         }
-        out.println("Resolved " + issues.size() + "/" + total + " matching issues.");
+        out.println(" done");
 
         return issues;
     }
@@ -126,25 +134,29 @@ public class Issues {
         }
 
         int c1 = 0;
+        out.print("Resolving issues (" + totalSize + " total): ");
         List<RetryableIssuePromise> parentPromises = new ArrayList<>();
         for (RetryableIssuePromise ip : basicPromises) {
             RetryableIssuePromise parent = Accessors.getParent(issueCli, ip.claim());
             parentPromises.add(parent != null ? parent : ip);
             if ((++c1 % PAGE_SIZE) == 0) {
-                out.println("Resolved " + parentPromises.size() + "/" + totalSize + " matching issues.");
+                out.print(".");
+                out.flush();
             }
         }
-        out.println("Resolved " + parentPromises.size() + "/" + totalSize + " matching issues.");
+        out.println(" done");
 
         int c2 = 0;
+        out.print("Resolving parents (" + totalSize + " total): ");
         List<Issue> issues = new ArrayList<>();
         for (RetryableIssuePromise ip : parentPromises) {
             issues.add(ip.claim());
             if ((++c2 % PAGE_SIZE) == 0) {
-                out.println("Resolved parents for " + issues.size() + "/" + totalSize + " matching issues.");
+                out.print(".");
+                out.flush();
             }
         }
-        out.println("Resolved parents for " + issues.size() + "/" + totalSize + " matching issues.");
+        out.println(" done");
 
         return issues;
     }
