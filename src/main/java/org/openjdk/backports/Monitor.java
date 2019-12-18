@@ -420,7 +420,7 @@ public class Monitor {
                 out.println();
 
                 for (String rn : relNotes) {
-                    out.println(StringUtils.leftPad(StringUtils.rewrap(rn, 100), 6));
+                    out.println(StringUtils.leftPad(StringUtils.rewrap(rn, StringUtils.DEFAULT_WIDTH - 6), 6));
                     out.println();
                 }
             }
@@ -880,11 +880,11 @@ public class Monitor {
     }
 
     private void printDelimiterLine(PrintStream pw) {
-        pw.println("-------------------------------------------------------------------------------------------------------------------");
+        pw.println(StringUtils.tabLine('-'));
     }
 
     private void printMajorDelimiterLine(PrintStream pw) {
-        pw.println("===================================================================================================================");
+        pw.println(StringUtils.tabLine('='));
     }
 
     private void recordOracleStatus(Set<Integer> results, Issue issue) {

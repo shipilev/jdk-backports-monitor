@@ -28,6 +28,8 @@ import org.apache.commons.lang3.text.WordUtils;
 
 public class StringUtils {
 
+    public static int DEFAULT_WIDTH = 100;
+
     public static String rewrap(String str, int width) {
         return rewrap(str, width, Integer.MAX_VALUE);
     }
@@ -64,5 +66,17 @@ public class StringUtils {
 
     public static String stripNull(String v) {
         return (v != null) ? v : "";
+    }
+
+    public static String tabLine(char v) {
+        return tabLine(v, DEFAULT_WIDTH);
+    }
+
+    public static String tabLine(char v, int width) {
+        StringBuilder sb = new StringBuilder();
+        for (int c = 0; c < width; c++) {
+            sb.append(v);
+        }
+        return sb.toString();
     }
 }

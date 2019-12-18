@@ -29,6 +29,7 @@ import com.atlassian.jira.rest.client.api.SearchRestClient;
 import com.atlassian.jira.rest.client.api.domain.Issue;
 import com.atlassian.jira.rest.client.api.domain.SearchResult;
 import org.apache.commons.lang3.text.WordUtils;
+import org.openjdk.backports.StringUtils;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -56,7 +57,8 @@ public class Issues {
      * @return list of issues
      */
     public List<Issue> getBasicIssues(String query) {
-        out.println("JIRA Query: " + WordUtils.wrap(query, 80));
+        out.println("JIRA Query:");
+        out.println(WordUtils.wrap(query, StringUtils.DEFAULT_WIDTH));
         out.println();
 
         SearchResult poll = new RetryableSearchPromise(searchCli, query, 1, 0).claim();
