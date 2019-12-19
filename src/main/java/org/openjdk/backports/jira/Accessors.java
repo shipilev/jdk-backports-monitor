@@ -125,8 +125,34 @@ public class Accessors {
         return null;
     }
 
+    private static String getStatus(Issue issue) {
+        Status s = issue.getStatus();
+        if (s == null) {
+            return "";
+        }
+
+        String n = s.getName();
+        if (n == null) {
+            return "";
+        }
+        return n;
+    }
+
+    private static String getResolution(Issue issue) {
+        Resolution r = issue.getResolution();
+        if (r == null) {
+            return "";
+        }
+
+        String n = r.getName();
+        if (n == null) {
+            return "";
+        }
+        return n;
+    }
+
     public static boolean isDelivered(Issue issue) {
-        switch (issue.getStatus().getName()) {
+        switch (getStatus(issue)) {
             case "Closed":
             case "Resolved":
                 break;
@@ -137,7 +163,7 @@ public class Accessors {
                 break;
         }
 
-        switch (issue.getResolution().getName()) {
+        switch (getResolution(issue)) {
             case "Withdrawn":
             case "Won't Fix":
             case "Duplicate":
