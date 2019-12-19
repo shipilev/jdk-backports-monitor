@@ -858,7 +858,7 @@ public class Monitor {
     private void printReleaseNotes(PrintStream ps, Collection<String> relNotes) {
         PrintWriter pw = new PrintWriter(ps);
         printReleaseNotes(pw, relNotes);
-        pw.close();
+        pw.flush();
     }
 
     private void printReleaseNotes(PrintWriter pw, Collection<String> relNotes) {
