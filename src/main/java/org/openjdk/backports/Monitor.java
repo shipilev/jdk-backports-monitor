@@ -847,7 +847,7 @@ public class Monitor {
 
         Collection<String> relNotes = Accessors.getReleaseNotes(issueCli, issue);
         if (!relNotes.isEmpty()) {
-            pw.println("  Release notes:");
+            pw.println("  Release Notes:");
             printReleaseNotes(pw, relNotes);
         }
         pw.println();
