@@ -146,6 +146,7 @@ public class Accessors {
             case "Other":
                 return false;
             case "Resolved":
+            case "Fixed":
                 break;
             default:
                 // Default to "not delivered"
