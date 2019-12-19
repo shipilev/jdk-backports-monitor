@@ -419,14 +419,7 @@ public class Monitor {
                 out.println("  " + i.getKey() + ": " + i.getSummary());
                 out.println();
 
-                Set<String> dup = new HashSet<>();
-                for (String rn : relNotes) {
-                    String fmtd = StringUtils.leftPad(StringUtils.rewrap(rn, StringUtils.DEFAULT_WIDTH - 6), 6);
-                    if (dup.add(fmtd)) {
-                        out.println(fmtd);
-                        out.println();
-                    }
-                }
+                printReleaseNotes(out, relNotes);
             }
         }
         if (!haveRelNotes) {
@@ -850,10 +843,33 @@ public class Monitor {
                 pw.println("      None.");
             }
         }
+        pw.println();
 
+        Collection<String> relNotes = Accessors.getReleaseNotes(issueCli, issue);
+        if (!relNotes.isEmpty()) {
+            pw.println("  Release notes:");
+            printReleaseNotes(pw, relNotes);
+        }
         pw.println();
 
         return new TrackedIssue(sw.toString(), daysAgo, actions);
+    }
+
+    private void printReleaseNotes(PrintStream ps, Collection<String> relNotes) {
+        PrintWriter pw = new PrintWriter(ps);
+        printReleaseNotes(pw, relNotes);
+        pw.close();
+    }
+
+    private void printReleaseNotes(PrintWriter pw, Collection<String> relNotes) {
+        Set<String> dup = new HashSet<>();
+        for (String rn : relNotes) {
+            String fmtd = StringUtils.leftPad(StringUtils.rewrap(rn, StringUtils.DEFAULT_WIDTH - 6), 6);
+            if (dup.add(fmtd)) {
+                pw.println(fmtd);
+                pw.println();
+            }
+        }
     }
 
     private void printHgStatus(boolean affected, Actions actions, PrintWriter pw, Issue issue, String label, String repo) {
