@@ -125,6 +125,36 @@ public class Accessors {
         return null;
     }
 
+    public static boolean isDelivered(Issue issue) {
+        switch (issue.getStatus().getName()) {
+            case "Closed":
+            case "Resolved":
+                break;
+            case "Withdrawn":
+                return false;
+            default:
+                // Default to "not delivered"
+                return false;
+        }
+
+        switch (issue.getResolution().getName()) {
+            case "Withdrawn":
+            case "Won't Fix":
+            case "Duplicate":
+            case "Cannot Reproduce":
+            case "Not an Issue":
+            case "Other":
+                return false;
+            case "Resolved":
+                break;
+            default:
+                // Default to "not delivered"
+                return false;
+        }
+
+        return true;
+    }
+
     public static boolean isReleaseNoteTag(Issue issue) {
         return issue.getLabels().contains("release-note");
     }
@@ -132,8 +162,8 @@ public class Accessors {
     public static boolean isReleaseNote(Issue issue) {
         // Brilliant, we cannot trust "release-note" tags?
         //   See: https://mail.openjdk.java.net/pipermail/jdk-dev/2019-July/003083.html
-        return isReleaseNoteTag(issue) ||
-               issue.getSummary().toLowerCase().trim().startsWith("release note");
+        return (isReleaseNoteTag(issue) || issue.getSummary().toLowerCase().trim().startsWith("release note"))
+                && isDelivered(issue);
     }
 
     public static Collection<String> getReleaseNotes(IssueRestClient cli, Issue start) {
