@@ -631,11 +631,12 @@ public class Monitor {
 
         {
             boolean foundInPublic = false;
+            boolean printedWarning = false;
 
             for (String repo : new String[] {"jdk/jdk", "jdk-updates/jdk11u", "jdk8u/jdk8u", "jdk7u/jdk7u"}) {
                 if (!hgDB.hasRepo(repo)) {
                     pw.println("  " + MSG_WARNING + ": " + repo + " repository is not available to check changeset");
-                    pw.println();
+                    printedWarning = true;
                 } else {
                     List<HgRecord> rs = hgDB.search(repo, issue.getKey().replaceFirst("JDK-", ""));
                     if (!rs.isEmpty()) {
@@ -646,9 +647,13 @@ public class Monitor {
             }
 
             if (!foundInPublic) {
-                pw.println("  " + MSG_WARNING + ": The change is missing in all open repos.");
-                pw.println();
                 actions.update(Actionable.CRITICAL);
+                pw.println("  " + MSG_WARNING + ": The change is missing in all open repos.");
+                printedWarning = true;
+            }
+
+            if (printedWarning) {
+                pw.println();
             }
         }
 
