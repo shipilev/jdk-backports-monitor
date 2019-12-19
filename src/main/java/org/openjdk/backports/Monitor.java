@@ -849,8 +849,8 @@ public class Monitor {
         if (!relNotes.isEmpty()) {
             pw.println("  Release Notes:");
             printReleaseNotes(pw, relNotes);
+            pw.println();
         }
-        pw.println();
 
         return new TrackedIssue(sw.toString(), daysAgo, actions);
     }
