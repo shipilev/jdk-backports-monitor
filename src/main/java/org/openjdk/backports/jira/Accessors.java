@@ -133,8 +133,8 @@ public class Accessors {
             case "Withdrawn":
                 return false;
             default:
-                // Default to "not delivered"
-                return false;
+                // Default to "delivered"
+                break;
         }
 
         switch (issue.getResolution().getName()) {
@@ -149,8 +149,8 @@ public class Accessors {
             case "Fixed":
                 break;
             default:
-                // Default to "not delivered"
-                return false;
+                // Default to "delivered"
+                break;
         }
 
         return true;
