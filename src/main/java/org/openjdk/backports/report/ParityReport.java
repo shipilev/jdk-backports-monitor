@@ -186,7 +186,7 @@ public class ParityReport extends AbstractReport {
         out.println();
         out.println("This is where Oracle JDK used to be ahead, and then OpenJDK caught up in future releases.");
         out.println();
-        printSimple(lateOpenFirst);
+        printSimple(lateOracleFirst);
         out.println();
 
         out.println("=== EXACT PARITY: OPENJDK DID BACKPORT FIRST");
