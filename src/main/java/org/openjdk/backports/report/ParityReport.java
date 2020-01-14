@@ -29,6 +29,7 @@ import com.atlassian.jira.rest.client.api.domain.Issue;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import org.openjdk.backports.jira.Accessors;
+import org.openjdk.backports.jira.Versions;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -95,11 +96,12 @@ public class ParityReport extends AbstractReport {
             LocalDateTime timeOpen = null;
 
             for (Issue subIssue : mp.get(p)) {
-                String resolutiondate = subIssue.getField("resolutiondate").getValue().toString();
-                LocalDateTime rd = LocalDateTime.parse(resolutiondate.substring(0, resolutiondate.indexOf(".")));
+                String rds = subIssue.getField("resolutiondate").getValue().toString();
+                LocalDateTime rd = LocalDateTime.parse(rds.substring(0, rds.indexOf(".")));
+
                 for (String fv : Accessors.getFixVersions(subIssue)) {
-                    if (fv.endsWith("-oracle")) {
-                        String sub = fv.substring(0, fv.indexOf("-oracle"));
+                    String sub = Versions.stripVendor(fv);
+                    if (Versions.isOracle(fv)) {
                         if (firstOracle == null) {
                             firstOracle = sub;
                             timeOracle = rd;
@@ -111,11 +113,11 @@ public class ParityReport extends AbstractReport {
                         }
                     } else {
                         if (firstOpen == null) {
-                            firstOpen = fv;
+                            firstOpen = sub;
                             timeOpen = rd;
                         } else {
-                            if (fv.compareTo(firstOpen) < 0) {
-                                firstOpen = fv;
+                            if (sub.compareTo(firstOpen) < 0) {
+                                firstOpen = sub;
                                 timeOpen = rd;
                             }
                         }

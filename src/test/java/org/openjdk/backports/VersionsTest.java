@@ -84,8 +84,30 @@ public class VersionsTest {
 
         Assert.assertEquals(-1,  Versions.parseMinor("OpenJDK6"));
         Assert.assertEquals(-1,  Versions.parseMinor("openjdk7u"));
-        Assert.assertEquals(-1,  Versions.parseMinor("openjdk8u"));
-        Assert.assertEquals(-1,  Versions.parseMinor("openjdk8u212"));
+        Assert.assertEquals(0,   Versions.parseMinor("openjdk8u"));
+        Assert.assertEquals(212, Versions.parseMinor("openjdk8u212"));
+    }
+
+    @Test
+    public void testIsOracle() {
+        Assert.assertFalse(Versions.isOracle("openjdk8u202"));
+        Assert.assertFalse(Versions.isOracle("8u202"));
+        Assert.assertFalse(Versions.isOracle("openjdk8u212"));
+        Assert.assertTrue(Versions.isOracle("8u212"));
+        Assert.assertFalse(Versions.isOracle("11.0.3"));
+        Assert.assertTrue(Versions.isOracle("11.0.3-oracle"));
+        Assert.assertFalse(Versions.isOracle("13.0.1"));
+        Assert.assertTrue(Versions.isOracle("13.0.1-oracle"));
+    }
+
+    @Test
+    public void testStripVendor() {
+        Assert.assertEquals("8u212",  Versions.stripVendor("openjdk8u212"));
+        Assert.assertEquals("8u212",  Versions.stripVendor("8u212"));
+        Assert.assertEquals("11.0.3",  Versions.stripVendor("11.0.3"));
+        Assert.assertEquals("11.0.3",  Versions.stripVendor("11.0.3-oracle"));
+        Assert.assertEquals("13.0.1",  Versions.stripVendor("13.0.1"));
+        Assert.assertEquals("13.0.1",  Versions.stripVendor("13.0.1-oracle"));
     }
 
 }

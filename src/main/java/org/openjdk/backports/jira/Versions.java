@@ -76,13 +76,16 @@ public class Versions {
     }
 
     public static int parseMinor(String version) {
-        if (version.startsWith("openjdk")) {
+        if (version.startsWith("openjdk7")) {
             return -1;
         }
 
         // Only for 8u now.
         int uIdx = version.indexOf("u");
         if (uIdx != -1) {
+            if (uIdx + 1 == version.length()) {
+                return 0;
+            }
             try {
                 return Integer.parseInt(version.substring(uIdx+1));
             } catch (Exception e) {
@@ -119,5 +122,28 @@ public class Versions {
         }
     }
 
+    public static boolean isOracle(String version) {
+        if (parseMajor(version) >= 11 && version.endsWith("-oracle")) {
+            return true;
+        }
+
+        if (parseMajor(version) == 8 && parseMinor(version) >= 212 && !version.startsWith("openjdk")) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static String stripVendor(String version) {
+        if (version.endsWith("-oracle")) {
+            return version.substring(0, version.indexOf("-oracle"));
+        }
+
+        if (version.startsWith("openjdk")) {
+            return version.substring(7);
+        }
+
+        return version;
+    }
 
 }
