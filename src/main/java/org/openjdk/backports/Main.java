@@ -90,6 +90,10 @@ public class Main {
                     if (options.getAffiliationReport() != null) {
                         m.runAffiliationReport();
                     }
+
+                    if (options.getParityReport() != null) {
+                        m.runParityReport(options.getParityReport());
+                    }
                 }
             }
         } catch (Exception e) {

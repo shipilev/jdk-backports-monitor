@@ -42,6 +42,7 @@ public class Options {
     private Actionable minLevel;
     private boolean includeDownstream;
     private boolean directOnly;
+    private String parityReport;
 
     public Options(String[] args) {
         this.args = args;
@@ -67,6 +68,9 @@ public class Options {
 
         OptionSpec<Long> optFilterReport = parser.accepts("filter", "Report issues matching the filter")
                 .withRequiredArg().ofType(long.class).describedAs("filter-id");
+
+        OptionSpec<String> optParityReport = parser.accepts("parity", "Report parity statistics")
+                .withRequiredArg().ofType(String.class).describedAs("versions[comma-separated]");
 
         OptionSpec<String> optReleaseNotesReport = parser.accepts("release-notes", "Generates release notes for a given release")
                 .withRequiredArg().ofType(String.class).describedAs("release");
@@ -106,6 +110,7 @@ public class Options {
         pendingPushReport = optPendingPushReport.value(set);
         issueReport = optIssueReport.value(set);
         filterReport = optFilterReport.value(set);
+        parityReport = optParityReport.value(set);
         releaseNotesReport = optReleaseNotesReport.value(set);
         affiliationReport = set.has(optAffiliationReport) ? "yes" : null;
         hgRepos = optUpdateHgDB.value(set);
@@ -146,6 +151,10 @@ public class Options {
 
     public Long getFilterReport() {
         return filterReport;
+    }
+
+    public String getParityReport() {
+        return parityReport;
     }
 
     public String getHgRepos() { return hgRepos; }

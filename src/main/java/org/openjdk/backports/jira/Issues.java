@@ -163,4 +163,36 @@ public class Issues {
         return issues;
     }
 
+    public List<Issue> getParentIssues(List<Issue> basics) {
+        int c1 = 0;
+        out.print("Resolving issues (" + basics.size() + " total): ");
+        List<RetryableIssuePromise> parentPromises = new ArrayList<>();
+        for (Issue ip : basics) {
+            RetryableIssuePromise parent = Accessors.getParent(issueCli, ip);
+            parentPromises.add(parent);
+            if ((++c1 % PAGE_SIZE) == 0) {
+                out.print(".");
+                out.flush();
+            }
+        }
+        out.println(" done");
+
+        out.print("Resolving parents (" + basics.size() + " total): ");
+        List<Issue> issues = new ArrayList<>();
+        for (int i = 0; i < parentPromises.size(); i++) {
+            RetryableIssuePromise ip = parentPromises.get(i);
+            if (ip != null) {
+                issues.add(ip.claim());
+            } else {
+                issues.add(basics.get(i));
+            }
+            if ((i % PAGE_SIZE) == 0) {
+                out.print(".");
+                out.flush();
+            }
+        }
+        out.println(" done");
+        return issues;
+    }
+
 }
