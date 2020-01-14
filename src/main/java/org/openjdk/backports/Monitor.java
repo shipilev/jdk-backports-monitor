@@ -33,7 +33,6 @@ import org.openjdk.backports.hg.HgRecord;
 import org.openjdk.backports.jira.*;
 
 import java.io.*;
-import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -358,7 +357,7 @@ public class Monitor {
         for (Issue issue : regularIssues) {
             boolean backported = false;
             for (String ver : Accessors.getFixVersions(issue)) {
-                if (Parsers.parseVersion(ver) >= Parsers.parseVersion(release)) {
+                if (Versions.parseMajor(ver) >= Versions.parseMajor(release)) {
                     backported = true;
                     break;
                 }
@@ -559,9 +558,9 @@ public class Monitor {
         for (Version v : orEmpty(issue.getAffectedVersions())) {
             String verName = v.getName();
 
-            int ver = Parsers.parseVersion(verName);
-            int verSh = Parsers.parseVersionShenandoah(verName);
-            int verAarch64 = Parsers.parseVersionAArch64(verName);
+            int ver = Versions.parseMajor(verName);
+            int verSh = Versions.parseMajorShenandoah(verName);
+            int verAarch64 = Versions.parseMajorAArch64(verName);
 
             if (ver == 0) {
                 // Special case: odd version, ignore it
@@ -597,7 +596,7 @@ public class Monitor {
             recordOracleStatus(oracleBackports, subIssue);
         }
 
-        int origRel = Parsers.parseVersion(Accessors.getFixVersion(issue));
+        int origRel = Versions.parseMajor(Accessors.getFixVersion(issue));
         int highRel = results.isEmpty() ? origRel : results.lastKey();
 
         for (int release : VERSIONS_TO_CARE_FOR) {
@@ -917,10 +916,10 @@ public class Monitor {
     private void recordOracleStatus(Set<Integer> results, Issue issue) {
         String fixVersion = Accessors.getFixVersion(issue);
 
-        int ver = Parsers.parseVersion(fixVersion);
+        int ver = Versions.parseMajor(fixVersion);
         switch (ver) {
             case 8:
-                if (Parsers.parseSubversion(fixVersion) <= 212) return;
+                if (Versions.parseMinor(fixVersion) <= 212) return;
                 break;
             case 11:
                 if (!fixVersion.contains("-oracle")) return;
@@ -959,7 +958,7 @@ public class Monitor {
         }
 
         String line = String.format("%s, %10s, %s, %s", fixVersion, issue.getKey(), pushURL, Accessors.getPushDate(issue));
-        int ver = Parsers.parseVersion(fixVersion);
+        int ver = Versions.parseMajor(fixVersion);
         List<String> list = results.computeIfAbsent(ver, k -> new ArrayList<>());
         list.add(line);
     }
