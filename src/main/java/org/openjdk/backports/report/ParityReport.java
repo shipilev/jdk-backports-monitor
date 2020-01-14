@@ -106,7 +106,7 @@ public class ParityReport extends AbstractReport {
                             firstOracle = sub;
                             timeOracle = rd;
                         } else {
-                            if (sub.compareTo(firstOracle) < 0) {
+                            if (Versions.compare(sub, firstOracle) < 0) {
                                 firstOracle = sub;
                                 timeOracle = rd;
                             }
@@ -116,7 +116,7 @@ public class ParityReport extends AbstractReport {
                             firstOpen = sub;
                             timeOpen = rd;
                         } else {
-                            if (sub.compareTo(firstOpen) < 0) {
+                            if (Versions.compare(sub, firstOpen) < 0) {
                                 firstOpen = sub;
                                 timeOpen = rd;
                             }
@@ -133,7 +133,7 @@ public class ParityReport extends AbstractReport {
                 onlyOracle.add(p);
             }
 
-            if (firstOracle != null && firstOracle.equals(firstOpen)) {
+            if (firstOracle != null && firstOpen != null && Versions.compare(firstOracle, firstOpen) == 0) {
                 if (timeOpen.compareTo(timeOracle) < 0) {
                     exactOpenFirst.add(p);
                 } else {
@@ -141,11 +141,11 @@ public class ParityReport extends AbstractReport {
                 }
             }
 
-            if (firstOracle != null && firstOpen != null && firstOpen.compareTo(firstOracle) < 0) {
+            if (firstOracle != null && firstOpen != null && Versions.compare(firstOpen, firstOracle) < 0) {
                 lateOpenFirst.add(p);
             }
 
-            if (firstOracle != null && firstOpen != null && firstOpen.compareTo(firstOracle) > 0) {
+            if (firstOracle != null && firstOpen != null && Versions.compare(firstOpen, firstOracle) > 0) {
                 lateOracleFirst.add(p);
             }
         }

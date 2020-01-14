@@ -146,4 +146,16 @@ public class Versions {
         return version;
     }
 
+    public static int compare(String left, String right) {
+        String stripLeft = stripVendor(left);
+        String stripRight = stripVendor(right);
+        if (parseMajor(stripLeft) == 8 && parseMajor(stripRight) == 8) {
+            if (Math.abs(parseMinor(stripLeft) - parseMinor(stripRight)) <= 1) {
+                return 0;
+            }
+        }
+
+        return stripLeft.compareTo(stripRight);
+    }
+
 }
