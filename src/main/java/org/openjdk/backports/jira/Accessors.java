@@ -47,9 +47,17 @@ public class Accessors {
         }
         Version fixVersion = it.next();
         if (it.hasNext()) {
-            throw new IllegalStateException("Multiple fix versions");
+            throw new IllegalStateException("Multiple fix versions: " + issue.getKey());
         }
         return fixVersion.getName();
+    }
+
+    public static List<String> getFixVersions(Issue issue) {
+        List<String> res = new ArrayList<>();
+        for (Version ver : issue.getFixVersions()) {
+            res.add(ver.getName());
+        }
+        return res;
     }
 
     public static String getPushURL(Issue issue) {
