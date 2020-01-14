@@ -64,8 +64,6 @@ public abstract class AbstractIssueReport extends AbstractReport {
         this.includeDownstream = includeDownstream;
     }
 
-    public abstract void run();
-
     private static <T> Iterable<T> orEmpty(Iterable<T> it) {
         return (it != null) ? it : Collections.emptyList();
     }
@@ -389,26 +387,6 @@ public abstract class AbstractIssueReport extends AbstractReport {
         return new TrackedIssue(sw.toString(), daysAgo, actions);
     }
 
-    protected void printReleaseNotes(PrintStream ps, Collection<Issue> relNotes) {
-        PrintWriter pw = new PrintWriter(ps);
-        printReleaseNotes(pw, relNotes);
-        pw.flush();
-    }
-
-    private void printReleaseNotes(PrintWriter pw, Collection<Issue> relNotes) {
-        Set<String> dup = new HashSet<>();
-        for (Issue rn : relNotes) {
-            String summary = StringUtils.leftPad(rn.getKey() + ": " + rn.getSummary().replaceFirst("Release Note: ", ""), 2);
-            String descr = StringUtils.leftPad(StringUtils.rewrap(StringUtils.stripNull(rn.getDescription()), StringUtils.DEFAULT_WIDTH - 6), 6);
-            if (dup.add(descr)) {
-                pw.println(summary);
-                pw.println();
-                pw.println(descr);
-                pw.println();
-            }
-        }
-    }
-
     private void printHgStatus(boolean affected, Actions actions, PrintWriter pw, Issue issue, String label, String repo) {
         pw.printf("  %" + VER_INDENT + "s: ", label);
 
@@ -450,14 +428,6 @@ public abstract class AbstractIssueReport extends AbstractReport {
             pw.println(r.toString());
         }
         return true;
-    }
-
-    protected void printDelimiterLine(PrintStream pw) {
-        pw.println(StringUtils.tabLine('-'));
-    }
-
-    protected void printMajorDelimiterLine(PrintStream pw) {
-        pw.println(StringUtils.tabLine('='));
     }
 
     private void recordOracleStatus(Set<Integer> results, Issue issue) {

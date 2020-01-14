@@ -72,17 +72,13 @@ public abstract class AbstractReport {
 
     public abstract void run();
 
-    private static <T> Iterable<T> orEmpty(Iterable<T> it) {
-        return (it != null) ? it : Collections.emptyList();
-    }
-
     protected void printReleaseNotes(PrintStream ps, Collection<Issue> relNotes) {
         PrintWriter pw = new PrintWriter(ps);
         printReleaseNotes(pw, relNotes);
         pw.flush();
     }
 
-    private void printReleaseNotes(PrintWriter pw, Collection<Issue> relNotes) {
+    protected void printReleaseNotes(PrintWriter pw, Collection<Issue> relNotes) {
         Set<String> dup = new HashSet<>();
         for (Issue rn : relNotes) {
             String summary = StringUtils.leftPad(rn.getKey() + ": " + rn.getSummary().replaceFirst("Release Note: ", ""), 2);
