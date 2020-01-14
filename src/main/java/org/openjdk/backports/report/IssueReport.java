@@ -22,38 +22,39 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package org.openjdk.backports;
+package org.openjdk.backports.report;
 
-public class Actions implements Comparable<Actions> {
-    Actionable actionable;
-    int importance;
+import com.atlassian.jira.rest.client.api.JiraRestClient;
+import com.atlassian.jira.rest.client.api.domain.Issue;
+import org.openjdk.backports.hg.HgDB;
+import org.openjdk.backports.jira.TrackedIssue;
 
-    public Actions() {
-        actionable = Actionable.NONE;
-    }
+import java.util.Date;
 
-    public void update(Actionable act) {
-        update(act, 0);
-    }
+public class IssueReport extends AbstractReport {
 
-    public void update(Actionable act, int impt) {
-        actionable = actionable.mix(act);
-        if (act.ordinal() > Actionable.NONE.ordinal()) {
-            importance += impt;
-        }
+    private final String issueId;
+
+    public IssueReport(JiraRestClient restClient, HgDB hgDB, boolean includeDownstream, String issueId) {
+        super(restClient, hgDB, includeDownstream);
+        this.issueId = issueId;
     }
 
     @Override
-    public int compareTo(Actions other) {
-        int v1 = Integer.compare(actionable.ordinal(), other.actionable.ordinal());
-        if (v1 != 0) {
-            return v1;
-        }
-        return Integer.compare(importance, other.importance);
-    }
+    public void run() {
+        out.println("ISSUE REPORT: " + issueId);
+        printMajorDelimiterLine(out);
+        out.println();
+        out.println("This report shows a single issue status.");
+        out.println();
+        out.println("Report generated: " + new Date());
+        out.println();
 
-    public Actionable getActionable() {
-        return actionable;
-    }
+        Issue issue = issueCli.getIssue(issueId).claim();
 
+        TrackedIssue trackedIssue = parseIssue(issue);
+
+        printDelimiterLine(out);
+        out.println(trackedIssue.getOutput());
+    }
 }

@@ -27,6 +27,7 @@ package org.openjdk.backports;
 import com.atlassian.jira.rest.client.api.JiraRestClient;
 import org.openjdk.backports.hg.HgDB;
 import org.openjdk.backports.jira.Connect;
+import org.openjdk.backports.report.*;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -60,39 +61,38 @@ public class Main {
                     throw new IllegalStateException("user/pass keys are missing in auth file: " + options.getAuthProps());
                 }
 
-                try (JiraRestClient restClient = Connect.getJiraRestClient(JIRA_URL, user, pass)) {
-                    Monitor m = new Monitor(restClient, hgDB, options.includeDownstream(), options.directOnly());
-
+                try (JiraRestClient cli = Connect.getJiraRestClient(JIRA_URL, user, pass)) {
+                    boolean ids = options.includeDownstream();
                     if (options.getLabelReport() != null) {
-                        m.runLabelReport(options.getLabelReport(), options.getMinLevel());
+                        new LabelReport(cli, hgDB, ids, options.getLabelReport(), options.getMinLevel()).run();
                     }
 
                     if (options.getPushesReport() != null) {
-                        m.runPushesReport(options.getPushesReport());
+                        new PushesReport(cli, hgDB, ids, options.directOnly(), options.getPushesReport()).run();
                     }
 
                     if (options.getPendingPushReport() != null) {
-                        m.runPendingPushReport(options.getPendingPushReport());
+                        new PendingPushReport(cli, hgDB, ids, options.getPendingPushReport()).run();
                     }
 
                     if (options.getFilterReport() != null) {
-                        m.runFilterReport(options.getFilterReport());
+                        new FilterReport(cli, hgDB, ids, options.getFilterReport()).run();
                     }
 
                     if (options.getIssueReport() != null) {
-                        m.runIssueReport(options.getIssueReport());
+                        new IssueReport(cli, hgDB, ids, options.getIssueReport()).run();
                     }
 
                     if (options.getReleaseNotesReport() != null) {
-                        m.runReleaseNotesReport(options.getReleaseNotesReport());
+                        new ReleaseNotesReport(cli, hgDB, ids, options.getReleaseNotesReport()).run();
                     }
 
                     if (options.getAffiliationReport() != null) {
-                        m.runAffiliationReport();
+                        new AffiliationReport(cli, hgDB, ids).run();
                     }
 
                     if (options.getParityReport() != null) {
-                        m.runParityReport(options.getParityReport());
+                        new ParityReport(cli, hgDB, ids, options.getParityReport()).run();
                     }
                 }
             }
