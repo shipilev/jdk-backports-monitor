@@ -56,29 +56,31 @@ public class Main {
                 }
 
                 try (JiraRestClient cli = Connect.getJiraRestClient(JIRA_URL, user, pass)) {
-                    boolean ids = options.includeDownstream();
                     if (options.getLabelReport() != null) {
-                        new LabelReport(cli, options.getHgRepos(), ids, options.getLabelReport(), options.getMinLevel()).run();
+                        new LabelReport(cli, options.getHgRepos(), options.includeDownstream(),
+                                options.getLabelReport(), options.getMinLevel()).run();
+                    }
+
+                    if (options.getPendingPushReport() != null) {
+                        new PendingPushReport(cli, options.getHgRepos(), options.includeDownstream(),
+                                options.getPendingPushReport()).run();
+                    }
+
+                    if (options.getIssueReport() != null) {
+                        new IssueReport(cli, options.getHgRepos(), options.includeDownstream(),
+                                options.getIssueReport()).run();
                     }
 
                     if (options.getPushesReport() != null) {
                         new PushesReport(cli, options.directOnly(), options.getPushesReport()).run();
                     }
 
-                    if (options.getPendingPushReport() != null) {
-                        new PendingPushReport(cli, options.getHgRepos(), ids, options.getPendingPushReport()).run();
+                    if (options.getReleaseNotesReport() != null) {
+                        new ReleaseNotesReport(cli, options.getReleaseNotesReport()).run();
                     }
 
                     if (options.getFilterReport() != null) {
                         new FilterReport(cli, options.getFilterReport()).run();
-                    }
-
-                    if (options.getIssueReport() != null) {
-                        new IssueReport(cli, options.getHgRepos(), ids, options.getIssueReport()).run();
-                    }
-
-                    if (options.getReleaseNotesReport() != null) {
-                        new ReleaseNotesReport(cli, options.getReleaseNotesReport()).run();
                     }
 
                     if (options.getAffiliationReport() != null) {
