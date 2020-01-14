@@ -409,7 +409,7 @@ public class Monitor {
         for (String component : byComponent.keySet()) {
             boolean printed = false;
             for (Issue i : byComponent.get(component)) {
-                Collection<String> relNotes = Accessors.getReleaseNotes(issueCli, i);
+                Collection<Issue> relNotes = Accessors.getReleaseNotes(issueCli, i);
                 if (relNotes.isEmpty()) continue;
                 haveRelNotes = true;
 
@@ -418,9 +418,6 @@ public class Monitor {
                     out.println();
                     printed = true;
                 }
-
-                out.println("  " + i.getKey() + ": " + i.getSummary());
-                out.println();
 
                 printReleaseNotes(out, relNotes);
             }
@@ -836,7 +833,7 @@ public class Monitor {
         }
         pw.println();
 
-        Collection<String> relNotes = Accessors.getReleaseNotes(issueCli, issue);
+        Collection<Issue> relNotes = Accessors.getReleaseNotes(issueCli, issue);
         if (!relNotes.isEmpty()) {
             pw.println("  Release Notes:");
             printReleaseNotes(pw, relNotes);
@@ -846,18 +843,21 @@ public class Monitor {
         return new TrackedIssue(sw.toString(), daysAgo, actions);
     }
 
-    private void printReleaseNotes(PrintStream ps, Collection<String> relNotes) {
+    private void printReleaseNotes(PrintStream ps, Collection<Issue> relNotes) {
         PrintWriter pw = new PrintWriter(ps);
         printReleaseNotes(pw, relNotes);
         pw.flush();
     }
 
-    private void printReleaseNotes(PrintWriter pw, Collection<String> relNotes) {
+    private void printReleaseNotes(PrintWriter pw, Collection<Issue> relNotes) {
         Set<String> dup = new HashSet<>();
-        for (String rn : relNotes) {
-            String fmtd = StringUtils.leftPad(StringUtils.rewrap(rn, StringUtils.DEFAULT_WIDTH - 6), 6);
-            if (dup.add(fmtd)) {
-                pw.println(fmtd);
+        for (Issue rn : relNotes) {
+            String summary = StringUtils.leftPad(rn.getKey() + ": " + rn.getSummary().replaceFirst("Release Note: ", ""), 2);
+            String descr = StringUtils.leftPad(StringUtils.rewrap(StringUtils.stripNull(rn.getDescription()), StringUtils.DEFAULT_WIDTH - 6), 6);
+            if (dup.add(descr)) {
+                pw.println(summary);
+                pw.println();
+                pw.println(descr);
                 pw.println();
             }
         }

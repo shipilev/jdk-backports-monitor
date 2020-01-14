@@ -28,15 +28,8 @@ import com.atlassian.jira.rest.client.api.IssueRestClient;
 import com.atlassian.jira.rest.client.api.domain.*;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
-import org.openjdk.backports.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.StringJoiner;
-import java.util.TreeSet;
+import java.util.*;
 
 public class Accessors {
 
@@ -201,16 +194,13 @@ public class Accessors {
                 && isDelivered(issue);
     }
 
-    public static Collection<String> getReleaseNotes(IssueRestClient cli, Issue start) {
+    public static Collection<Issue> getReleaseNotes(IssueRestClient cli, Issue start) {
         List<RetryableIssuePromise> relnotes = new ArrayList<>();
-        Set<String> releaseNotes = new TreeSet<>();
+        Set<Issue> releaseNotes = new HashSet<>();
 
         // Direct hit?
         if (isReleaseNote(start)) {
-            if (!isReleaseNoteTag(start)) {
-                releaseNotes.add("WARNING: no 'release-note' tag on " + start.getKey());
-            }
-            releaseNotes.add(StringUtils.stripNull(start.getDescription()));
+            releaseNotes.add(start);
         }
 
         // Search in sub-tasks
@@ -230,10 +220,7 @@ public class Accessors {
         for (RetryableIssuePromise p : relnotes) {
             Issue i = p.claim();
             if (isReleaseNote(i)) {
-                if (!isReleaseNoteTag(i)) {
-                    releaseNotes.add("WARNING: no 'release-note' tag on " + i.getKey());
-                }
-                releaseNotes.add(StringUtils.stripNull(i.getDescription()));
+                releaseNotes.add(i);
             }
         }
 
