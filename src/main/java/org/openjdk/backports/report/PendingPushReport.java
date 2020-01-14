@@ -34,12 +34,12 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-public class PendingPushReport extends AbstractReport {
+public class PendingPushReport extends AbstractIssueReport {
 
     private final String release;
 
-    public PendingPushReport(JiraRestClient restClient, HgDB hgDB, boolean includeDownstream, String release) {
-        super(restClient, hgDB, includeDownstream);
+    public PendingPushReport(JiraRestClient restClient, String hgRepos, boolean includeDownstream, String release) {
+        super(restClient, hgRepos, includeDownstream);
         this.release = release;
     }
 

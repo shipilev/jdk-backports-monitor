@@ -39,8 +39,8 @@ public class PushesReport extends AbstractReport {
     private final boolean directOnly;
     private final String release;
 
-    public PushesReport(JiraRestClient restClient, HgDB hgDB, boolean includeDownstream, boolean directOnly, String release) {
-        super(restClient, hgDB, includeDownstream);
+    public PushesReport(JiraRestClient restClient, boolean directOnly, String release) {
+        super(restClient);
         this.directOnly = directOnly;
         this.release = release;
     }

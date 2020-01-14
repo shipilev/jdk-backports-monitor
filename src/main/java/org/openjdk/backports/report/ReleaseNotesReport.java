@@ -40,8 +40,8 @@ public class ReleaseNotesReport extends AbstractReport {
 
     private final String release;
 
-    public ReleaseNotesReport(JiraRestClient restClient, HgDB hgDB, boolean includeDownstream, String release) {
-        super(restClient, hgDB, includeDownstream);
+    public ReleaseNotesReport(JiraRestClient restClient, String release) {
+        super(restClient);
         this.release = release;
     }
 

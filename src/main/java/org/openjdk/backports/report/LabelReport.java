@@ -27,7 +27,6 @@ package org.openjdk.backports.report;
 import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.atlassian.jira.rest.client.api.domain.Issue;
 import org.openjdk.backports.Actionable;
-import org.openjdk.backports.hg.HgDB;
 import org.openjdk.backports.jira.TrackedIssue;
 
 import java.util.Collections;
@@ -35,13 +34,13 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class LabelReport extends AbstractReport {
+public class LabelReport extends AbstractIssueReport {
 
     private final String label;
     private final Actionable minLevel;
 
-    public LabelReport(JiraRestClient restClient, HgDB hgDB, boolean includeDownstream, String label, Actionable minLevel) {
-        super(restClient, hgDB, includeDownstream);
+    public LabelReport(JiraRestClient restClient, String hgRepos, boolean includeDownstream, String label, Actionable minLevel) {
+        super(restClient, hgRepos, includeDownstream);
         this.label = label;
         this.minLevel = minLevel;
     }

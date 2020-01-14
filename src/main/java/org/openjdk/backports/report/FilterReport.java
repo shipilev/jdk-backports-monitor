@@ -41,8 +41,8 @@ public class FilterReport extends AbstractReport {
 
     private final long filterId;
 
-    public FilterReport(JiraRestClient restClient, HgDB hgDB, boolean includeDownstream, long filterId) {
-        super(restClient, hgDB, includeDownstream);
+    public FilterReport(JiraRestClient restClient, long filterId) {
+        super(restClient);
         this.filterId = filterId;
     }
 

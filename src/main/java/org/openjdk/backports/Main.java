@@ -49,11 +49,6 @@ public class Main {
                     throw new RuntimeException(e);
                 }
 
-                HgDB hgDB = new HgDB();
-                if (options.getHgRepos() != null) {
-                    hgDB.load(options.getHgRepos());
-                }
-
                 String user = p.getProperty("user");
                 String pass = p.getProperty("pass");
 
@@ -64,35 +59,35 @@ public class Main {
                 try (JiraRestClient cli = Connect.getJiraRestClient(JIRA_URL, user, pass)) {
                     boolean ids = options.includeDownstream();
                     if (options.getLabelReport() != null) {
-                        new LabelReport(cli, hgDB, ids, options.getLabelReport(), options.getMinLevel()).run();
+                        new LabelReport(cli, options.getHgRepos(), ids, options.getLabelReport(), options.getMinLevel()).run();
                     }
 
                     if (options.getPushesReport() != null) {
-                        new PushesReport(cli, hgDB, ids, options.directOnly(), options.getPushesReport()).run();
+                        new PushesReport(cli, options.directOnly(), options.getPushesReport()).run();
                     }
 
                     if (options.getPendingPushReport() != null) {
-                        new PendingPushReport(cli, hgDB, ids, options.getPendingPushReport()).run();
+                        new PendingPushReport(cli, options.getHgRepos(), ids, options.getPendingPushReport()).run();
                     }
 
                     if (options.getFilterReport() != null) {
-                        new FilterReport(cli, hgDB, ids, options.getFilterReport()).run();
+                        new FilterReport(cli, options.getFilterReport()).run();
                     }
 
                     if (options.getIssueReport() != null) {
-                        new IssueReport(cli, hgDB, ids, options.getIssueReport()).run();
+                        new IssueReport(cli, options.getHgRepos(), ids, options.getIssueReport()).run();
                     }
 
                     if (options.getReleaseNotesReport() != null) {
-                        new ReleaseNotesReport(cli, hgDB, ids, options.getReleaseNotesReport()).run();
+                        new ReleaseNotesReport(cli, options.getReleaseNotesReport()).run();
                     }
 
                     if (options.getAffiliationReport() != null) {
-                        new AffiliationReport(cli, hgDB, ids).run();
+                        new AffiliationReport(cli).run();
                     }
 
                     if (options.getParityReport() != null) {
-                        new ParityReport(cli, hgDB, ids, options.getParityReport()).run();
+                        new ParityReport(cli, options.getParityReport()).run();
                     }
                 }
             }

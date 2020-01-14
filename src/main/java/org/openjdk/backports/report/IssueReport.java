@@ -26,17 +26,16 @@ package org.openjdk.backports.report;
 
 import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.atlassian.jira.rest.client.api.domain.Issue;
-import org.openjdk.backports.hg.HgDB;
 import org.openjdk.backports.jira.TrackedIssue;
 
 import java.util.Date;
 
-public class IssueReport extends AbstractReport {
+public class IssueReport extends AbstractIssueReport {
 
     private final String issueId;
 
-    public IssueReport(JiraRestClient restClient, HgDB hgDB, boolean includeDownstream, String issueId) {
-        super(restClient, hgDB, includeDownstream);
+    public IssueReport(JiraRestClient restClient, String hgRepos, boolean includeDownstream, String issueId) {
+        super(restClient, hgRepos, includeDownstream);
         this.issueId = issueId;
     }
 

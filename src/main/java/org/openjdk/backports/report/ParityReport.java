@@ -38,8 +38,8 @@ public class ParityReport extends AbstractReport {
 
     private final String in;
 
-    public ParityReport(JiraRestClient restClient, HgDB hgDB, boolean includeDownstream, String in) {
-        super(restClient, hgDB, includeDownstream);
+    public ParityReport(JiraRestClient restClient, String in) {
+        super(restClient);
         this.in = in;
     }
 

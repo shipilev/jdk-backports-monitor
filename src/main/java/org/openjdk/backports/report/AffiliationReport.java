@@ -33,8 +33,8 @@ import java.util.List;
 
 public class AffiliationReport extends AbstractReport {
 
-    public AffiliationReport(JiraRestClient restClient, HgDB hgDB, boolean includeDownstream) {
-        super(restClient, hgDB, includeDownstream);
+    public AffiliationReport(JiraRestClient restClient) {
+        super(restClient);
     }
 
     @Override
