@@ -28,11 +28,13 @@ import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.atlassian.jira.rest.client.api.domain.Issue;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import org.openjdk.backports.hg.HgDB;
 import org.openjdk.backports.jira.Accessors;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
 
 public class ParityReport extends AbstractReport {
 
@@ -204,7 +206,7 @@ public class ParityReport extends AbstractReport {
 
     void printSimple(Collection<Issue> issues) {
         List<Issue> printed = new ArrayList<>(issues);
-        Collections.sort(printed, DEFAULT_ISSUE_SORT);
+        printed.sort(DEFAULT_ISSUE_SORT);
 
         out.println(issues.size() + " issues:");
         for (Issue i : printed) {

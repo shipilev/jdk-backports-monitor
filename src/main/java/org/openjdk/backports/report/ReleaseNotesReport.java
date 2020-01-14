@@ -30,7 +30,6 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.TreeMultimap;
 import org.openjdk.backports.Main;
 import org.openjdk.backports.StringUtils;
-import org.openjdk.backports.hg.HgDB;
 import org.openjdk.backports.jira.Accessors;
 import org.openjdk.backports.jira.Versions;
 

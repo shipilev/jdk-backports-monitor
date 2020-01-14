@@ -26,7 +26,6 @@ package org.openjdk.backports.report;
 
 import com.atlassian.jira.rest.client.api.JiraRestClient;
 import org.openjdk.backports.census.Census;
-import org.openjdk.backports.hg.HgDB;
 
 import java.util.Date;
 import java.util.List;

@@ -24,7 +24,10 @@
  */
 package org.openjdk.backports;
 
-import joptsimple.*;
+import joptsimple.OptionException;
+import joptsimple.OptionParser;
+import joptsimple.OptionSet;
+import joptsimple.OptionSpec;
 
 import java.io.IOException;
 

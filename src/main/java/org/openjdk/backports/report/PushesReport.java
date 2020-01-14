@@ -27,7 +27,6 @@ package org.openjdk.backports.report;
 import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.atlassian.jira.rest.client.api.domain.Issue;
 import com.google.common.collect.*;
-import org.openjdk.backports.hg.HgDB;
 import org.openjdk.backports.jira.Accessors;
 
 import java.io.PrintStream;

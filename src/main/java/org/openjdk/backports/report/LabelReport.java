@@ -29,7 +29,6 @@ import com.atlassian.jira.rest.client.api.domain.Issue;
 import org.openjdk.backports.Actionable;
 import org.openjdk.backports.jira.TrackedIssue;
 
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -75,9 +74,8 @@ public class LabelReport extends AbstractIssueReport {
                 .parallelStream()
                 .map(this::parseIssue)
                 .filter(ti -> ti.getActions().getActionable().ordinal() >= minLevel.ordinal())
+                .sorted()
                 .collect(Collectors.toList());
-
-        Collections.sort(issues);
 
         printDelimiterLine(out);
         for (TrackedIssue i : issues) {

@@ -25,7 +25,6 @@
 package org.openjdk.backports;
 
 import com.atlassian.jira.rest.client.api.JiraRestClient;
-import org.openjdk.backports.hg.HgDB;
 import org.openjdk.backports.jira.Connect;
 import org.openjdk.backports.report.*;
 

@@ -24,17 +24,22 @@
  */
 package org.openjdk.backports.report;
 
-import com.atlassian.jira.rest.client.api.*;
-import com.atlassian.jira.rest.client.api.domain.*;
+import com.atlassian.jira.rest.client.api.JiraRestClient;
+import com.atlassian.jira.rest.client.api.domain.Issue;
+import com.atlassian.jira.rest.client.api.domain.IssueLink;
+import com.atlassian.jira.rest.client.api.domain.Version;
 import org.openjdk.backports.Actionable;
 import org.openjdk.backports.Actions;
 import org.openjdk.backports.Main;
-import org.openjdk.backports.StringUtils;
 import org.openjdk.backports.hg.HgDB;
 import org.openjdk.backports.hg.HgRecord;
-import org.openjdk.backports.jira.*;
+import org.openjdk.backports.jira.Accessors;
+import org.openjdk.backports.jira.RetryableIssuePromise;
+import org.openjdk.backports.jira.TrackedIssue;
+import org.openjdk.backports.jira.Versions;
 
-import java.io.*;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.*;
 
 public abstract class AbstractIssueReport extends AbstractReport {
@@ -189,7 +194,7 @@ public abstract class AbstractIssueReport extends AbstractReport {
             List<String> lines = results.get(release);
             if (lines != null) {
                 if (release != origRel) {
-                    Collections.sort(lines, Comparator.reverseOrder());
+                    lines.sort(Comparator.reverseOrder());
 
                     boolean first = true;
                     for (String line : lines) {

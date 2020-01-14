@@ -6,7 +6,7 @@ import org.openjdk.backports.jira.Parsers;
 
 public class ParserTest {
 
-    static String SAMPLE_COMMENT = "URL: http://hg.openjdk.java.net/jdk/jdk/rev/66f5241da404\n" +
+    static final String SAMPLE_COMMENT = "URL: http://hg.openjdk.java.net/jdk/jdk/rev/66f5241da404\n" +
             "User: shade\n" +
             "Date: 2019-04-15 16:22:25 +0000";
 

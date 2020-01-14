@@ -28,20 +28,16 @@ import com.atlassian.jira.rest.client.api.IssueRestClient;
 import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.atlassian.jira.rest.client.api.SearchRestClient;
 import com.atlassian.jira.rest.client.api.domain.Issue;
-import com.atlassian.jira.rest.client.api.domain.IssueLink;
-import com.atlassian.jira.rest.client.api.domain.Version;
-import org.openjdk.backports.Actionable;
-import org.openjdk.backports.Actions;
-import org.openjdk.backports.Main;
 import org.openjdk.backports.StringUtils;
-import org.openjdk.backports.hg.HgDB;
-import org.openjdk.backports.hg.HgRecord;
-import org.openjdk.backports.jira.*;
+import org.openjdk.backports.jira.Issues;
+import org.openjdk.backports.jira.UserCache;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.*;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Set;
 
 public abstract class AbstractReport {
 

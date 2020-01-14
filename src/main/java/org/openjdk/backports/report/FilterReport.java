@@ -30,10 +30,8 @@ import com.atlassian.jira.rest.client.api.domain.Issue;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.TreeMultimap;
 import org.openjdk.backports.Main;
-import org.openjdk.backports.hg.HgDB;
 import org.openjdk.backports.jira.Accessors;
 
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -67,7 +65,7 @@ public class FilterReport extends AbstractReport {
         out.println("Hint: Prefix bug IDs with " + Main.JIRA_URL + "browse/ to reach the relevant JIRA entry.");
         out.println();
 
-        Collections.sort(issues, DEFAULT_ISSUE_SORT);
+        issues.sort(DEFAULT_ISSUE_SORT);
 
         Multimap<String, Issue> byComponent = TreeMultimap.create(String::compareTo, DEFAULT_ISSUE_SORT);
 
