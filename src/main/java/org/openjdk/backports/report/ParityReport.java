@@ -48,7 +48,7 @@ public class ParityReport extends AbstractReport {
 
     @Override
     public void run() {
-        out.println("PARITY REPORT");
+        out.println("PARITY REPORT: " + in);
         printMajorDelimiterLine(out);
         out.println();
         out.println("This report shows the bird-eye view of parity between OpenJDK and Oracle JDK.");
