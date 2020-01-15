@@ -138,9 +138,9 @@ public class ParityReport extends AbstractReport {
 
             if (firstOracle != null && firstOpen != null && Versions.compare(firstOracleRaw, firstOpen) == 0) {
                 if (timeOpen.compareTo(timeOracle) < 0) {
-                    exactOpenFirst.put(p, String.format("  %15s -> %15s, %s: %s", firstOpenRaw, p.getKey(), p.getSummary()));
+                    exactOpenFirst.put(p, String.format("  %15s -> %15s, %s: %s", firstOpenRaw, firstOracleRaw, p.getKey(), p.getSummary()));
                 } else {
-                    exactOracleFirst.put(p, String.format("  %15s -> %15s, %s: %s", firstOracleRaw, p.getKey(), p.getSummary()));
+                    exactOracleFirst.put(p, String.format("  %15s -> %15s, %s: %s", firstOracleRaw, firstOpenRaw, p.getKey(), p.getSummary()));
                 }
             }
 
