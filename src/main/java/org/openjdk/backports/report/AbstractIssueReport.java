@@ -385,6 +385,7 @@ public abstract class AbstractIssueReport extends AbstractReport {
         Collection<Issue> relNotes = Accessors.getReleaseNotes(issueCli, issue);
         if (!relNotes.isEmpty()) {
             pw.println("  Release Notes:");
+            pw.println();
             printReleaseNotes(pw, relNotes);
             pw.println();
         }
