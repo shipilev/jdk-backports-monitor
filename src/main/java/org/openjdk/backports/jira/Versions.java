@@ -127,7 +127,7 @@ public class Versions {
             return true;
         }
 
-        if (parseMajor(version) == 8 && parseMinor(version) >= 212 && !version.startsWith("openjdk")) {
+        if (parseMajor(version) == 8 && parseMinor(version) >= 211 && !version.startsWith("openjdk")) {
             return true;
         }
 

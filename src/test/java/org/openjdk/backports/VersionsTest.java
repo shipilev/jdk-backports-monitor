@@ -93,6 +93,7 @@ public class VersionsTest {
         Assert.assertFalse(Versions.isOracle("openjdk8u202"));
         Assert.assertFalse(Versions.isOracle("8u202"));
         Assert.assertFalse(Versions.isOracle("openjdk8u212"));
+        Assert.assertTrue(Versions.isOracle("8u211"));
         Assert.assertTrue(Versions.isOracle("8u212"));
         Assert.assertFalse(Versions.isOracle("11.0.3"));
         Assert.assertTrue(Versions.isOracle("11.0.3-oracle"));
