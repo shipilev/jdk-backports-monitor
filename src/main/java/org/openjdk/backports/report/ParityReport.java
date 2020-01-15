@@ -32,10 +32,7 @@ import org.openjdk.backports.jira.Accessors;
 import org.openjdk.backports.jira.Versions;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 public class ParityReport extends AbstractReport {
 
@@ -82,16 +79,18 @@ public class ParityReport extends AbstractReport {
         out.println("Discovered " + mp.size() + " issues.");
         out.println();
 
-        List<Issue> onlyOpen = new ArrayList<>();
-        List<Issue> onlyOracle = new ArrayList<>();
-        List<Issue> exactOpenFirst = new ArrayList<>();
-        List<Issue> exactOracleFirst = new ArrayList<>();
-        List<Issue> lateOpenFirst = new ArrayList<>();
-        List<Issue> lateOracleFirst = new ArrayList<>();
+        SortedMap<Issue, String> onlyOpen = new TreeMap<>(DEFAULT_ISSUE_SORT);
+        SortedMap<Issue, String> onlyOracle = new TreeMap<>(DEFAULT_ISSUE_SORT);
+        SortedMap<Issue, String> exactOpenFirst = new TreeMap<>(DEFAULT_ISSUE_SORT);
+        SortedMap<Issue, String> exactOracleFirst = new TreeMap<>(DEFAULT_ISSUE_SORT);
+        SortedMap<Issue, String> lateOpenFirst = new TreeMap<>(DEFAULT_ISSUE_SORT);
+        SortedMap<Issue, String> lateOracleFirst = new TreeMap<>(DEFAULT_ISSUE_SORT);
 
         for (Issue p : mp.keySet()) {
             String firstOracle = null;
+            String firstOracleRaw = null;
             String firstOpen = null;
+            String firstOpenRaw = null;
             LocalDateTime timeOracle = null;
             LocalDateTime timeOpen = null;
 
@@ -104,20 +103,24 @@ public class ParityReport extends AbstractReport {
                     if (Versions.isOracle(fv)) {
                         if (firstOracle == null) {
                             firstOracle = sub;
+                            firstOracleRaw = fv;
                             timeOracle = rd;
                         } else {
                             if (Versions.compare(sub, firstOracle) < 0) {
                                 firstOracle = sub;
+                                firstOracleRaw = fv;
                                 timeOracle = rd;
                             }
                         }
                     } else {
                         if (firstOpen == null) {
                             firstOpen = sub;
+                            firstOpenRaw = fv;
                             timeOpen = rd;
                         } else {
                             if (Versions.compare(sub, firstOpen) < 0) {
                                 firstOpen = sub;
+                                firstOpenRaw = fv;
                                 timeOpen = rd;
                             }
                         }
@@ -126,38 +129,31 @@ public class ParityReport extends AbstractReport {
             }
 
             if (firstOracle == null && firstOpen != null) {
-                onlyOpen.add(p);
+                onlyOpen.put(p, String.format("  %15s, %s: %s", firstOpenRaw, p.getKey(), p.getSummary()));
             }
 
             if (firstOracle != null && firstOpen == null) {
-                onlyOracle.add(p);
+                onlyOracle.put(p, String.format("  %15s, %s: %s", firstOracleRaw, p.getKey(), p.getSummary()));
             }
 
-            if (firstOracle != null && firstOpen != null && Versions.compare(firstOracle, firstOpen) == 0) {
+            if (firstOracle != null && firstOpen != null && Versions.compare(firstOracleRaw, firstOpen) == 0) {
                 if (timeOpen.compareTo(timeOracle) < 0) {
-                    exactOpenFirst.add(p);
+                    exactOpenFirst.put(p, String.format("  %15s -> %15s, %s: %s", firstOpenRaw, p.getKey(), p.getSummary()));
                 } else {
-                    exactOracleFirst.add(p);
+                    exactOracleFirst.put(p, String.format("  %15s -> %15s, %s: %s", firstOracleRaw, p.getKey(), p.getSummary()));
                 }
             }
 
             if (firstOracle != null && firstOpen != null && Versions.compare(firstOpen, firstOracle) < 0) {
-                lateOpenFirst.add(p);
+                lateOpenFirst.put(p, String.format("  %15s -> %15s, %s: %s", firstOpenRaw, firstOracleRaw, p.getKey(), p.getSummary()));
             }
 
             if (firstOracle != null && firstOpen != null && Versions.compare(firstOpen, firstOracle) > 0) {
-                lateOracleFirst.add(p);
+                lateOracleFirst.put(p, String.format("  %15s -> %15s, %s: %s", firstOracleRaw, firstOpenRaw, p.getKey(), p.getSummary()));
             }
         }
 
-        onlyOpen.sort(DEFAULT_ISSUE_SORT);
-        onlyOracle.sort(DEFAULT_ISSUE_SORT);
-        lateOpenFirst.sort(DEFAULT_ISSUE_SORT);
-        lateOracleFirst.sort(DEFAULT_ISSUE_SORT);
-        exactOpenFirst.sort(DEFAULT_ISSUE_SORT);
-        exactOracleFirst.sort(DEFAULT_ISSUE_SORT);
-
-        out.println("=== ONLY IN OPENJDK");
+        out.println("=== EXCLUSIVE: ONLY IN OPENJDK");
         out.println();
         out.println("This is where OpenJDK is ahead of Oracle JDK.");
         out.println("No relevant backports are detected in Oracle JDK yet.");
@@ -166,7 +162,7 @@ public class ParityReport extends AbstractReport {
         printSimple(onlyOpen);
         out.println();
 
-        out.println("=== ONLY IN ORACLE JDK");
+        out.println("=== EXCLUSIVE: ONLY IN ORACLE JDK");
         out.println();
         out.println("This is where Oracle JDK is ahead of OpenJDK.");
         out.println("No relevant backports are detected in OpenJDK.");
@@ -175,21 +171,21 @@ public class ParityReport extends AbstractReport {
         printSimple(onlyOracle);
         out.println();
 
-        out.println("=== LATE PARITY: FIRST IN OPENJDK RELEASE");
+        out.println("=== LATE PARITY: ORACLE JDK FOLLOWS OPENJDK IN LATER RELEASES");
         out.println();
         out.println("This is where OpenJDK used to be ahead, and then Oracle JDK caught up in future releases.");
         out.println();
         printSimple(lateOpenFirst);
         out.println();
 
-        out.println("=== LATE PARITY: FIRST IN ORACLE JDK RELEASE");
+        out.println("=== LATE PARITY: OPENJDK FOLLOWS ORACLE JDK IN LATER RELEASES");
         out.println();
         out.println("This is where Oracle JDK used to be ahead, and then OpenJDK caught up in future releases.");
         out.println();
         printSimple(lateOracleFirst);
         out.println();
 
-        out.println("=== EXACT PARITY: OPENJDK DID BACKPORT FIRST");
+        out.println("=== EXACT PARITY: ORACLE JDK FOLLOWS OPENJDK");
         out.println();
         out.println("This is where OpenJDK made the first backport in the release, and then Oracle JDK followed.");
         out.println("No difference in the final release detected.");
@@ -197,7 +193,7 @@ public class ParityReport extends AbstractReport {
         printSimple(exactOpenFirst);
         out.println();
 
-        out.println("=== EXACT PARITY: ORACLE JDK DID BACKPORT FIRST");
+        out.println("=== EXACT PARITY: OPENJDK FOLLOWS ORACLE JDK");
         out.println();
         out.println("This is where Oracle JDK made the first backport in the release, and then OpenJDK followed.");
         out.println("No difference in the final release detected.");
@@ -206,15 +202,11 @@ public class ParityReport extends AbstractReport {
         out.println();
     }
 
-    void printSimple(Collection<Issue> issues) {
-        List<Issue> printed = new ArrayList<>(issues);
-        printed.sort(DEFAULT_ISSUE_SORT);
-
+    void printSimple(Map<Issue, String> issues) {
         out.println(issues.size() + " issues:");
-        for (Issue i : printed) {
-            out.println("  " + i.getKey() + ": " + i.getSummary());
+        for (Map.Entry<Issue,String> kv : issues.entrySet()) {
+            out.println(kv.getValue());
         }
-
         out.println();
     }
 }
