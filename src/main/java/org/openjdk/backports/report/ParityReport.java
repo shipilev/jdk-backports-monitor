@@ -60,6 +60,7 @@ public class ParityReport extends AbstractReport {
         Multimap<Issue, Issue> mp = HashMultimap.create();
 
         List<String> vers = new ArrayList<>();
+        int versLen = 0;
 
         Project proj = restClient.getProjectClient().getProject("JDK").claim();
         for (Version ver : proj.getVersions()) {
@@ -67,6 +68,7 @@ public class ParityReport extends AbstractReport {
             if (Versions.parseMajor(v) != majorVer) continue;
             if (Versions.isShared(v)) continue;
             vers.add(v);
+            versLen = Math.max(versLen, v.length());
         }
 
         out.println("Auto-detected versions:");
@@ -164,27 +166,33 @@ public class ParityReport extends AbstractReport {
             }
 
             if (firstOracle == null && firstOpen != null) {
-                onlyOpen.put(p, String.format("  %15s, %s: %s", firstOpenRaw, p.getKey(), p.getSummary()));
+                onlyOpen.put(p, String.format("  %-" + versLen + "s, %s: %s",
+                        firstOpenRaw, p.getKey(), p.getSummary()));
             }
 
             if (firstOracle != null && firstOpen == null) {
-                onlyOracle.put(p, String.format("  %15s, %s: %s", firstOracleRaw, p.getKey(), p.getSummary()));
+                onlyOracle.put(p, String.format("  %-" + versLen + "s, %s: %s",
+                        firstOracleRaw, p.getKey(), p.getSummary()));
             }
 
             if (firstOracle != null && firstOpen != null && Versions.compare(firstOracleRaw, firstOpen) == 0) {
                 if (timeOpen.compareTo(timeOracle) < 0) {
-                    exactOpenFirst.put(p, String.format("  %15s -> %15s, %s: %s", firstOpenRaw, firstOracleRaw, p.getKey(), p.getSummary()));
+                    exactOpenFirst.put(p, String.format("  %-" + versLen + "s -> %-" + versLen + "s, %s: %s",
+                            firstOpenRaw, firstOracleRaw, p.getKey(), p.getSummary()));
                 } else {
-                    exactOracleFirst.put(p, String.format("  %15s -> %15s, %s: %s", firstOracleRaw, firstOpenRaw, p.getKey(), p.getSummary()));
+                    exactOracleFirst.put(p, String.format("  %-" + versLen + "s -> %-" + versLen + "s, %s: %s",
+                            firstOracleRaw, firstOpenRaw, p.getKey(), p.getSummary()));
                 }
             }
 
             if (firstOracle != null && firstOpen != null && Versions.compare(firstOpen, firstOracle) < 0) {
-                lateOpenFirst.put(p, String.format("  %15s -> %15s, %s: %s", firstOpenRaw, firstOracleRaw, p.getKey(), p.getSummary()));
+                lateOpenFirst.put(p, String.format("  %-" + versLen + "s -> %-" + versLen + "s, %s: %s",
+                        firstOpenRaw, firstOracleRaw, p.getKey(), p.getSummary()));
             }
 
             if (firstOracle != null && firstOpen != null && Versions.compare(firstOpen, firstOracle) > 0) {
-                lateOracleFirst.put(p, String.format("  %15s -> %15s, %s: %s", firstOracleRaw, firstOpenRaw, p.getKey(), p.getSummary()));
+                lateOracleFirst.put(p, String.format("  %-" + versLen + "s -> %-" + versLen + "s, %s: %s",
+                        firstOracleRaw, firstOpenRaw, p.getKey(), p.getSummary()));
             }
         }
 
