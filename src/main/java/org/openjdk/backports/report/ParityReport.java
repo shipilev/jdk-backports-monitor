@@ -56,20 +56,22 @@ public class ParityReport extends AbstractReport {
         Multimap<Issue, Issue> mp = HashMultimap.create();
 
         for (String ver : in.split(",")) {
-            List<Issue> backports = jiraIssues.getBasicIssues("project = JDK" +
+            Multimap<Issue, Issue> pb = jiraIssues.getIssuesWithBackports("project = JDK" +
                     " AND (status in (Closed, Resolved))" +
                     " AND (labels not in (release-note, openjdk-na) OR labels is EMPTY)" +
                     " AND (issuetype != CSR)" +
                     " AND (resolution not in (\"Won't Fix\", Duplicate, \"Cannot Reproduce\", \"Not an Issue\", Withdrawn, Other))" +
                     " AND fixVersion = " + ver);
 
-            List<Issue> parents = jiraIssues.getParentIssues(backports);
-            for (int i = 0; i < parents.size(); i++) {
-                Issue parent = parents.get(i);
-                Issue backport = backports.get(i);
-                if (parent == null) parent = backport;
-                if (!mp.containsEntry(parent, backport)) {
-                    mp.put(parent, backport);
+            for (Issue parent : pb.keySet()) {
+                if (mp.containsKey(parent)) {
+                    // Already parsed, skip
+                    continue;
+                }
+                for (Issue backport : pb.get(parent)) {
+                    if (Accessors.isDelivered(backport)) {
+                        mp.put(parent, backport);
+                    }
                 }
             }
 

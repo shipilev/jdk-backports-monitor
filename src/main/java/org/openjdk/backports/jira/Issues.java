@@ -27,7 +27,10 @@ package org.openjdk.backports.jira;
 import com.atlassian.jira.rest.client.api.IssueRestClient;
 import com.atlassian.jira.rest.client.api.SearchRestClient;
 import com.atlassian.jira.rest.client.api.domain.Issue;
+import com.atlassian.jira.rest.client.api.domain.IssueLink;
 import com.atlassian.jira.rest.client.api.domain.SearchResult;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.commons.lang3.text.WordUtils;
 import org.openjdk.backports.StringUtils;
 
@@ -161,6 +164,40 @@ public class Issues {
         out.println(" done");
 
         return issues;
+    }
+
+    public Multimap<Issue, Issue> getIssuesWithBackports(String query) {
+        List<Issue> parents = getParentIssues(query);
+        int totalSize = parents.size();
+
+        Multimap<Issue, RetryableIssuePromise> promises = HashMultimap.create();
+        for (Issue parent : parents) {
+            if (parent.getIssueLinks() != null) {
+                for (IssueLink link : parent.getIssueLinks()) {
+                    if (link.getIssueLinkType().getName().equals("Backport")) {
+                        String linkKey = link.getTargetIssueKey();
+                        promises.put(parent, new RetryableIssuePromise(issueCli, linkKey));
+                    }
+                }
+            }
+
+        }
+
+        int c1 = 0;
+        out.print("Resolving backports (" + totalSize + " total): ");
+        Multimap<Issue, Issue> result = HashMultimap.create();
+        for (Issue parent : parents) {
+            for (RetryableIssuePromise ip : promises.get(parent)) {
+                result.put(parent, ip.claim());
+            }
+            if ((++c1 % PAGE_SIZE) == 0) {
+                out.print(".");
+                out.flush();
+            }
+        }
+        out.println(" done");
+
+        return result;
     }
 
     public List<Issue> getParentIssues(List<Issue> basics) {

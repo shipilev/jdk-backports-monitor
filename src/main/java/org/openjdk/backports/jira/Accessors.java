@@ -160,8 +160,8 @@ public class Accessors {
             case "Withdrawn":
                 return false;
             default:
-                // Default to "delivered"
-                break;
+                // Default to "not delivered"
+                return false;
         }
 
         switch (getResolution(issue)) {
@@ -174,13 +174,11 @@ public class Accessors {
                 return false;
             case "Resolved":
             case "Fixed":
-                break;
+                return true;
             default:
                 // Default to "delivered"
-                break;
+                return true;
         }
-
-        return true;
     }
 
     public static boolean isReleaseNoteTag(Issue issue) {
