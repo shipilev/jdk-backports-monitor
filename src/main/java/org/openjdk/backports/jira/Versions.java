@@ -80,19 +80,37 @@ public class Versions {
             return -1;
         }
 
-        // Only for 8u now.
-        int uIdx = version.indexOf("u");
-        if (uIdx != -1) {
-            if (uIdx + 1 == version.length()) {
-                return 0;
-            }
-            try {
-                return Integer.parseInt(version.substring(uIdx+1));
-            } catch (Exception e) {
-                e.printStackTrace();
-                return -1;
+        if (parseMajor(version) <= 8) {
+            int uIdx = version.indexOf("u");
+            if (uIdx != -1) {
+                if (uIdx + 1 == version.length()) {
+                    return 0;
+                }
+                try {
+                    return Integer.parseInt(version.substring(uIdx + 1));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return -1;
+                }
             }
         }
+
+        if (parseMajor(version) >= 11) {
+            String sub = stripVendor(version);
+            int dotIdx = sub.lastIndexOf(".");
+            if (dotIdx + 1 == version.length()) {
+                return 0;
+            }
+            if (dotIdx != -1) {
+                try {
+                    return Integer.parseInt(sub.substring(dotIdx + 1));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return -1;
+                }
+            }
+        }
+
         return -1;
     }
 
@@ -128,6 +146,22 @@ public class Versions {
         }
 
         if (parseMajor(version) == 8 && parseMinor(version) >= 211 && !version.startsWith("openjdk")) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static boolean isShared(String version) {
+        if (isOracle(version)) {
+            return false;
+        }
+
+        if (parseMajor(version) >= 11 && parseMinor(version) <= 2) {
+            return true;
+        }
+
+        if (parseMajor(version) == 8 && parseMinor(version) < 211) {
             return true;
         }
 

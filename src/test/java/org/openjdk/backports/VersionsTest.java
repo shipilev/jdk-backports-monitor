@@ -71,7 +71,7 @@ public class VersionsTest {
         Assert.assertEquals(-1,  Versions.parseMinor("8-shenandoah"));
         Assert.assertEquals(-1,  Versions.parseMinor("11-shenandoah"));
         Assert.assertEquals(-1,  Versions.parseMinor("8-aarch64"));
-        Assert.assertEquals(-1,  Versions.parseMinor("11.0.3"));
+        Assert.assertEquals(3,   Versions.parseMinor("11.0.3"));
 
         Assert.assertEquals(-1,  Versions.parseMinor("7"));
         Assert.assertEquals(40,  Versions.parseMinor("7u40"));
@@ -90,7 +90,7 @@ public class VersionsTest {
 
     @Test
     public void testIsOracle() {
-        Assert.assertFalse(Versions.isOracle("openjdk8u202"));
+        Assert.assertFalse(Versions.isOracle("8u192"));
         Assert.assertFalse(Versions.isOracle("8u202"));
         Assert.assertFalse(Versions.isOracle("openjdk8u212"));
         Assert.assertTrue(Versions.isOracle("8u211"));
@@ -99,6 +99,33 @@ public class VersionsTest {
         Assert.assertTrue(Versions.isOracle("11.0.3-oracle"));
         Assert.assertFalse(Versions.isOracle("13.0.1"));
         Assert.assertTrue(Versions.isOracle("13.0.1-oracle"));
+    }
+
+    @Test
+    public void testIsShared() {
+        Assert.assertTrue(Versions.isShared("8u192"));
+        Assert.assertTrue(Versions.isShared("openjdk8u202"));
+        Assert.assertTrue(Versions.isShared("8u202"));
+        Assert.assertFalse(Versions.isShared("openjdk8u212"));
+        Assert.assertFalse(Versions.isShared("8u211"));
+        Assert.assertFalse(Versions.isShared("8u212"));
+        Assert.assertTrue(Versions.isShared("11"));
+        Assert.assertTrue(Versions.isShared("11.0.1"));
+        Assert.assertTrue(Versions.isShared("11.0.2"));
+        Assert.assertFalse(Versions.isShared("11.0.3"));
+        Assert.assertFalse(Versions.isShared("11.0.3-oracle"));
+        Assert.assertTrue(Versions.isShared("13"));
+        Assert.assertTrue(Versions.isShared("13.0.1"));
+        Assert.assertTrue(Versions.isShared("13.0.2"));
+        Assert.assertFalse(Versions.isShared("13.0.1-oracle"));
+        Assert.assertFalse(Versions.isShared("13.0.2-oracle"));
+        Assert.assertFalse(Versions.isShared("13.0.3-oracle"));
+        Assert.assertTrue(Versions.isShared("14"));
+        Assert.assertTrue(Versions.isShared("14.0.1"));
+        Assert.assertTrue(Versions.isShared("14.0.2"));
+        Assert.assertFalse(Versions.isShared("14.0.1-oracle"));
+        Assert.assertFalse(Versions.isShared("14.0.2-oracle"));
+        Assert.assertFalse(Versions.isShared("14.0.3-oracle"));
     }
 
     @Test

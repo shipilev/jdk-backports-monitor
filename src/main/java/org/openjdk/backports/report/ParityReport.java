@@ -87,6 +87,7 @@ public class ParityReport extends AbstractReport {
         SortedMap<Issue, String> lateOracleFirst = new TreeMap<>(DEFAULT_ISSUE_SORT);
 
         for (Issue p : mp.keySet()) {
+            boolean isShared = false;
             String firstOracle = null;
             String firstOracleRaw = null;
             String firstOpen = null;
@@ -99,6 +100,10 @@ public class ParityReport extends AbstractReport {
                 LocalDateTime rd = LocalDateTime.parse(rds.substring(0, rds.indexOf(".")));
 
                 for (String fv : Accessors.getFixVersions(subIssue)) {
+                    if (Versions.isShared(fv)) {
+                        isShared = true;
+                    }
+
                     String sub = Versions.stripVendor(fv);
                     if (Versions.isOracle(fv)) {
                         if (firstOracle == null) {
@@ -126,6 +131,10 @@ public class ParityReport extends AbstractReport {
                         }
                     }
                 }
+            }
+
+            if (isShared) {
+                continue;
             }
 
             if (firstOracle == null && firstOpen != null) {
