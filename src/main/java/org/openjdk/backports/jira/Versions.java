@@ -89,7 +89,6 @@ public class Versions {
                 try {
                     return Integer.parseInt(version.substring(uIdx + 1));
                 } catch (Exception e) {
-                    e.printStackTrace();
                     return -1;
                 }
             }
@@ -109,7 +108,6 @@ public class Versions {
                 try {
                     return Integer.parseInt(args[2]);
                 } catch (Exception e) {
-                    e.printStackTrace();
                     return -1;
                 }
             }

@@ -45,7 +45,7 @@ public class Options {
     private Actionable minLevel;
     private boolean includeDownstream;
     private boolean directOnly;
-    private String parityReport;
+    private Integer parityReport;
 
     public Options(String[] args) {
         this.args = args;
@@ -72,8 +72,8 @@ public class Options {
         OptionSpec<Long> optFilterReport = parser.accepts("filter", "Report issues matching the filter")
                 .withRequiredArg().ofType(long.class).describedAs("filter-id");
 
-        OptionSpec<String> optParityReport = parser.accepts("parity", "Report parity statistics")
-                .withRequiredArg().ofType(String.class).describedAs("versions[comma-separated]");
+        OptionSpec<Integer> optParityReport = parser.accepts("parity", "Report parity statistics")
+                .withRequiredArg().ofType(Integer.class).describedAs("release-train");
 
         OptionSpec<String> optReleaseNotesReport = parser.accepts("release-notes", "Generates release notes for a given release")
                 .withRequiredArg().ofType(String.class).describedAs("release");
@@ -156,7 +156,7 @@ public class Options {
         return filterReport;
     }
 
-    public String getParityReport() {
+    public Integer getParityReport() {
         return parityReport;
     }
 

@@ -26,6 +26,8 @@ package org.openjdk.backports.report;
 
 import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.atlassian.jira.rest.client.api.domain.Issue;
+import com.atlassian.jira.rest.client.api.domain.Project;
+import com.atlassian.jira.rest.client.api.domain.Version;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import org.openjdk.backports.jira.Accessors;
@@ -36,16 +38,18 @@ import java.util.*;
 
 public class ParityReport extends AbstractReport {
 
-    private final String in;
+    private final JiraRestClient restClient;
+    private final int majorVer;
 
-    public ParityReport(JiraRestClient restClient, String in) {
+    public ParityReport(JiraRestClient restClient, int majorVer) {
         super(restClient);
-        this.in = in;
+        this.restClient = restClient;
+        this.majorVer = majorVer;
     }
 
     @Override
     public void run() {
-        out.println("PARITY REPORT: " + in);
+        out.println("PARITY REPORT FOR JDK: " + majorVer);
         printMajorDelimiterLine(out);
         out.println();
         out.println("This report shows the bird-eye view of parity between OpenJDK and Oracle JDK.");
@@ -55,19 +59,21 @@ public class ParityReport extends AbstractReport {
 
         Multimap<Issue, Issue> mp = HashMultimap.create();
 
-        String[] vers = in.split(",");
+        List<String> vers = new ArrayList<>();
 
-        int majorVer = -1;
-        for (String ver : vers) {
-            int v = Versions.parseMajor(ver);
-            if (majorVer == -1) {
-                majorVer = v;
-            } else {
-                if (v != majorVer) {
-                    throw new IllegalArgumentException("Cannot mix major versions: major is " + majorVer + ", yet try to add " + ver);
-                }
-            }
+        Project proj = restClient.getProjectClient().getProject("JDK").claim();
+        for (Version ver : proj.getVersions()) {
+            String v = ver.getName();
+            if (Versions.parseMajor(v) != majorVer) continue;
+            if (Versions.isShared(v)) continue;
+            vers.add(v);
         }
+
+        out.println("Auto-detected versions:");
+        for (String ver : vers) {
+            out.println("  " + ver);
+        }
+        out.println();
 
         for (String ver : vers) {
             Multimap<Issue, Issue> pb = jiraIssues.getIssuesWithBackports("project = JDK" +
