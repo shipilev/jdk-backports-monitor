@@ -33,10 +33,7 @@ import org.openjdk.backports.Actions;
 import org.openjdk.backports.Main;
 import org.openjdk.backports.hg.HgDB;
 import org.openjdk.backports.hg.HgRecord;
-import org.openjdk.backports.jira.Accessors;
-import org.openjdk.backports.jira.RetryableIssuePromise;
-import org.openjdk.backports.jira.TrackedIssue;
-import org.openjdk.backports.jira.Versions;
+import org.openjdk.backports.jira.*;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -133,14 +130,14 @@ public abstract class AbstractIssueReport extends AbstractReport {
             actions.update(Actionable.CRITICAL);
         }
 
-        List<RetryableIssuePromise> links = new ArrayList<>();
+        List<IssuePromise> links = new ArrayList<>();
         for (IssueLink link : orEmpty(issue.getIssueLinks())) {
             if (link.getIssueLinkType().getName().equals("Backport")) {
                 String linkKey = link.getTargetIssueKey();
-                links.add(new RetryableIssuePromise(issueCli, linkKey));
+                links.add(jiraIssues.getIssue(linkKey));
             }
         }
-        for (RetryableIssuePromise p : links) {
+        for (IssuePromise p : links) {
             Issue subIssue = p.claim();
             recordIssue(results, subIssue);
             recordOracleStatus(oracleBackports, subIssue);

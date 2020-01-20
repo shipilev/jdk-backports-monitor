@@ -115,17 +115,6 @@ public class Accessors {
         return joiner.toString();
     }
 
-    public static RetryableIssuePromise getParent(IssueRestClient cli, Issue start) {
-        for (IssueLink link : start.getIssueLinks()) {
-            IssueLinkType type = link.getIssueLinkType();
-            if (type.getName().equals("Backport") && type.getDirection() == IssueLinkType.Direction.INBOUND) {
-                String linkKey = link.getTargetIssueKey();
-                return new RetryableIssuePromise(cli, linkKey);
-            }
-        }
-        return null;
-    }
-
     private static String getStatus(Issue issue) {
         Status s = issue.getStatus();
         if (s == null) {
@@ -204,14 +193,14 @@ public class Accessors {
         // Search in sub-tasks
         for (Subtask link : start.getSubtasks()) {
             String linkKey = link.getIssueKey();
-            relnotes.add(new RetryableIssuePromise(cli, linkKey));
+            relnotes.add(new RetryableIssuePromise(null, cli, linkKey));
         }
 
         // Search in related issues
         for (IssueLink link : start.getIssueLinks()) {
             if (link.getIssueLinkType().getName().equals("Relates")) {
                 String linkKey = link.getTargetIssueKey();
-                relnotes.add(new RetryableIssuePromise(cli, linkKey));
+                relnotes.add(new RetryableIssuePromise(null, cli, linkKey));
             }
         }
 

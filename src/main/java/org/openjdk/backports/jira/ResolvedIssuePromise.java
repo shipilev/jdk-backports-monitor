@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2019, Red Hat, Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,46 +24,17 @@
  */
 package org.openjdk.backports.jira;
 
-import com.atlassian.jira.rest.client.api.IssueRestClient;
 import com.atlassian.jira.rest.client.api.domain.Issue;
-import com.atlassian.util.concurrent.Promise;
 
-import java.util.concurrent.TimeUnit;
+public class ResolvedIssuePromise implements IssuePromise {
+    private final Issue issue;
 
-public class RetryableIssuePromise implements IssuePromise {
-    private final Issues issues;
-    private final IssueRestClient cli;
-    private final String key;
-    private Promise<Issue> cur;
-
-    public RetryableIssuePromise(Issues issues, IssueRestClient cli, String key) {
-        this.issues = issues;
-        this.cli = cli;
-        this.key = key;
-        this.cur = cli.getIssue(key);
+    public ResolvedIssuePromise(Issue issue) {
+        this.issue = issue;
     }
 
+    @Override
     public Issue claim() {
-        Issue issue = claimDo();
-        if (issue != null && issues != null) {
-            issues.registerIssueCache(key, issue);
-        }
         return issue;
-    }
-
-    private Issue claimDo() {
-        for (int t = 0; t < 10; t++) {
-            try {
-                return cur.claim();
-            } catch (Exception e) {
-                try {
-                    TimeUnit.MILLISECONDS.sleep((1 + t*t)*100);
-                } catch (InterruptedException ie) {
-                    ie.printStackTrace();
-                }
-                cur = cli.getIssue(key);
-            }
-        }
-        return cur.claim();
     }
 }
