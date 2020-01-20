@@ -86,6 +86,9 @@ public class VersionsTest {
         Assert.assertEquals(-1,  Versions.parseMinor("openjdk7u"));
         Assert.assertEquals(0,   Versions.parseMinor("openjdk8u"));
         Assert.assertEquals(212, Versions.parseMinor("openjdk8u212"));
+
+        Assert.assertEquals(6, Versions.parseMinor("11.0.6.0.1"));
+        Assert.assertEquals(6, Versions.parseMinor("11.0.6.0.1-oracle"));
     }
 
     @Test

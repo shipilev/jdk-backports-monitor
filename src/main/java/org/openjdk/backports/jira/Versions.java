@@ -102,8 +102,12 @@ public class Versions {
                 return 0;
             }
             if (dotIdx != -1) {
+                String[] args = sub.split("\\.");
+                if (args.length < 3) {
+                    return -1;
+                }
                 try {
-                    return Integer.parseInt(sub.substring(dotIdx + 1));
+                    return Integer.parseInt(args[2]);
                 } catch (Exception e) {
                     e.printStackTrace();
                     return -1;
