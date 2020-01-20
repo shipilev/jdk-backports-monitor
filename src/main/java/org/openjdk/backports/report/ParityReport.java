@@ -55,7 +55,21 @@ public class ParityReport extends AbstractReport {
 
         Multimap<Issue, Issue> mp = HashMultimap.create();
 
-        for (String ver : in.split(",")) {
+        String[] vers = in.split(",");
+
+        int majorVer = -1;
+        for (String ver : vers) {
+            int v = Versions.parseMajor(ver);
+            if (majorVer == -1) {
+                majorVer = v;
+            } else {
+                if (v != majorVer) {
+                    throw new IllegalArgumentException("Cannot mix major versions: major is " + majorVer + ", yet try to add " + ver);
+                }
+            }
+        }
+
+        for (String ver : vers) {
             Multimap<Issue, Issue> pb = jiraIssues.getIssuesWithBackports("project = JDK" +
                     " AND (status in (Closed, Resolved))" +
                     " AND (labels not in (release-note, openjdk-na) OR labels is EMPTY)" +
@@ -102,6 +116,10 @@ public class ParityReport extends AbstractReport {
                 LocalDateTime rd = LocalDateTime.parse(rds.substring(0, rds.indexOf(".")));
 
                 for (String fv : Accessors.getFixVersions(subIssue)) {
+                    if (Versions.parseMajor(fv) != majorVer) {
+                        // Not the release we are looking for
+                        continue;
+                    }
                     if (Versions.isShared(fv)) {
                         isShared = true;
                     }
