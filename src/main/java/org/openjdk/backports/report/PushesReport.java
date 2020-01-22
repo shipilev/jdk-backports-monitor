@@ -70,16 +70,12 @@ public class PushesReport extends AbstractReport {
         Set<Issue> byTime = new TreeSet<>(chronologicalCompare);
 
         SortedSet<Issue> noChangesets = new TreeSet<>(chronologicalCompare);
-        SortedSet<Issue> syncs = new TreeSet<>(chronologicalCompare);
 
         for (Issue issue : issues) {
             String committer = Accessors.getPushUser(issue);
             if (committer.equals("N/A")) {
                 // These are pushes to internal repos
                 noChangesets.add(issue);
-            } else if (issue.getIssueType().getName().equals("Backport") && issue.getLabels().contains("hgupdate-sync")) {
-                // These are usually syncs across release versions, not the original pushes
-                syncs.add(issue);
             } else {
                 byPriority.add(issue.getPriority().getName());
                 byComponent.add(Accessors.extractComponents(issue));
@@ -89,7 +85,7 @@ public class PushesReport extends AbstractReport {
         }
 
         out.println();
-        out.println("Filtered " + noChangesets.size() + " issues without pushes, " + syncs.size() + " sync pushes, " + byPriority.size() + " pushes left.");
+        out.println("Filtered " + noChangesets.size() + " issues without pushes, " + byPriority.size() + " pushes left.");
         out.println();
 
         out.println("Distribution by priority:");
@@ -113,15 +109,6 @@ public class PushesReport extends AbstractReport {
             out.printf("  %3d day(s) ago, %" + users.maxDisplayName() + "s, %" + users.maxAffiliation() + "s, %s: %s%n",
                     TimeUnit.SECONDS.toDays(Accessors.getPushSecondsAgo(i)),
                     users.getDisplayName(pushUser), users.getAffiliation(pushUser),
-                    i.getKey(), i.getSummary());
-        }
-        out.println();
-
-        out.println("Chronological syncs log:");
-        out.println();
-        for (Issue i : syncs) {
-            out.printf("  %3d day(s) ago, %s: %s%n",
-                    TimeUnit.SECONDS.toDays(Accessors.getPushSecondsAgo(i)),
                     i.getKey(), i.getSummary());
         }
         out.println();
