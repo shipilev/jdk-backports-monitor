@@ -123,6 +123,8 @@ public class ParityReport extends AbstractReport {
             LocalDateTime timeOracle = null;
             LocalDateTime timeOpen = null;
 
+            boolean backportRequested = p.getLabels().contains("jdk" + majorVer + "u-fix-request");
+
             for (Issue subIssue : mp.get(p)) {
                 String rds = subIssue.getField("resolutiondate").getValue().toString();
                 LocalDateTime rd = LocalDateTime.parse(rds.substring(0, rds.indexOf(".")));
@@ -175,8 +177,8 @@ public class ParityReport extends AbstractReport {
             }
 
             if (firstOracle != null && firstOpen == null) {
-                onlyOracle.put(p, String.format("  %-" + versLen + "s, %s: %s",
-                        firstOracleRaw, p.getKey(), p.getSummary()));
+                onlyOracle.put(p, String.format("  %-" + versLen + "s, %3s %s: %s",
+                        firstOracleRaw, backportRequested ? "(*)" : "", p.getKey(), p.getSummary()));
             }
 
             if (firstOracle != null && firstOpen != null && Versions.compare(firstOracleRaw, firstOpen) == 0) {
@@ -213,7 +215,8 @@ public class ParityReport extends AbstractReport {
         out.println();
         out.println("This is where Oracle JDK is ahead of OpenJDK.");
         out.println("No relevant backports are detected in OpenJDK.");
-        out.println("This misses the ongoing backporting work.");
+        out.println("This misses the future backporting work.");
+        out.println("(*) marks the backporting work in progress.");
         out.println();
         printSimple(onlyOracle);
         out.println();
