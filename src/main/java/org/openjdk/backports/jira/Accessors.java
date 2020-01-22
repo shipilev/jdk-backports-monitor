@@ -170,6 +170,10 @@ public class Accessors {
         }
     }
 
+    public static boolean isOracleSpecific(Issue issue) {
+        return issue.getLabels().contains("openjdk-na");
+    }
+
     public static boolean isReleaseNoteTag(Issue issue) {
         return issue.getLabels().contains("release-note");
     }

@@ -86,6 +86,10 @@ public class ParityReport extends AbstractReport {
                     " AND fixVersion = " + ver);
 
             for (Issue parent : pb.keySet()) {
+                if (Accessors.isOracleSpecific(parent)) {
+                    // There is no parity with these
+                    continue;
+                }
                 if (mp.containsKey(parent)) {
                     // Already parsed, skip
                     continue;
