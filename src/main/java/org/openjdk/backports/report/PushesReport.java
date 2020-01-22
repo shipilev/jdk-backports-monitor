@@ -165,7 +165,7 @@ public class PushesReport extends AbstractReport {
             String first = component.split("/")[0];
             Multiset<String> bu = seconds.computeIfAbsent(first, k -> HashMultiset.create());
             bu.add(component, byComponent.count(component));
-            firsts.add(first);
+            firsts.add(first, byComponent.count(component));
         }
 
         int total = byComponent.size();
