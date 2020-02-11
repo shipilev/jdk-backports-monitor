@@ -68,7 +68,7 @@ public class Main {
 
                     if (options.getIssueReport() != null) {
                         new IssueReport(cli, options.getHgRepos(), options.includeDownstream(),
-                                options.getIssueReport()).run();
+                                options.getIssueReport(), options.doCSV()).run();
                     }
 
                     if (options.getPushesReport() != null) {

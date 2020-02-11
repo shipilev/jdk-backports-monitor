@@ -33,10 +33,12 @@ import java.util.Date;
 public class IssueReport extends AbstractIssueReport {
 
     private final String issueId;
+    private final boolean doCSV;
 
-    public IssueReport(JiraRestClient restClient, String hgRepos, boolean includeDownstream, String issueId) {
+    public IssueReport(JiraRestClient restClient, String hgRepos, boolean includeDownstream, String issueId, boolean doCSV) {
         super(restClient, hgRepos, includeDownstream);
         this.issueId = issueId;
+        this.doCSV = doCSV;
     }
 
     @Override
@@ -53,7 +55,11 @@ public class IssueReport extends AbstractIssueReport {
 
         TrackedIssue trackedIssue = parseIssue(issue);
 
-        printDelimiterLine(out);
-        out.println(trackedIssue.getOutput());
+        if (doCSV) {
+            out.println(trackedIssue.getShortOutput());
+        } else {
+            printDelimiterLine(out);
+            out.println(trackedIssue.getOutput());
+        }
     }
 }
