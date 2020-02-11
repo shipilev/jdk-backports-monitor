@@ -58,7 +58,7 @@ public class Main {
                 try (JiraRestClient cli = Connect.getJiraRestClient(JIRA_URL, user, pass)) {
                     if (options.getLabelReport() != null) {
                         new LabelReport(cli, options.getHgRepos(), options.includeDownstream(),
-                                options.getLabelReport(), options.getMinLevel()).run();
+                                options.getLabelReport(), options.getMinLevel(), options.doCSV()).run();
                     }
 
                     if (options.getPendingPushReport() != null) {

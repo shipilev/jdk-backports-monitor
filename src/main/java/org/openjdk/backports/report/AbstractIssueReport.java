@@ -74,7 +74,10 @@ public abstract class AbstractIssueReport extends AbstractReport {
         Actions actions = new Actions();
 
         StringWriter sw = new StringWriter();
+        StringWriter swShort = new StringWriter();
+
         PrintWriter pw = new PrintWriter(sw);
+        PrintWriter pwShort = new PrintWriter(swShort);
 
         pw.println();
         pw.println(issue.getKey() + ": " + issue.getSummary());
@@ -87,6 +90,8 @@ public abstract class AbstractIssueReport extends AbstractReport {
         pw.println("      Components: " + Accessors.extractComponents(issue));
         pw.println();
 
+        pwShort.print("\"" + issue.getKey() + ": " + issue.getSummary() + "\", " + issue.getPriority().getName() + ", " + Accessors.extractComponents(issue) + ", ");
+
         SortedMap<Integer, List<String>> results = new TreeMap<>();
         Set<Integer> oracleBackports = new HashSet<>();
 
@@ -97,6 +102,8 @@ public abstract class AbstractIssueReport extends AbstractReport {
         pw.printf("  %" + VER_INDENT + "s: %10s, %s, %s%n", Accessors.getFixVersion(issue), issue.getKey(), Accessors.getPushURL(issue), Accessors.getPushDate(issue));
         recordIssue(results, issue);
         pw.println();
+
+        pwShort.print(Accessors.getFixVersion(issue) + ", ");
 
         Set<Integer> affectedReleases = new HashSet<>();
         Set<Integer> affectedShenandoah = new HashSet<>();
@@ -156,34 +163,6 @@ public abstract class AbstractIssueReport extends AbstractReport {
             }
         }
 
-        {
-            boolean foundInPublic = false;
-            boolean printedWarning = false;
-
-            for (String repo : new String[] {"jdk/jdk", "jdk-updates/jdk11u", "jdk8u/jdk8u", "jdk7u/jdk7u"}) {
-                if (!hgDB.hasRepo(repo)) {
-                    pw.println("  " + MSG_WARNING + ": " + repo + " repository is not available to check changeset");
-                    printedWarning = true;
-                } else {
-                    List<HgRecord> rs = hgDB.search(repo, issue.getKey().replaceFirst("JDK-", ""));
-                    if (!rs.isEmpty()) {
-                        foundInPublic = true;
-                        break;
-                    }
-                }
-            }
-
-            if (!foundInPublic) {
-                actions.update(Actionable.CRITICAL);
-                pw.println("  " + MSG_WARNING + ": The change is missing in all open repos.");
-                printedWarning = true;
-            }
-
-            if (printedWarning) {
-                pw.println();
-            }
-        }
-
         pw.println("  Backports and Forwardports:");
 
         boolean printed = false;
@@ -205,18 +184,25 @@ public abstract class AbstractIssueReport extends AbstractReport {
                         printed = true;
                     }
                 }
-            } else if (release <= highRel) {
+                pwShort.print("Done, ");
+            } else {
                 pw.printf("  %" + VER_INDENT + "s: ", release);
                 switch (release) {
                     case 7: {
                         if (!affectedReleases.contains(7)) {
                             pw.println(MSG_NOT_AFFECTED);
+                            pwShort.print(MSG_NOT_AFFECTED);
                         } else if (daysAgo >= 0 && daysAgo < BAKE_TIME) {
                             actions.update(Actionable.WAITING);
                             pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
-                        } else {
+                            pwShort.print(MSG_BAKING);
+                        } else if (release <= highRel) {
                             actions.update(Actionable.MISSING, IMPORTANCE_LTS_BACKPORT);
                             pw.println(MSG_MISSING);
+                            pwShort.print(MSG_MISSING);
+                        } else {
+                            pw.println(MSG_INHERITED);
+                            pwShort.print(MSG_INHERITED);
                         }
                         break;
                     }
@@ -224,28 +210,40 @@ public abstract class AbstractIssueReport extends AbstractReport {
                         if (issue.getLabels().contains("jdk8u-critical-yes")) {
                             actions.update(Actionable.PUSHABLE, IMPORTANCE_LTS_BACKPORT_CRITICAL);
                             pw.println(MSG_APPROVED + ": jdk8u-critical-yes is set");
+                            pwShort.print(MSG_APPROVED);
                         } else if (issue.getLabels().contains("jdk8u-fix-yes")) {
                             actions.update(Actionable.PUSHABLE, IMPORTANCE_LTS_BACKPORT);
                             pw.println(MSG_APPROVED + ": jdk8u-fix-yes is set");
+                            pwShort.print(MSG_APPROVED);
                         } else if (issue.getLabels().contains("jdk8u-fix-no")) {
-                            pw.println("REJECTED: jdk8u-fix-no is set");
+                            pw.println(MSG_REJECTED + ": jdk8u-fix-no is set");
+                            pwShort.print(MSG_REJECTED);
                         } else if (issue.getLabels().contains("jdk8u-critical-request")) {
-                            pw.println("Requested: jdk8u-critical-request is set");
                             actions.update(Actionable.REQUESTED);
+                            pw.println(MSG_REQUESTED + ": jdk8u-critical-request is set");
+                            pwShort.print(MSG_REQUESTED);
                         } else if (issue.getLabels().contains("jdk8u-fix-request")) {
-                            pw.println("Requested: jdk8u-fix-request is set");
                             actions.update(Actionable.REQUESTED);
+                            pw.println(MSG_REQUESTED + ": jdk8u-fix-request is set");
+                            pwShort.print(MSG_REQUESTED);
                         } else if (!affectedReleases.contains(8)) {
                             pw.println(MSG_NOT_AFFECTED);
+                            pwShort.print(MSG_NOT_AFFECTED);
                         } else if (daysAgo >= 0 && daysAgo < BAKE_TIME) {
                             actions.update(Actionable.WAITING);
                             pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
+                            pwShort.print(MSG_BAKING);
                         } else if (oracleBackports.contains(8)) {
                             actions.update(Actionable.MISSING, IMPORTANCE_LTS_BACKPORT_ORACLE);
                             pw.println(MSG_MISSING_ORACLE);
-                        } else {
+                            pwShort.print(MSG_MISSING_ORACLE);
+                        } else if (release <= highRel) {
                             actions.update(Actionable.MISSING, IMPORTANCE_LTS_BACKPORT);
                             pw.println(MSG_MISSING);
+                            pwShort.print(MSG_MISSING);
+                        } else {
+                            pw.println(MSG_INHERITED);
+                            pwShort.print(MSG_INHERITED);
                         }
                         break;
                     }
@@ -253,48 +251,40 @@ public abstract class AbstractIssueReport extends AbstractReport {
                         if (issue.getLabels().contains("jdk11u-critical-yes")) {
                             actions.update(Actionable.PUSHABLE, IMPORTANCE_LTS_BACKPORT_CRITICAL);
                             pw.println(MSG_APPROVED + ": jdk11u-critical-yes is set");
+                            pwShort.print(MSG_APPROVED);
                         } else if (issue.getLabels().contains("jdk11u-fix-yes")) {
                             actions.update(Actionable.PUSHABLE, IMPORTANCE_LTS_BACKPORT);
                             pw.println(MSG_APPROVED + ": jdk11u-fix-yes is set");
+                            pwShort.print(MSG_APPROVED);
                         } else if (issue.getLabels().contains("jdk11u-fix-no")) {
-                            pw.println("REJECTED: jdk11u-fix-no is set");
+                            pw.println(MSG_REJECTED + ": jdk11u-fix-no is set");
+                            pwShort.print(MSG_REJECTED);
                         } else if (issue.getLabels().contains("jdk11u-critical-request")) {
-                            pw.println("Requested: jdk11u-critical-request is set");
                             actions.update(Actionable.REQUESTED);
+                            pw.println(MSG_REQUESTED + ": jdk11u-critical-request is set");
+                            pwShort.print(MSG_REQUESTED);
                         } else if (issue.getLabels().contains("jdk11u-fix-request")) {
-                            pw.println("Requested: jdk11u-fix-request is set");
                             actions.update(Actionable.REQUESTED);
+                            pw.println(MSG_REQUESTED + ": jdk11u-fix-request is set");
+                            pwShort.print(MSG_REQUESTED);
                         } else if (!affectedReleases.contains(11)) {
                             pw.println(MSG_NOT_AFFECTED);
+                            pwShort.print(MSG_NOT_AFFECTED);
                         } else if (daysAgo >= 0 && daysAgo < BAKE_TIME) {
                             actions.update(Actionable.WAITING);
                             pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
+                            pwShort.print(MSG_BAKING);
                         } else if (oracleBackports.contains(11)) {
                             actions.update(Actionable.MISSING, IMPORTANCE_LTS_BACKPORT_ORACLE);
                             pw.println(MSG_MISSING_ORACLE);
-                        } else {
+                            pwShort.print(MSG_MISSING_ORACLE);
+                        } else if (release <= highRel) {
                             actions.update(Actionable.MISSING, IMPORTANCE_LTS_BACKPORT);
                             pw.println(MSG_MISSING);
-                        }
-                        break;
-                    }
-                    case 13: {
-                        if (issue.getLabels().contains("jdk13u-fix-yes")) {
-                            actions.update(Actionable.PUSHABLE, IMPORTANCE_STS_BACKPORT);
-                            pw.println(MSG_APPROVED + ": jdk13u-fix-yes is set");
-                        } else if (issue.getLabels().contains("jdk13u-fix-no")) {
-                            pw.println("REJECTED: jdk13u-fix-no is set");
-                        } else if (issue.getLabels().contains("jdk13u-fix-request")) {
-                            pw.println("Requested: jdk13u-fix-request is set");
-                            actions.update(Actionable.REQUESTED);
-                        } else if (!affectedReleases.contains(13)) {
-                            pw.println(MSG_NOT_AFFECTED);
-                        } else if (daysAgo >= 0 && daysAgo < BAKE_TIME) {
-                            actions.update(Actionable.WAITING);
-                            pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
+                            pwShort.print(MSG_MISSING);
                         } else {
-                            actions.update(Actionable.MISSING, IMPORTANCE_STS_BACKPORT);
-                            pw.println(MSG_MISSING);
+                            pw.println(MSG_INHERITED);
+                            pwShort.print(MSG_INHERITED);
                         }
                         break;
                     }
@@ -302,26 +292,37 @@ public abstract class AbstractIssueReport extends AbstractReport {
                         if (issue.getLabels().contains("jdk14-fix-yes")) {
                             actions.update(Actionable.PUSHABLE, IMPORTANCE_STS_BACKPORT);
                             pw.println(MSG_APPROVED + ": jdk14-fix-yes is set");
+                            pwShort.print(MSG_APPROVED);
                         } else if (issue.getLabels().contains("jdk14-fix-no")) {
-                            pw.println("REJECTED: jdk14-fix-no is set");
+                            pw.println(MSG_REJECTED + ": jdk14-fix-no is set");
+                            pwShort.print(MSG_REJECTED);
                         } else if (issue.getLabels().contains("jdk14-fix-request")) {
-                            pw.println("Requested: jdk14-fix-request is set");
                             actions.update(Actionable.REQUESTED);
+                            pw.println(MSG_REQUESTED + ": jdk14-fix-request is set");
+                            pwShort.print(MSG_REQUESTED);
                         } else if (!affectedReleases.contains(14)) {
                             pw.println(MSG_NOT_AFFECTED);
+                            pwShort.print(MSG_NOT_AFFECTED);
                         } else if (daysAgo >= 0 && daysAgo < BAKE_TIME) {
                             actions.update(Actionable.WAITING);
                             pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
-                        } else {
+                            pwShort.print(MSG_BAKING);
+                        } else if (release <= highRel) {
                             actions.update(Actionable.MISSING, IMPORTANCE_STS_BACKPORT);
                             pw.println(MSG_MISSING);
+                            pwShort.print(MSG_MISSING);
+                        } else {
+                            pw.println(MSG_INHERITED);
+                            pwShort.print(MSG_INHERITED);
                         }
                         break;
                     }
                     default:
                         pw.println("Unknown release: " + release);
+                        pwShort.print("???");
                         actions.update(Actionable.CRITICAL);
                 }
+                pwShort.print(", ");
                 printed = true;
             }
         }
@@ -387,7 +388,7 @@ public abstract class AbstractIssueReport extends AbstractReport {
             pw.println();
         }
 
-        return new TrackedIssue(sw.toString(), daysAgo, actions);
+        return new TrackedIssue(sw.toString(), swShort.toString(), daysAgo, actions);
     }
 
     private void printHgStatus(boolean affected, Actions actions, PrintWriter pw, Issue issue, String label, String repo) {

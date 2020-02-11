@@ -28,17 +28,23 @@ import org.openjdk.backports.Actions;
 
 public class TrackedIssue implements Comparable<TrackedIssue> {
     final String output;
+    final String shortOutput;
     final long age;
     final Actions actions;
 
-    public TrackedIssue(String output, long age, Actions actions) {
+    public TrackedIssue(String output, String shortOutput, long age, Actions actions) {
         this.output = output;
+        this.shortOutput = shortOutput;
         this.age = age;
         this.actions = actions;
     }
 
     public String getOutput() {
         return output;
+    }
+
+    public String getShortOutput() {
+        return shortOutput;
     }
 
     public Actions getActions() {
@@ -55,6 +61,6 @@ public class TrackedIssue implements Comparable<TrackedIssue> {
         if (v2 != 0) {
             return v2;
         }
-        return this.output.compareTo(other.output);
+        return this.shortOutput.compareTo(other.shortOutput);
     }
 }

@@ -46,6 +46,7 @@ public class Options {
     private boolean includeDownstream;
     private boolean directOnly;
     private Integer parityReport;
+    private boolean doCSV;
 
     public Options(String[] args) {
         this.args = args;
@@ -86,6 +87,8 @@ public class Options {
 
         OptionSpec<Void> optIncludeDownstream = parser.accepts("include-downstream", "Include downstream repos in reports");
 
+        OptionSpec<Void> optCSV = parser.accepts("csv", "Machine-readable CSV output (some reports only)");
+
         OptionSpec<Void> optAffiliationReport = parser.accepts("affiliation", "Create affiliation report");
 
         OptionSpec<Void> optDirectOnly = parser.accepts("direct-only", "For pushes, do direct pushes only");
@@ -120,6 +123,7 @@ public class Options {
         minLevel = optMinLevel.value(set);
         includeDownstream = set.has(optIncludeDownstream);
         directOnly = set.has(optDirectOnly);
+        doCSV = set.has(optCSV);
 
         return true;
     }
@@ -167,5 +171,7 @@ public class Options {
     public boolean includeDownstream() { return includeDownstream; }
 
     public boolean directOnly() { return directOnly; }
+
+    public boolean doCSV() { return doCSV; }
 
 }

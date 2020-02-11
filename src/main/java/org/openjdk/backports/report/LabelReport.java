@@ -37,11 +37,13 @@ public class LabelReport extends AbstractIssueReport {
 
     private final String label;
     private final Actionable minLevel;
+    private final boolean doCSV;
 
-    public LabelReport(JiraRestClient restClient, String hgRepos, boolean includeDownstream, String label, Actionable minLevel) {
+    public LabelReport(JiraRestClient restClient, String hgRepos, boolean includeDownstream, String label, Actionable minLevel, boolean doCSV) {
         super(restClient, hgRepos, includeDownstream);
         this.label = label;
         this.minLevel = minLevel;
+        this.doCSV = doCSV;
     }
 
     @Override
@@ -79,8 +81,12 @@ public class LabelReport extends AbstractIssueReport {
 
         printDelimiterLine(out);
         for (TrackedIssue i : issues) {
-            out.println(i.getOutput());
-            printDelimiterLine(out);
+            if (doCSV) {
+                out.println(i.getShortOutput());
+            } else {
+                out.println(i.getOutput());
+                printDelimiterLine(out);
+            }
         }
 
         out.println();
