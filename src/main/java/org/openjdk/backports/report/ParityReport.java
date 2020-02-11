@@ -86,10 +86,16 @@ public class ParityReport extends AbstractReport {
                     " AND (resolution not in (\"Won't Fix\", Duplicate, \"Cannot Reproduce\", \"Not an Issue\", Withdrawn, Other))" +
                     " AND fixVersion = " + ver);
 
-            for (Issue parent : pb.keySet()) {
+            nextParent: for (Issue parent : pb.keySet()) {
                 if (Accessors.isOracleSpecific(parent)) {
                     // There is no parity with these
                     continue;
+                }
+                for (String fv : Accessors.getFixVersions(parent)) {
+                    if (Versions.parseMajor(fv) == majorVer && Versions.isShared(fv)) {
+                        // There is already open fix in the release we are looking at.
+                        continue nextParent;
+                    }
                 }
                 if (mp.containsKey(parent)) {
                     // Already parsed, skip
