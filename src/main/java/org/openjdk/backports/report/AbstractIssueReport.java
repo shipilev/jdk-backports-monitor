@@ -98,6 +98,7 @@ public abstract class AbstractIssueReport extends AbstractReport {
         pw.println("  Original Fix:");
 
         long daysAgo = Accessors.getPushDaysAgo(issue);
+        int priority = Accessors.getPriority(issue);
 
         pw.printf("  %" + VER_INDENT + "s: %10s, %s, %s%n", Accessors.getFixVersion(issue), issue.getKey(), Accessors.getPushURL(issue), Accessors.getPushDate(issue));
         recordIssue(results, issue);
@@ -388,7 +389,7 @@ public abstract class AbstractIssueReport extends AbstractReport {
             pw.println();
         }
 
-        return new TrackedIssue(sw.toString(), swShort.toString(), daysAgo, actions);
+        return new TrackedIssue(sw.toString(), swShort.toString(), daysAgo, priority, actions);
     }
 
     private void printHgStatus(boolean affected, Actions actions, PrintWriter pw, Issue issue, String label, String repo) {

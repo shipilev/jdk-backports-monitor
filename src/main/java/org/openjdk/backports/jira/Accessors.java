@@ -98,6 +98,14 @@ public class Accessors {
         return -1;
     }
 
+
+    public static int getPriority(Issue issue) {
+        if (issue.getPriority() != null) {
+            return Parsers.parsePriority(issue.getPriority().getName());
+        }
+        return -1;
+    }
+
     public static String extractComponents(Issue issue) {
         StringJoiner joiner = new StringJoiner("/");
         for (BasicComponent c : issue.getComponents()) {

@@ -71,4 +71,15 @@ public class Parsers {
         return 0;
     }
 
+    public static int parsePriority(String s) {
+        if (s.length() != 2 && !s.startsWith("P")) {
+            return -1;
+        }
+
+        try {
+            return Integer.parseInt(s.substring(1));
+        } catch (NumberFormatException nfe) {
+            return -1;
+        }
+    }
 }

@@ -36,4 +36,16 @@ public class ParserTest {
         Assert.assertTrue(Parsers.parseSecondsAgo(SAMPLE_COMMENT) > 0);
     }
 
+    @Test
+    public void parsePriority() {
+        Assert.assertEquals(1, Parsers.parsePriority("P1"));
+        Assert.assertEquals(2, Parsers.parsePriority("P2"));
+        Assert.assertEquals(3, Parsers.parsePriority("P3"));
+        Assert.assertEquals(4, Parsers.parsePriority("P4"));
+        Assert.assertEquals(5, Parsers.parsePriority("P5"));
+        Assert.assertEquals(-1, Parsers.parsePriority("P"));
+        Assert.assertEquals(-1, Parsers.parsePriority("Px"));
+        Assert.assertEquals(-1, Parsers.parsePriority(""));
+    }
+
 }
