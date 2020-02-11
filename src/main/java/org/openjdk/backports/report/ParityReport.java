@@ -31,6 +31,7 @@ import com.atlassian.jira.rest.client.api.domain.Version;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import org.openjdk.backports.jira.Accessors;
+import org.openjdk.backports.jira.InterestTags;
 import org.openjdk.backports.jira.Versions;
 
 import java.time.LocalDateTime;
@@ -124,6 +125,7 @@ public class ParityReport extends AbstractReport {
             LocalDateTime timeOpen = null;
 
             boolean backportRequested = p.getLabels().contains("jdk" + majorVer + "u-fix-request");
+            String interestTags = InterestTags.shortTags(p.getLabels());
 
             for (Issue subIssue : mp.get(p)) {
                 String rds = subIssue.getField("resolutiondate").getValue().toString();
@@ -177,8 +179,8 @@ public class ParityReport extends AbstractReport {
             }
 
             if (firstOracle != null && firstOpen == null) {
-                onlyOracle.put(p, String.format("  %-" + versLen + "s, %3s %s: %s",
-                        firstOracleRaw, backportRequested ? "(*)" : "", p.getKey(), p.getSummary()));
+                onlyOracle.put(p, String.format("  %-" + versLen + "s, %7s %3s %s: %s",
+                        firstOracleRaw, interestTags, backportRequested ? "(*)" : "", p.getKey(), p.getSummary()));
             }
 
             if (firstOracle != null && firstOpen != null && Versions.compare(firstOracleRaw, firstOpen) == 0) {
@@ -216,6 +218,7 @@ public class ParityReport extends AbstractReport {
         out.println("This is where Oracle JDK is ahead of OpenJDK.");
         out.println("No relevant backports are detected in OpenJDK.");
         out.println("This misses the future backporting work.");
+        out.println("[...] marks the interest tags.");
         out.println("(*) marks the backporting work in progress.");
         out.println();
         printSimple(onlyOracle);
