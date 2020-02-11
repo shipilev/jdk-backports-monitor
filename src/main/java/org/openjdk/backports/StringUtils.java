@@ -79,4 +79,8 @@ public class StringUtils {
         }
         return sb.toString();
     }
+
+    public static String csvEscape(String s) {
+        return "\"" + s.replaceAll("\\\"", "'") + "\"";
+    }
 }

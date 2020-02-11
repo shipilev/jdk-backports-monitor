@@ -31,6 +31,7 @@ import com.atlassian.jira.rest.client.api.domain.Version;
 import org.openjdk.backports.Actionable;
 import org.openjdk.backports.Actions;
 import org.openjdk.backports.Main;
+import org.openjdk.backports.StringUtils;
 import org.openjdk.backports.hg.HgDB;
 import org.openjdk.backports.hg.HgRecord;
 import org.openjdk.backports.jira.*;
@@ -90,7 +91,7 @@ public abstract class AbstractIssueReport extends AbstractReport {
         pw.println("      Components: " + Accessors.extractComponents(issue));
         pw.println();
 
-        pwShort.print("\"" + issue.getKey() + ": " + issue.getSummary() + "\", " + issue.getPriority().getName() + ", " + Accessors.extractComponents(issue) + ", ");
+        pwShort.print(StringUtils.csvEscape(issue.getKey() + ": " + issue.getSummary()) + ", " + issue.getPriority().getName() + ", " + Accessors.extractComponents(issue) + ", ");
 
         SortedMap<Integer, List<String>> results = new TreeMap<>();
         Set<Integer> oracleBackports = new HashSet<>();
