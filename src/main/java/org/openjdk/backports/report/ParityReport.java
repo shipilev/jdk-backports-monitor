@@ -97,6 +97,10 @@ public class ParityReport extends AbstractReport {
                         continue nextParent;
                     }
                 }
+                if (majorVer == 8 && Accessors.extractComponents(parent).startsWith("javafx")) {
+                    // JavaFX is not the part of OpenJDK 8, no parity.
+                    continue;
+                }
                 if (mp.containsKey(parent)) {
                     // Already parsed, skip
                     continue;
