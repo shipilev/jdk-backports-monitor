@@ -80,6 +80,8 @@ public abstract class AbstractIssueReport extends AbstractReport {
         PrintWriter pw = new PrintWriter(sw);
         PrintWriter pwShort = new PrintWriter(swShort);
 
+        String components = Accessors.extractComponents(issue);
+
         pw.println();
         pw.println(issue.getKey() + ": " + issue.getSummary());
         pw.println();
@@ -88,10 +90,10 @@ public abstract class AbstractIssueReport extends AbstractReport {
         pw.println("      Reporter: " + (issue.getReporter() != null ? issue.getReporter().getDisplayName() : "None"));
         pw.println("      Assignee: " + (issue.getAssignee() != null ? issue.getAssignee().getDisplayName() : "None"));
         pw.println("      Priority: " + issue.getPriority().getName());
-        pw.println("      Components: " + Accessors.extractComponents(issue));
+        pw.println("      Components: " + components);
         pw.println();
 
-        pwShort.print(StringUtils.csvEscape(issue.getKey() + ": " + issue.getSummary()) + ", " + issue.getPriority().getName() + ", " + Accessors.extractComponents(issue) + ", ");
+        pwShort.print(StringUtils.csvEscape(issue.getKey() + ": " + issue.getSummary()) + ", " + components + ", " + issue.getPriority().getName() + ", " );
 
         SortedMap<Integer, List<String>> results = new TreeMap<>();
         Set<Integer> oracleBackports = new HashSet<>();
@@ -390,7 +392,7 @@ public abstract class AbstractIssueReport extends AbstractReport {
             pw.println();
         }
 
-        return new TrackedIssue(sw.toString(), swShort.toString(), daysAgo, priority, actions);
+        return new TrackedIssue(sw.toString(), swShort.toString(), daysAgo, priority, components, actions);
     }
 
     private void printHgStatus(boolean affected, Actions actions, PrintWriter pw, Issue issue, String label, String repo) {

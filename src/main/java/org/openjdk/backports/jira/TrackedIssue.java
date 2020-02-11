@@ -31,13 +31,15 @@ public class TrackedIssue implements Comparable<TrackedIssue> {
     final String shortOutput;
     final long age;
     final int priority;
+    final String components;
     final Actions actions;
 
-    public TrackedIssue(String output, String shortOutput, long age, int priority, Actions actions) {
+    public TrackedIssue(String output, String shortOutput, long age, int priority, String components, Actions actions) {
         this.output = output;
         this.shortOutput = shortOutput;
         this.age = age;
         this.priority = priority;
+        this.components = components;
         this.actions = actions;
     }
 
@@ -59,13 +61,17 @@ public class TrackedIssue implements Comparable<TrackedIssue> {
         if (v1 != 0) {
             return v1;
         }
-        int v2 = Integer.compare(this.priority, other.priority);
+        int v2 = this.components.compareTo(other.components);
         if (v2 != 0) {
             return v2;
         }
-        int v3 = Long.compare(other.age, this.age);
+        int v3 = Integer.compare(this.priority, other.priority);
         if (v3 != 0) {
             return v3;
+        }
+        int v4 = Long.compare(other.age, this.age);
+        if (v4 != 0) {
+            return v4;
         }
         return this.shortOutput.compareTo(other.shortOutput);
     }
