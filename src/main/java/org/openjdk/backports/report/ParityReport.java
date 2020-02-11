@@ -26,6 +26,7 @@ package org.openjdk.backports.report;
 
 import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.atlassian.jira.rest.client.api.domain.Issue;
+import com.atlassian.jira.rest.client.api.domain.IssueField;
 import com.atlassian.jira.rest.client.api.domain.Project;
 import com.atlassian.jira.rest.client.api.domain.Version;
 import com.google.common.collect.HashMultimap;
@@ -86,16 +87,10 @@ public class ParityReport extends AbstractReport {
                     " AND (resolution not in (\"Won't Fix\", Duplicate, \"Cannot Reproduce\", \"Not an Issue\", Withdrawn, Other))" +
                     " AND fixVersion = " + ver);
 
-            nextParent: for (Issue parent : pb.keySet()) {
+            for (Issue parent : pb.keySet()) {
                 if (Accessors.isOracleSpecific(parent)) {
                     // There is no parity with these
                     continue;
-                }
-                for (String fv : Accessors.getFixVersions(parent)) {
-                    if (Versions.parseMajor(fv) == majorVer && Versions.isShared(fv)) {
-                        // There is already open fix in the release we are looking at.
-                        continue nextParent;
-                    }
                 }
                 if (majorVer == 8 && Accessors.extractComponents(parent).startsWith("javafx")) {
                     // JavaFX is not the part of OpenJDK 8, no parity.
@@ -122,6 +117,7 @@ public class ParityReport extends AbstractReport {
         SortedMap<Issue, String> onlyOracle = new TreeMap<>(DEFAULT_ISSUE_SORT);
         SortedMap<Issue, String> exactOpenFirst = new TreeMap<>(DEFAULT_ISSUE_SORT);
         SortedMap<Issue, String> exactOracleFirst = new TreeMap<>(DEFAULT_ISSUE_SORT);
+        SortedMap<Issue, String> exactUnknown = new TreeMap<>(DEFAULT_ISSUE_SORT);
         SortedMap<Issue, String> lateOpenFirst = new TreeMap<>(DEFAULT_ISSUE_SORT);
         SortedMap<Issue, String> lateOracleFirst = new TreeMap<>(DEFAULT_ISSUE_SORT);
 
@@ -137,9 +133,19 @@ public class ParityReport extends AbstractReport {
             boolean backportRequested = p.getLabels().contains("jdk" + majorVer + "u-fix-request");
             String interestTags = InterestTags.shortTags(p.getLabels());
 
-            for (Issue subIssue : mp.get(p)) {
-                String rds = subIssue.getField("resolutiondate").getValue().toString();
-                LocalDateTime rd = LocalDateTime.parse(rds.substring(0, rds.indexOf(".")));
+            // Awkward hack: parent needs to be counted for parity, on the off-chance
+            // it has the fix-version after the open/closed split.
+            List<Issue> issues = new ArrayList<>();
+            issues.addAll(mp.get(p)); // all sub-issues
+            issues.add(p);            // and the issue itself
+
+            for (Issue subIssue : issues) {
+                IssueField rdf = subIssue.getField("resolutiondate");
+                LocalDateTime rd = null;
+                if (rdf != null && rdf.getValue() != null) {
+                    String rds = rdf.getValue().toString();
+                    rd = LocalDateTime.parse(rds.substring(0, rds.indexOf(".")));
+                }
 
                 for (String fv : Accessors.getFixVersions(subIssue)) {
                     if (Versions.parseMajor(fv) != majorVer) {
@@ -194,7 +200,10 @@ public class ParityReport extends AbstractReport {
             }
 
             if (firstOracle != null && firstOpen != null && Versions.compare(firstOracleRaw, firstOpen) == 0) {
-                if (timeOpen.compareTo(timeOracle) < 0) {
+                if (timeOpen == null || timeOracle == null) {
+                    exactUnknown.put(p, String.format("  %-" + versLen + "s ... %-" + versLen + "s, %s: %s",
+                            firstOpenRaw, firstOracleRaw, p.getKey(), p.getSummary()));
+                } else if (timeOpen.compareTo(timeOracle) < 0) {
                     exactOpenFirst.put(p, String.format("  %-" + versLen + "s -> %-" + versLen + "s, %s: %s",
                             firstOpenRaw, firstOracleRaw, p.getKey(), p.getSummary()));
                 } else {
@@ -262,6 +271,14 @@ public class ParityReport extends AbstractReport {
         out.println("No difference in the final release detected.");
         out.println();
         printSimple(exactOracleFirst);
+        out.println();
+
+        out.println("=== EXACT PARITY: UNKNOWN TIMING");
+        out.println();
+        out.println("This is where the difference in time within the release was not identified reliably.");
+        out.println("No difference in the final release detected.");
+        out.println();
+        printSimple(exactUnknown);
         out.println();
     }
 
