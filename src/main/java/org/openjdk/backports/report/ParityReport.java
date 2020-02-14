@@ -113,8 +113,9 @@ public class ParityReport extends AbstractReport {
         out.println("Discovered " + mp.size() + " issues.");
         out.println();
 
-        SortedMap<Issue, String> onlyOpen = new TreeMap<>(DEFAULT_ISSUE_SORT);
-        SortedMap<Issue, String> onlyOracle = new TreeMap<>(DEFAULT_ISSUE_SORT);
+        Map<String, Map<Issue, String>> onlyOpen = new TreeMap<>();
+        Map<String, Map<Issue, String>> onlyOracle = new TreeMap<>();
+
         SortedMap<Issue, String> exactOpenFirst = new TreeMap<>(DEFAULT_ISSUE_SORT);
         SortedMap<Issue, String> exactOracleFirst = new TreeMap<>(DEFAULT_ISSUE_SORT);
         SortedMap<Issue, String> exactUnknown = new TreeMap<>(DEFAULT_ISSUE_SORT);
@@ -190,12 +191,14 @@ public class ParityReport extends AbstractReport {
             }
 
             if (firstOracle == null && firstOpen != null) {
-                onlyOpen.put(p, String.format("  %-" + versLen + "s, %s: %s",
+                Map<Issue, String> map = onlyOpen.computeIfAbsent(firstOpen, k -> new TreeMap<>(DEFAULT_ISSUE_SORT));
+                map.put(p, String.format("  %-" + versLen + "s, %s: %s",
                         firstOpenRaw, p.getKey(), p.getSummary()));
             }
 
             if (firstOracle != null && firstOpen == null) {
-                onlyOracle.put(p, String.format("  %-" + versLen + "s, %7s %3s %s: %s",
+                Map<Issue, String> map = onlyOracle.computeIfAbsent(firstOracle, k -> new TreeMap<>(DEFAULT_ISSUE_SORT));
+                map.put(p, String.format("  %-" + versLen + "s, %7s %3s %s: %s",
                         firstOracleRaw, interestTags, backportRequested ? "(*)" : "", p.getKey(), p.getSummary()));
             }
 
@@ -229,7 +232,7 @@ public class ParityReport extends AbstractReport {
         out.println("No relevant backports are detected in Oracle JDK yet.");
         out.println("This misses the ongoing backporting work.");
         out.println();
-        printSimple(onlyOpen);
+        printWithVersion(onlyOpen);
         out.println();
 
         out.println("=== EXCLUSIVE: ONLY IN ORACLE JDK");
@@ -240,7 +243,7 @@ public class ParityReport extends AbstractReport {
         out.println("[...] marks the interest tags.");
         out.println("(*) marks the backporting work in progress.");
         out.println();
-        printSimple(onlyOracle);
+        printWithVersion(onlyOracle);
         out.println();
 
         out.println("=== LATE PARITY: ORACLE JDK FOLLOWS OPENJDK IN LATER RELEASES");
@@ -280,6 +283,23 @@ public class ParityReport extends AbstractReport {
         out.println();
         printSimple(exactUnknown);
         out.println();
+    }
+
+    void printWithVersion(Map<String, Map<Issue, String>> issues) {
+        int size = 0;
+        for (Map.Entry<String, Map<Issue, String>> kv : issues.entrySet()) {
+            size += kv.getValue().size();
+        }
+        out.println(size + " issues in total");
+        out.println();
+
+        for (Map.Entry<String, Map<Issue, String>> kv : issues.entrySet()) {
+            out.println(kv.getKey() + " (" + kv.getValue().size() + " issues):");
+            for (Map.Entry<Issue, String> kv2 : kv.getValue().entrySet()) {
+                out.println(kv2.getValue());
+            }
+            out.println();
+        }
     }
 
     void printSimple(Map<Issue, String> issues) {
