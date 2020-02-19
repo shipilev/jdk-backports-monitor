@@ -159,7 +159,11 @@ public class Versions {
             return false;
         }
 
-        if (parseMajor(version) >= 11 && parseMinor(version) <= 2) {
+        if (parseMajor(version) >= 13) {
+            return true;
+        }
+
+        if (parseMajor(version) == 11 && parseMinor(version) <= 2) {
             return true;
         }
 

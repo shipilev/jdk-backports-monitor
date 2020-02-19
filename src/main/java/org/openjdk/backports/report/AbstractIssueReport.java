@@ -46,13 +46,14 @@ public abstract class AbstractIssueReport extends AbstractReport {
 
     private static final int VER_INDENT = 9; // spaces
 
-    private static final int[] VERSIONS_TO_CARE_FOR = {14, 11, 8};
+    private static final int[] VERSIONS_TO_CARE_FOR = {14, 13, 11, 8};
 
-    // LTS backports are most important, then merges, then STS backports
+    // LTS backports are most important, then merges, then MTS backports, then STS backports
     private static final int IMPORTANCE_LTS_BACKPORT_CRITICAL = 50;
     private static final int IMPORTANCE_LTS_BACKPORT_ORACLE = 30;
     private static final int IMPORTANCE_LTS_BACKPORT = 10;
-    private static final int IMPORTANCE_MERGE        = 3;
+    private static final int IMPORTANCE_MERGE        = 5;
+    private static final int IMPORTANCE_MTS_BACKPORT = 3;
     private static final int IMPORTANCE_STS_BACKPORT = 1;
 
     private final HgDB hgDB;
@@ -284,6 +285,35 @@ public abstract class AbstractIssueReport extends AbstractReport {
                             pwShort.print(MSG_MISSING_ORACLE);
                         } else if (release <= highRel) {
                             actions.update(Actionable.MISSING, IMPORTANCE_LTS_BACKPORT);
+                            pw.println(MSG_MISSING);
+                            pwShort.print(MSG_MISSING);
+                        } else {
+                            pw.println(MSG_INHERITED);
+                            pwShort.print(MSG_INHERITED);
+                        }
+                        break;
+                    }
+                    case 13: {
+                        if (issue.getLabels().contains("jdk13u-fix-yes")) {
+                            actions.update(Actionable.PUSHABLE, IMPORTANCE_MTS_BACKPORT);
+                            pw.println(MSG_APPROVED + ": jdk13u-fix-yes is set");
+                            pwShort.print(MSG_APPROVED);
+                        } else if (issue.getLabels().contains("jdk13u-fix-no")) {
+                            pw.println(MSG_REJECTED + ": jdk13u-fix-no is set");
+                            pwShort.print(MSG_REJECTED);
+                        } else if (issue.getLabels().contains("jdk13u-fix-request")) {
+                            actions.update(Actionable.REQUESTED);
+                            pw.println(MSG_REQUESTED + ": jdk13u-fix-request is set");
+                            pwShort.print(MSG_REQUESTED);
+                        } else if (!affectedReleases.contains(13)) {
+                            pw.println(MSG_NOT_AFFECTED);
+                            pwShort.print(MSG_NOT_AFFECTED);
+                        } else if (daysAgo >= 0 && daysAgo < BAKE_TIME) {
+                            actions.update(Actionable.WAITING);
+                            pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
+                            pwShort.print(MSG_BAKING);
+                        } else if (release <= highRel) {
+                            actions.update(Actionable.MISSING, IMPORTANCE_MTS_BACKPORT);
                             pw.println(MSG_MISSING);
                             pwShort.print(MSG_MISSING);
                         } else {

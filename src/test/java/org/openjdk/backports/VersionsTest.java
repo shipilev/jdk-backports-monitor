@@ -35,6 +35,7 @@ public class VersionsTest {
 
         Assert.assertEquals(13, Versions.parseMajor("13"));
         Assert.assertEquals(13, Versions.parseMajor("13.0.1"));
+        Assert.assertEquals(13, Versions.parseMajor("13.0.3"));
         Assert.assertEquals(13, Versions.parseMajor("13-pool"));
 
         Assert.assertEquals(14, Versions.parseMajor("14"));
@@ -120,6 +121,7 @@ public class VersionsTest {
         Assert.assertTrue(Versions.isShared("13"));
         Assert.assertTrue(Versions.isShared("13.0.1"));
         Assert.assertTrue(Versions.isShared("13.0.2"));
+        Assert.assertTrue(Versions.isShared("13.0.3"));
         Assert.assertFalse(Versions.isShared("13.0.1-oracle"));
         Assert.assertFalse(Versions.isShared("13.0.2-oracle"));
         Assert.assertFalse(Versions.isShared("13.0.3-oracle"));
@@ -139,6 +141,7 @@ public class VersionsTest {
         Assert.assertEquals("11.0.3",  Versions.stripVendor("11.0.3-oracle"));
         Assert.assertEquals("13.0.1",  Versions.stripVendor("13.0.1"));
         Assert.assertEquals("13.0.1",  Versions.stripVendor("13.0.1-oracle"));
+        Assert.assertEquals("13.0.3",  Versions.stripVendor("13.0.3"));
     }
 
     @Test
