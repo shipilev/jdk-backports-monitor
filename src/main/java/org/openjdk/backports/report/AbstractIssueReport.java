@@ -46,7 +46,7 @@ public abstract class AbstractIssueReport extends AbstractReport {
 
     private static final int VER_INDENT = 9; // spaces
 
-    private static final int[] VERSIONS_TO_CARE_FOR = {14, 13, 11, 8};
+    private static final int[] VERSIONS_TO_CARE_FOR = {14, 11, 8};
 
     // LTS backports are most important, then merges, then MTS backports, then STS backports
     private static final int IMPORTANCE_LTS_BACKPORT_CRITICAL = 50;
