@@ -167,10 +167,10 @@ public class Accessors {
             case "Duplicate":
             case "Cannot Reproduce":
             case "Not an Issue":
-            case "Other":
                 return false;
             case "Resolved":
             case "Fixed":
+            case "Other":
                 return true;
             default:
                 // Default to "delivered"
