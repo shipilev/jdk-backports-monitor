@@ -61,6 +61,10 @@ public class Main {
                                 options.getLabelReport(), options.getMinLevel(), options.doCSV()).run();
                     }
 
+                    if (options.getLabelHistoryReport() != null) {
+                        new LabelHistoryReport(cli, options.getLabelHistoryReport()).run();
+                    }
+
                     if (options.getPendingPushReport() != null) {
                         new PendingPushReport(cli, options.getHgRepos(), options.includeDownstream(),
                                 options.getPendingPushReport()).run();

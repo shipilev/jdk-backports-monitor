@@ -58,13 +58,17 @@ public class Issues {
     }
 
     public IssuePromise getIssue(String key) {
+        return getIssue(key, false);
+    }
+
+    public IssuePromise getIssue(String key, boolean full) {
         IssuePromise i = issueCache.get(key);
         if (i != null) {
             return i;
         }
 
         return issueCache.computeIfAbsent(key,
-                k -> new RetryableIssuePromise(this, issueCli, k));
+                k -> new RetryableIssuePromise(this, issueCli, k, full));
     }
 
     void registerIssueCache(String key, Issue issue) {
@@ -114,15 +118,16 @@ public class Issues {
      * Resolved issues have all their fields filled in.
      *
      * @param query query
+     * @param full load all metadata
      * @return list of issues
      */
-    public List<Issue> getIssues(String query) {
+    public List<Issue> getIssues(String query, boolean full) {
         List<Issue> basicIssues = getBasicIssues(query);
         int total = basicIssues.size();
 
         List<IssuePromise> batch = new ArrayList<>();
         for (Issue i : basicIssues) {
-            batch.add(getIssue(i.getKey()));
+            batch.add(getIssue(i.getKey(), full));
         }
 
         int count = 0;

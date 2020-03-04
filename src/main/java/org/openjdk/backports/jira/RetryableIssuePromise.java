@@ -28,19 +28,34 @@ import com.atlassian.jira.rest.client.api.IssueRestClient;
 import com.atlassian.jira.rest.client.api.domain.Issue;
 import com.atlassian.util.concurrent.Promise;
 
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 public class RetryableIssuePromise implements IssuePromise {
     private final Issues issues;
     private final IssueRestClient cli;
     private final String key;
+    private final boolean full;
     private Promise<Issue> cur;
 
     public RetryableIssuePromise(Issues issues, IssueRestClient cli, String key) {
+        this(issues, cli, key, false);
+    }
+
+    public RetryableIssuePromise(Issues issues, IssueRestClient cli, String key, boolean full) {
         this.issues = issues;
         this.cli = cli;
         this.key = key;
-        this.cur = cli.getIssue(key);
+        this.full = full;
+        this.cur = get();
+    }
+
+    private Promise<Issue> get() {
+        if (full) {
+            return cli.getIssue(key, Collections.singleton(IssueRestClient.Expandos.CHANGELOG));
+        } else {
+            return cli.getIssue(key);
+        }
     }
 
     public Issue claim() {
@@ -61,7 +76,7 @@ public class RetryableIssuePromise implements IssuePromise {
                 } catch (InterruptedException ie) {
                     ie.printStackTrace();
                 }
-                cur = cli.getIssue(key);
+                cur = get();
             }
         }
         return cur.claim();

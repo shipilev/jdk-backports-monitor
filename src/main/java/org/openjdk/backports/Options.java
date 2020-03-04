@@ -35,6 +35,7 @@ public class Options {
     private final String[] args;
     private String authProps;
     private String labelReport;
+    private String labelHistoryReport;
     private String pushesReport;
     private String pendingPushReport;
     private String releaseNotesReport;
@@ -59,6 +60,9 @@ public class Options {
                 .withRequiredArg().ofType(String.class).describedAs("file").defaultsTo("auth.props");
 
         OptionSpec<String> optLabelReport = parser.accepts("label", "Report status of closed bugs for given label")
+                .withRequiredArg().ofType(String.class).describedAs("tag");
+
+        OptionSpec<String> optLabelHistoryReport = parser.accepts("label-history", "Report the history for a given label.")
                 .withRequiredArg().ofType(String.class).describedAs("tag");
 
         OptionSpec<String> optPushesReport = parser.accepts("pushes", "Report backport pushes by release")
@@ -112,6 +116,7 @@ public class Options {
 
         authProps = optAuthProps.value(set);
         labelReport = optLabelReport.value(set);
+        labelHistoryReport = optLabelHistoryReport.value(set);
         pushesReport = optPushesReport.value(set);
         pendingPushReport = optPendingPushReport.value(set);
         issueReport = optIssueReport.value(set);
@@ -134,6 +139,10 @@ public class Options {
 
     public String getLabelReport() {
         return labelReport;
+    }
+
+    public String getLabelHistoryReport() {
+        return labelHistoryReport;
     }
 
     public String getPushesReport() {

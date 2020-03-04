@@ -60,7 +60,8 @@ public class PushesReport extends AbstractReport {
                 " AND (resolution not in (\"Won't Fix\", Duplicate, \"Cannot Reproduce\", \"Not an Issue\", Withdrawn, Other))" +
                 (directOnly ? " AND type != Backport" : "") +
                 " AND (issuetype != CSR)" +
-                " AND fixVersion = " + release);
+                " AND fixVersion = " + release,
+                false);
 
         Comparator<Issue> chronologicalCompare = Comparator.comparing(Accessors::getPushSecondsAgo).thenComparing(Comparator.comparing(Issue::getKey).reversed());
 

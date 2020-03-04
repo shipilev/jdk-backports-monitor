@@ -64,7 +64,7 @@ public class PendingPushReport extends AbstractIssueReport {
                 query += " AND issue not in linked-subquery(\"issue in subquery(\\\"fixVersion ~ '" + release + ".*' AND fixVersion !~ '*oracle' AND (status = Closed OR status = Resolved)\\\")\")";
         }
 
-        List<Issue> found = jiraIssues.getIssues(query);
+        List<Issue> found = jiraIssues.getIssues(query, false);
 
         SortedSet<TrackedIssue> issues = new TreeSet<>();
         for (Issue i : found) {

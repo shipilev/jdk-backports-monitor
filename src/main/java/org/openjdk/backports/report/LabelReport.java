@@ -69,7 +69,8 @@ public class LabelReport extends AbstractIssueReport {
         List<Issue> found = jiraIssues.getIssues("labels = " + label +
                 " AND (status in (Closed, Resolved))" +
                 " AND (resolution not in (\"Won't Fix\", Duplicate, \"Cannot Reproduce\", \"Not an Issue\", Withdrawn, Other))" +
-                " AND type != Backport");
+                " AND type != Backport",
+                false);
         out.println();
 
         List<TrackedIssue> issues = found
