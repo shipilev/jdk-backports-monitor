@@ -226,15 +226,6 @@ public class ParityReport extends AbstractReport {
             }
         }
 
-        out.println("=== EXCLUSIVE: ONLY IN OPENJDK");
-        out.println();
-        out.println("This is where OpenJDK is ahead of Oracle JDK.");
-        out.println("No relevant backports are detected in Oracle JDK yet.");
-        out.println("This misses the ongoing backporting work.");
-        out.println();
-        printWithVersion(onlyOpen);
-        out.println();
-
         out.println("=== EXCLUSIVE: ONLY IN ORACLE JDK");
         out.println();
         out.println("This is where Oracle JDK is ahead of OpenJDK.");
@@ -244,6 +235,15 @@ public class ParityReport extends AbstractReport {
         out.println("(*) marks the backporting work in progress.");
         out.println();
         printWithVersion(onlyOracle);
+        out.println();
+
+        out.println("=== EXCLUSIVE: ONLY IN OPENJDK");
+        out.println();
+        out.println("This is where OpenJDK is ahead of Oracle JDK.");
+        out.println("No relevant backports are detected in Oracle JDK yet.");
+        out.println("This misses the ongoing backporting work.");
+        out.println();
+        printWithVersion(onlyOpen);
         out.println();
 
         out.println("=== LATE PARITY: ORACLE JDK FOLLOWS OPENJDK IN LATER RELEASES");
