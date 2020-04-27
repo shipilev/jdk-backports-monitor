@@ -373,10 +373,10 @@ public abstract class AbstractIssueReport extends AbstractReport {
                 boolean affected = affectedShenandoah.contains(ver);
                 switch (ver) {
                     case 8:
-                        printHgStatus(affected, actions, pw, issue, "8", "shenandoah/jdk8");
+                        printHgStatus(affected, actions, pw, issue, daysAgo, "8", "shenandoah/jdk8");
                         break;
                     case 11:
-                        printHgStatus(affected, actions, pw, issue, "11", "shenandoah/jdk11");
+                        printHgStatus(affected, actions, pw, issue, daysAgo, "11", "shenandoah/jdk11");
                         break;
                     default:
                         pw.println("Unknown release: " + ver);
@@ -388,7 +388,7 @@ public abstract class AbstractIssueReport extends AbstractReport {
             pw.println();
             pw.println("  AArch64 Backports:");
 
-            printHgStatus(true, actions, pw, issue, "8", "aarch64-port/jdk8u-shenandoah");
+            printHgStatus(true, actions, pw, issue, daysAgo, "8", "aarch64-port/jdk8u-shenandoah");
         }
 
         if (includeDownstream) {
@@ -397,15 +397,15 @@ public abstract class AbstractIssueReport extends AbstractReport {
 
             printed = false;
             if (affectedReleases.contains(11)) {
-                printHgStatus(true, actions, pw, issue, "11-sh", "shenandoah/jdk11");
+                printHgStatus(true, actions, pw, issue, daysAgo, "11-sh", "shenandoah/jdk11");
                 printed = true;
             }
             if (affectedReleases.contains(8) || affectedShenandoah.contains(8) || affectedAArch64.contains(8)) {
-                printHgStatus(true, actions, pw, issue, "8-a64-sh", "aarch64-port/jdk8u-shenandoah");
+                printHgStatus(true, actions, pw, issue, daysAgo, "8-a64-sh", "aarch64-port/jdk8u-shenandoah");
                 printed = true;
             }
             if (affectedReleases.contains(7)) {
-                printHgStatus(true, actions, pw, issue, "7-it-2.6", "icedtea7-forest-2.6");
+                printHgStatus(true, actions, pw, issue, daysAgo, "7-it-2.6", "icedtea7-forest-2.6");
                 printed = true;
             }
             if (!printed) {
@@ -425,11 +425,17 @@ public abstract class AbstractIssueReport extends AbstractReport {
         return new TrackedIssue(sw.toString(), swShort.toString(), daysAgo, priority, components, actions);
     }
 
-    private void printHgStatus(boolean affected, Actions actions, PrintWriter pw, Issue issue, String label, String repo) {
+    private void printHgStatus(boolean affected, Actions actions, PrintWriter pw, Issue issue, long daysAgo, String label, String repo) {
         pw.printf("  %" + VER_INDENT + "s: ", label);
 
         if (!affected) {
             pw.println(MSG_NOT_AFFECTED);
+            return;
+        }
+
+        if (daysAgo >= 0 && daysAgo < BAKE_TIME) {
+            actions.update(Actionable.WAITING);
+            pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
             return;
         }
 
