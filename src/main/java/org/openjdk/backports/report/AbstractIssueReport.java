@@ -433,12 +433,6 @@ public abstract class AbstractIssueReport extends AbstractReport {
             return;
         }
 
-        if (daysAgo >= 0 && daysAgo < BAKE_TIME) {
-            actions.update(Actionable.WAITING);
-            pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
-            return;
-        }
-
         if (!hgDB.hasRepo(repo)) {
             pw.println(MSG_WARNING + ": No Mercurial data available to judge");
             return;
@@ -449,6 +443,12 @@ public abstract class AbstractIssueReport extends AbstractReport {
         }
 
         if (tryPrintHg(pw, repo, issue.getKey().replaceFirst("JDK-", "[backport] "))) {
+            return;
+        }
+
+        if (daysAgo >= 0 && daysAgo < BAKE_TIME) {
+            actions.update(Actionable.WAITING);
+            pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
             return;
         }
 
