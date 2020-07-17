@@ -46,7 +46,7 @@ public abstract class AbstractIssueReport extends AbstractReport {
 
     private static final int VER_INDENT = 9; // spaces
 
-    private static final int[] VERSIONS_TO_CARE_FOR = {14, 11, 8};
+    private static final int[] VERSIONS_TO_CARE_FOR = {15, 11, 8};
 
     // LTS backports are most important, then merges, then MTS backports, then STS backports
     private static final int IMPORTANCE_LTS_BACKPORT_CRITICAL = 50;
@@ -335,6 +335,35 @@ public abstract class AbstractIssueReport extends AbstractReport {
                             pw.println(MSG_REQUESTED + ": jdk14u-fix-request is set");
                             pwShort.print(MSG_REQUESTED);
                         } else if (!affectedReleases.contains(14)) {
+                            pw.println(MSG_NOT_AFFECTED);
+                            pwShort.print(MSG_NOT_AFFECTED);
+                        } else if (daysAgo >= 0 && daysAgo < BAKE_TIME) {
+                            actions.update(Actionable.WAITING);
+                            pw.println(MSG_BAKING + ": " + (BAKE_TIME - daysAgo) + " days more");
+                            pwShort.print(MSG_BAKING);
+                        } else if (release <= highRel) {
+                            actions.update(Actionable.MISSING, IMPORTANCE_STS_BACKPORT);
+                            pw.println(MSG_MISSING);
+                            pwShort.print(MSG_MISSING);
+                        } else {
+                            pw.println(MSG_INHERITED);
+                            pwShort.print(MSG_INHERITED);
+                        }
+                        break;
+                    }
+                    case 15: {
+                        if (issue.getLabels().contains("jdk15-fix-yes")) {
+                            actions.update(Actionable.PUSHABLE, IMPORTANCE_STS_BACKPORT);
+                            pw.println(MSG_APPROVED + ": jdk15-fix-yes is set");
+                            pwShort.print(MSG_APPROVED);
+                        } else if (issue.getLabels().contains("jdk14-fix-no")) {
+                            pw.println(MSG_REJECTED + ": jdk15-fix-no is set");
+                            pwShort.print(MSG_REJECTED);
+                        } else if (issue.getLabels().contains("jdk15-fix-request")) {
+                            actions.update(Actionable.REQUESTED);
+                            pw.println(MSG_REQUESTED + ": jdk15-fix-request is set");
+                            pwShort.print(MSG_REQUESTED);
+                        } else if (!affectedReleases.contains(15)) {
                             pw.println(MSG_NOT_AFFECTED);
                             pwShort.print(MSG_NOT_AFFECTED);
                         } else if (daysAgo >= 0 && daysAgo < BAKE_TIME) {
