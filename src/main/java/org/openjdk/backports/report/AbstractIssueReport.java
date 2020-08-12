@@ -352,16 +352,16 @@ public abstract class AbstractIssueReport extends AbstractReport {
                         break;
                     }
                     case 15: {
-                        if (issue.getLabels().contains("jdk15-fix-yes")) {
+                        if (issue.getLabels().contains("jdk15u-fix-yes")) {
                             actions.update(Actionable.PUSHABLE, IMPORTANCE_STS_BACKPORT);
-                            pw.println(MSG_APPROVED + ": jdk15-fix-yes is set");
+                            pw.println(MSG_APPROVED + ": jdk15u-fix-yes is set");
                             pwShort.print(MSG_APPROVED);
-                        } else if (issue.getLabels().contains("jdk14-fix-no")) {
-                            pw.println(MSG_REJECTED + ": jdk15-fix-no is set");
+                        } else if (issue.getLabels().contains("jdk15u-fix-no")) {
+                            pw.println(MSG_REJECTED + ": jdk15u-fix-no is set");
                             pwShort.print(MSG_REJECTED);
-                        } else if (issue.getLabels().contains("jdk15-fix-request")) {
+                        } else if (issue.getLabels().contains("jdk15u-fix-request")) {
                             actions.update(Actionable.REQUESTED);
-                            pw.println(MSG_REQUESTED + ": jdk15-fix-request is set");
+                            pw.println(MSG_REQUESTED + ": jdk15u-fix-request is set");
                             pwShort.print(MSG_REQUESTED);
                         } else if (!affectedReleases.contains(15)) {
                             pw.println(MSG_NOT_AFFECTED);
