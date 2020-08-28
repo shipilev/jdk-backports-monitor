@@ -82,7 +82,7 @@ public class ParityReport extends AbstractReport {
         for (String ver : vers) {
             Multimap<Issue, Issue> pb = jiraIssues.getIssuesWithBackports("project = JDK" +
                     " AND (status in (Closed, Resolved))" +
-                    " AND (labels not in (release-note, openjdk-na) OR labels is EMPTY)" +
+                    " AND (labels not in (release-note, openjdk-na, openjdk" + majorVer + "u-WNF) OR labels is EMPTY)" +
                     " AND (issuetype != CSR)" +
                     " AND (resolution not in (\"Won't Fix\", Duplicate, \"Cannot Reproduce\", \"Not an Issue\", Withdrawn, Other))" +
                     " AND fixVersion = " + ver);
@@ -90,6 +90,10 @@ public class ParityReport extends AbstractReport {
             for (Issue parent : pb.keySet()) {
                 if (Accessors.isOracleSpecific(parent)) {
                     // There is no parity with these
+                    continue;
+                }
+                if (Accessors.isOpenJDKWontFix(parent, majorVer)) {
+                    // Determined as won't fix for OpenJDK, skip
                     continue;
                 }
                 if (majorVer == 8 && Accessors.extractComponents(parent).startsWith("javafx")) {
