@@ -182,6 +182,10 @@ public class Accessors {
         return issue.getLabels().contains("openjdk-na");
     }
 
+    public static boolean isOpenJDKWontFix(Issue issue, int majorVer) {
+        return issue.getLabels().contains("openjdk" + majorVer + "u-WNF");
+    }
+
     public static boolean isReleaseNoteTag(Issue issue) {
         return issue.getLabels().contains("release-note");
     }
