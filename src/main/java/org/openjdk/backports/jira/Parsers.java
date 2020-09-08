@@ -28,8 +28,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Parsers {
+
+    static final Pattern USER_ID_PATTERN = Pattern.compile("(.*)<(.*)@openjdk.org>");
 
     public static String parseURL(String s) {
         for (String l : s.split("\n")) {
@@ -44,6 +48,12 @@ public class Parsers {
         for (String l : s.split("\n")) {
             if (l.startsWith("User")) {
                 return l.replaceFirst("User:", "").trim();
+            }
+            if (l.startsWith("Author")) {
+                Matcher m = USER_ID_PATTERN.matcher(l);
+                if (m.matches()) {
+                    return m.group(2);
+                }
             }
         }
         return "N/A";

@@ -104,7 +104,7 @@ public abstract class AbstractIssueReport extends AbstractReport {
         long daysAgo = Accessors.getPushDaysAgo(issue);
         int priority = Accessors.getPriority(issue);
 
-        pw.printf("  %" + VER_INDENT + "s: %10s, %s, %s%n", Accessors.getFixVersion(issue), issue.getKey(), Accessors.getPushURL(issue), Accessors.getPushDate(issue));
+        pw.printf("  %" + VER_INDENT + "s: %10s, %s, %s, %s%n", Accessors.getFixVersion(issue), issue.getKey(), Accessors.getPushURL(issue), Accessors.getPushUser(issue), Accessors.getPushDate(issue));
         recordIssue(results, issue);
         pw.println();
 
