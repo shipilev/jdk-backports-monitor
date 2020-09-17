@@ -32,6 +32,12 @@ public class Versions {
             return 0;
         }
 
+        if (version.startsWith("hs")) {
+            // Special case odd issues that reference Hotspot versions:
+            //  https://bugs.openjdk.java.net/browse/JDK-8035493
+            return 0;
+        }
+
         version = version.toLowerCase();
 
         if (version.startsWith("openjdk")) {
