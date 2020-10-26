@@ -48,6 +48,7 @@ public class Options {
     private boolean directOnly;
     private Integer parityReport;
     private boolean doCSV;
+    private boolean includeCarryovers;
 
     public Options(String[] args) {
         this.args = args;
@@ -97,6 +98,8 @@ public class Options {
 
         OptionSpec<Void> optDirectOnly = parser.accepts("direct-only", "For pushes, do direct pushes only");
 
+        OptionSpec<Void> optIncludeCarryovers = parser.accepts("include-carryovers", "Include carry-over issues in reports");
+
         parser.accepts("h", "Print this help.");
 
         OptionSet set;
@@ -129,6 +132,7 @@ public class Options {
         includeDownstream = set.has(optIncludeDownstream);
         directOnly = set.has(optDirectOnly);
         doCSV = set.has(optCSV);
+        includeCarryovers = set.has(optIncludeCarryovers);
 
         return true;
     }
@@ -182,5 +186,7 @@ public class Options {
     public boolean directOnly() { return directOnly; }
 
     public boolean doCSV() { return doCSV; }
+
+    public boolean includeCarryovers() { return includeCarryovers; }
 
 }

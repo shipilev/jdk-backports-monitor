@@ -80,7 +80,7 @@ public class Main {
                     }
 
                     if (options.getReleaseNotesReport() != null) {
-                        new ReleaseNotesReport(cli, options.getReleaseNotesReport()).run();
+                        new ReleaseNotesReport(cli, options.getReleaseNotesReport(), options.includeCarryovers()).run();
                     }
 
                     if (options.getFilterReport() != null) {

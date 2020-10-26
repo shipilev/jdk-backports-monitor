@@ -38,10 +38,12 @@ import java.util.*;
 public class ReleaseNotesReport extends AbstractReport {
 
     private final String release;
+    private final boolean includeCarryovers;
 
-    public ReleaseNotesReport(JiraRestClient restClient, String release) {
+    public ReleaseNotesReport(JiraRestClient restClient, String release, boolean includeCarryovers) {
         super(restClient);
         this.release = release;
+        this.includeCarryovers = includeCarryovers;
     }
 
     @Override
@@ -190,17 +192,19 @@ public class ReleaseNotesReport extends AbstractReport {
         }
         out.println();
 
-        out.println("CARRIED OVER FROM PREVIOUS RELEASES:");
-        out.println("  These have fixes for the given release, but they are also fixed in the previous");
-        out.println("  minor version of the same major release.");
-        out.println();
-        if (carriedOver.isEmpty()) {
-            out.println("  None.");
-        }
+        if (includeCarryovers) {
+            out.println("CARRIED OVER FROM PREVIOUS RELEASES:");
+            out.println("  These have fixes for the given release, but they are also fixed in the previous");
+            out.println("  minor version of the same major release.");
+            out.println();
+            if (carriedOver.isEmpty()) {
+                out.println("  None.");
+            }
 
-        for (Issue i : carriedOver) {
-            out.printf("  (%s) %s: %s%n", i.getPriority().getName(), i.getKey(), i.getSummary());
+            for (Issue i : carriedOver) {
+                out.printf("  (%s) %s: %s%n", i.getPriority().getName(), i.getKey(), i.getSummary());
+            }
+            out.println();
         }
-        out.println();
     }
 }
