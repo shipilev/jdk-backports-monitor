@@ -143,13 +143,19 @@ public class ReleaseNotesReport extends AbstractReport {
         }
         out.println();
 
-        out.println("ALL FIXED ISSUES, BY COMPONENT:");
+        out.println("ALL FIXED ISSUES, BY COMPONENT AND PRIORITY:");
         out.println();
 
         for (String component : byComponent.keySet()) {
             out.println(component + ":");
+            Multimap<String, Issue> byPriority = TreeMultimap.create(String::compareTo, DEFAULT_ISSUE_SORT);
             for (Issue i : byComponent.get(component)) {
-                out.println("  " + i.getKey() + ": " + i.getSummary());
+                byPriority.put(i.getPriority().getName(), i);
+            }
+            for (String prio : byPriority.keySet()) {
+                for (Issue i : byPriority.get(prio)) {
+                    out.printf("  (%s) %s: %s%n", prio, i.getKey(), i.getSummary());
+                }
             }
             out.println();
         }
@@ -162,8 +168,7 @@ public class ReleaseNotesReport extends AbstractReport {
         }
 
         for (Issue i : carriedOver) {
-            out.printf("  %s: %s%n",
-                    i.getKey(), i.getSummary());
+            out.printf("  (%s) %s: %s%n", i.getPriority().getName(), i.getKey(), i.getSummary());
         }
         out.println();
     }
