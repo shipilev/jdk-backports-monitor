@@ -52,7 +52,7 @@ public class ReleaseNotesReport extends AbstractReport {
         out.println("Notes generated: " + new Date());
         out.println();
 
-        List<Issue> regularIssues = jiraIssues.getParentIssues("project = JDK" +
+        Multimap<Issue, Issue> issuesWithBackports = jiraIssues.getIssuesWithBackports("project = JDK" +
                 " AND (status in (Closed, Resolved))" +
                 " AND (resolution not in (\"Won't Fix\", Duplicate, \"Cannot Reproduce\", \"Not an Issue\", Withdrawn))" +
                 " AND (labels not in (release-note, testbug, openjdk-na, testbug) OR labels is EMPTY)" +
@@ -71,21 +71,50 @@ public class ReleaseNotesReport extends AbstractReport {
 
         SortedSet<Issue> carriedOver = new TreeSet<>(DEFAULT_ISSUE_SORT);
 
-        for (Issue issue : regularIssues) {
+        int majorRelease = Versions.parseMajor(release);
+        int minorRelease = Versions.parseMinor(release);
+
+        for (Issue issue : issuesWithBackports.keySet()) {
             boolean backported = false;
+
+            // Check the root issue is later than the one we want for the backport
             for (String ver : Accessors.getFixVersions(issue)) {
-                if (Versions.parseMajor(ver) >= Versions.parseMajor(release)) {
+                if (Versions.parseMajor(ver) >= majorRelease) {
                     backported = true;
                     break;
                 }
             }
 
-            if (!backported) {
+            // Check the root issue does not fix earlier minor versions in the same major train
+            if (backported) {
+                for (String ver : Accessors.getFixVersions(issue)) {
+                    if (Versions.parseMajor(ver) == majorRelease &&
+                        Versions.parseMinor(ver) < minorRelease) {
+                        backported = false;
+                        break;
+                    }
+                }
+            }
+
+            // Check there are no backports in earlier minor versions in the same major train
+            if (backported) {
+                for (Issue bp : issuesWithBackports.get(issue)) {
+                    for (String ver : Accessors.getFixVersions(bp)) {
+                        if (Versions.parseMajor(ver) == majorRelease &&
+                            Versions.parseMinor(ver) < minorRelease) {
+                            backported = false;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (backported) {
+                byComponent.put(Accessors.extractComponents(issue), issue);
+            } else {
                 // These are parent issues that have "accidental" forward port to requested release.
                 // Filter them out as "carried over".
                 carriedOver.add(issue);
-            } else {
-                byComponent.put(Accessors.extractComponents(issue), issue);
             }
         }
 
@@ -162,6 +191,8 @@ public class ReleaseNotesReport extends AbstractReport {
         out.println();
 
         out.println("CARRIED OVER FROM PREVIOUS RELEASES:");
+        out.println("  These have fixes for the given release, but they are also fixed in the previous");
+        out.println("  minor version of the same major release.");
         out.println();
         if (carriedOver.isEmpty()) {
             out.println("  None.");
