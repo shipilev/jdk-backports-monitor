@@ -160,6 +160,10 @@ public class Versions {
         return false;
     }
 
+    public static boolean isOpen(String version) {
+        return !isOracle(version);
+    }
+
     public static boolean isShared(String version) {
         if (isOracle(version)) {
             return false;

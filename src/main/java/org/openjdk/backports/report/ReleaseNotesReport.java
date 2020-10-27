@@ -90,7 +90,8 @@ public class ReleaseNotesReport extends AbstractReport {
             // Check the root issue does not fix earlier minor versions in the same major train
             if (backported) {
                 for (String ver : Accessors.getFixVersions(issue)) {
-                    if (Versions.parseMajor(ver) == majorRelease &&
+                    if (Versions.isOpen(ver) &&
+                        Versions.parseMajor(ver) == majorRelease &&
                         Versions.parseMinor(ver) < minorRelease) {
                         backported = false;
                         break;
@@ -101,8 +102,10 @@ public class ReleaseNotesReport extends AbstractReport {
             // Check there are no backports in earlier minor versions in the same major train
             if (backported) {
                 for (Issue bp : issuesWithBackports.get(issue)) {
+                    if (!Accessors.isDelivered(bp)) continue;
                     for (String ver : Accessors.getFixVersions(bp)) {
-                        if (Versions.parseMajor(ver) == majorRelease &&
+                        if (Versions.isOpen(ver) &&
+                            Versions.parseMajor(ver) == majorRelease &&
                             Versions.parseMinor(ver) < minorRelease) {
                             backported = false;
                             break;
