@@ -136,7 +136,7 @@ public abstract class AbstractIssueReport extends AbstractReport {
             }
         }
 
-        if (affectedReleases.isEmpty()) {
+        if (affectedReleases.isEmpty() && affectedShenandoah.isEmpty() && affectedAArch64.isEmpty()) {
             pw.println("  " + MSG_WARNING + ": Affected versions is not set.");
             pw.println();
             actions.update(Actionable.CRITICAL);
