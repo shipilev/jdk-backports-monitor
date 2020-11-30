@@ -46,7 +46,7 @@ public abstract class AbstractIssueReport extends AbstractReport {
 
     private static final int VER_INDENT = 9; // spaces
 
-    private static final int[] VERSIONS_TO_CARE_FOR = {15, 11, 8};
+    private static final int[] VERSIONS_TO_CARE_FOR = {16, 11, 8};
 
     private static int importanceMerge() {
         return 5;
