@@ -351,6 +351,7 @@ public abstract class AbstractIssueReport extends AbstractReport {
 
         if (!hgDB.hasRepo(repo)) {
             pw.println(MSG_WARNING + ": No Mercurial data available to judge");
+            actions.update(Actionable.CRITICAL);
             return;
         }
 
