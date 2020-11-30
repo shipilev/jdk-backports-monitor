@@ -329,14 +329,13 @@ public abstract class AbstractIssueReport extends AbstractReport {
                 pw.println("      None.");
             }
         }
-        pw.println();
 
         Collection<Issue> relNotes = Accessors.getReleaseNotes(issueCli, issue);
         if (!relNotes.isEmpty()) {
+            pw.println();
             pw.println("  Release Notes:");
             pw.println();
             printReleaseNotes(pw, relNotes);
-            pw.println();
         }
 
         return new TrackedIssue(sw.toString(), swShort.toString(), daysAgo, priority, components, actions);
