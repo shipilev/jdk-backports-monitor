@@ -229,7 +229,11 @@ public abstract class AbstractIssueReport extends AbstractReport {
                 }
                 pwShort.print("Done, ");
             } else {
-                pw.printf("  %" + VER_INDENT + "s: ", release);
+                // Only print this line for backports, not forward ports.
+                // "short" version is printed for CSV uses.
+                if (release <= highRel) {
+                    pw.printf("  %" + VER_INDENT + "s: ", release);
+                }
 
                 if (issue.getLabels().contains("jdk" + release + "u-critical-yes")) {
                     actions.update(Actionable.PUSHABLE, importanceCritical(release));
@@ -250,6 +254,8 @@ public abstract class AbstractIssueReport extends AbstractReport {
                     actions.update(Actionable.REQUESTED);
                     pw.println(MSG_REQUESTED + ": jdk" + release + "u-fix-request is set");
                     pwShort.print(MSG_REQUESTED);
+                } else if (release > highRel) {
+                    pwShort.print(MSG_INHERITED);
                 } else if (!affectedReleases.contains(release)) {
                     pw.println(MSG_NOT_AFFECTED);
                     pwShort.print(MSG_NOT_AFFECTED);
@@ -261,13 +267,10 @@ public abstract class AbstractIssueReport extends AbstractReport {
                     actions.update(Actionable.MISSING, importanceOracle(release));
                     pw.println(MSG_MISSING_ORACLE);
                     pwShort.print(MSG_MISSING_ORACLE);
-                } else if (release <= highRel) {
+                } else {
                     actions.update(Actionable.MISSING, importanceDefault(release));
                     pw.println(MSG_MISSING);
                     pwShort.print(MSG_MISSING);
-                } else {
-                    pw.println(MSG_INHERITED);
-                    pwShort.print(MSG_INHERITED);
                 }
 
                 pwShort.print(", ");
