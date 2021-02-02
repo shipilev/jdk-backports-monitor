@@ -10,13 +10,10 @@ public class VersionsTest {
     public void testParseVersion() {
         Assert.assertEquals(8,  Versions.parseMajorShenandoah("8-shenandoah"));
         Assert.assertEquals(11, Versions.parseMajorShenandoah("11-shenandoah"));
-        Assert.assertEquals(-1, Versions.parseMajorAArch64("8-shenandoah"));
-        Assert.assertEquals(-1, Versions.parseMajorAArch64("11-shenandoah"));
         Assert.assertEquals(-1, Versions.parseMajor("8-shenandoah"));
         Assert.assertEquals(-1, Versions.parseMajor("11-shenandoah"));
 
         Assert.assertEquals(-1, Versions.parseMajorShenandoah("8-aarch64"));
-        Assert.assertEquals(8,  Versions.parseMajorAArch64("8-aarch64"));
         Assert.assertEquals(-1, Versions.parseMajor("8-aarch64"));
 
         Assert.assertEquals(10, Versions.parseMajor("10"));

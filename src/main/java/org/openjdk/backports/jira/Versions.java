@@ -135,19 +135,6 @@ public class Versions {
         }
     }
 
-    public static int parseMajorAArch64(String version) {
-        if (!version.endsWith("-aarch64")) {
-            return -1;
-        }
-
-        version = version.substring(0, version.indexOf("aarch64") - 1);
-        try {
-            return Integer.parseInt(version);
-        } catch (Exception e) {
-            return -1;
-        }
-    }
-
     public static boolean isOracle(String version) {
         if (parseMajor(version) >= 11 && version.endsWith("-oracle")) {
             return true;

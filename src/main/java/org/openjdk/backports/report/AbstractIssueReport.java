@@ -150,14 +150,12 @@ public abstract class AbstractIssueReport extends AbstractReport {
 
         Set<Integer> affectedReleases = new HashSet<>();
         Set<Integer> affectedShenandoah = new HashSet<>();
-        Set<Integer> affectedAArch64 = new HashSet<>();
 
         for (Version v : orEmpty(issue.getAffectedVersions())) {
             String verName = v.getName();
 
             int ver = Versions.parseMajor(verName);
             int verSh = Versions.parseMajorShenandoah(verName);
-            int verAarch64 = Versions.parseMajorAArch64(verName);
 
             if (ver == 0) {
                 // Special case: odd version, ignore it
@@ -165,8 +163,6 @@ public abstract class AbstractIssueReport extends AbstractReport {
                 affectedReleases.add(ver);
             } else if (verSh > 0) {
                 affectedShenandoah.add(verSh);
-            } else if (verAarch64 > 0) {
-                affectedAArch64.add(verAarch64);
             } else {
                 pw.println("  " + MSG_WARNING + ": Unknown affected version: " + verName);
                 pw.println();
@@ -174,7 +170,7 @@ public abstract class AbstractIssueReport extends AbstractReport {
             }
         }
 
-        if (affectedReleases.isEmpty() && affectedShenandoah.isEmpty() && affectedAArch64.isEmpty()) {
+        if (affectedReleases.isEmpty() && affectedShenandoah.isEmpty()) {
             pw.println("  " + MSG_WARNING + ": Affected versions is not set.");
             pw.println();
             actions.update(Actionable.CRITICAL);
@@ -301,13 +297,6 @@ public abstract class AbstractIssueReport extends AbstractReport {
             }
         }
 
-        if (!affectedAArch64.isEmpty()) {
-            pw.println();
-            pw.println("  AArch64 Backports:");
-
-            printHgStatus(true, actions, pw, issue, daysAgo, "8", "aarch64-port/jdk8u-shenandoah");
-        }
-
         if (includeDownstream) {
             pw.println();
             pw.println("  Downstream Repositories:");
@@ -317,7 +306,7 @@ public abstract class AbstractIssueReport extends AbstractReport {
                 printHgStatus(true, actions, pw, issue, daysAgo, "11-sh", "shenandoah/jdk11");
                 printed = true;
             }
-            if (affectedReleases.contains(8) || affectedShenandoah.contains(8) || affectedAArch64.contains(8)) {
+            if (affectedReleases.contains(8) || affectedShenandoah.contains(8)) {
                 printHgStatus(true, actions, pw, issue, daysAgo, "8-a64-sh", "aarch64-port/jdk8u-shenandoah");
                 printed = true;
             }
