@@ -282,19 +282,7 @@ public abstract class AbstractIssueReport extends AbstractReport {
             pw.println();
             pw.println("  Shenandoah Backports:");
 
-            for (int ver : new int[]{11, 8}) {
-                boolean affected = affectedShenandoah.contains(ver);
-                switch (ver) {
-                    case 8:
-                        printHgStatus(affected, actions, pw, issue, daysAgo, "8", "shenandoah/jdk8");
-                        break;
-                    case 11:
-                        printHgStatus(affected, actions, pw, issue, daysAgo, "11", "shenandoah/jdk11");
-                        break;
-                    default:
-                        pw.println("Unknown release: " + ver);
-                }
-            }
+            printHgStatus(affectedShenandoah.contains(8), actions, pw, issue, daysAgo, "8", "shenandoah/jdk8");
         }
 
         if (includeDownstream) {
