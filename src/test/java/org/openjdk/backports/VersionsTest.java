@@ -62,6 +62,7 @@ public class VersionsTest {
         Assert.assertEquals(8, Versions.parseMajor("openjdk8u212"));
 
         Assert.assertEquals(0, Versions.parseMajor("solaris_10u7"));
+        Assert.assertEquals(0, Versions.parseMajor("8-aarch64"));
     }
 
     @Test
