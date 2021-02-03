@@ -38,9 +38,15 @@ public class Versions {
             return 0;
         }
 
+        if (version.startsWith("emb-")) {
+            // Special case odd issues that reference embedded versions:
+            //  https://bugs.openjdk.java.net/browse/JDK-8042557
+            return 0;
+        }
+
         if (version.equals("8-aarch64")) {
             // Special case odd issues that reference old pre-integration 8-aarch64 versions:
-            //   https://bugs.openjdk.java.net/browse/JDK-8236179
+            //  https://bugs.openjdk.java.net/browse/JDK-8236179
             return 0;
         }
 

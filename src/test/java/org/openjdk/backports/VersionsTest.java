@@ -14,7 +14,9 @@ public class VersionsTest {
         Assert.assertEquals(-1, Versions.parseMajor("11-shenandoah"));
 
         Assert.assertEquals(-1, Versions.parseMajorShenandoah("8-aarch64"));
-        Assert.assertEquals(-1, Versions.parseMajor("8-aarch64"));
+
+        Assert.assertEquals(0, Versions.parseMajor("8-aarch64"));
+        Assert.assertEquals(0, Versions.parseMajor("emb-8u26"));
 
         Assert.assertEquals(10, Versions.parseMajor("10"));
         Assert.assertEquals(10, Versions.parseMajor("10.0.2"));
@@ -62,7 +64,7 @@ public class VersionsTest {
         Assert.assertEquals(8, Versions.parseMajor("openjdk8u212"));
 
         Assert.assertEquals(0, Versions.parseMajor("solaris_10u7"));
-        Assert.assertEquals(0, Versions.parseMajor("8-aarch64"));
+
     }
 
     @Test
