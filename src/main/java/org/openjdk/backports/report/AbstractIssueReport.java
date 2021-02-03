@@ -290,10 +290,6 @@ public abstract class AbstractIssueReport extends AbstractReport {
             pw.println("  Downstream Repositories:");
 
             printed = false;
-            if (affectedReleases.contains(11)) {
-                printHgStatus(true, actions, pw, issue, daysAgo, "11-sh", "shenandoah/jdk11");
-                printed = true;
-            }
             if (affectedReleases.contains(8) || affectedShenandoah.contains(8)) {
                 printHgStatus(true, actions, pw, issue, daysAgo, "8-a64-sh", "aarch64-port/jdk8u-shenandoah");
                 printed = true;
