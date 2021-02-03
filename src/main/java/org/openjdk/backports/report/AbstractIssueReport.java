@@ -298,10 +298,6 @@ public abstract class AbstractIssueReport extends AbstractReport {
                 printHgStatus(true, actions, pw, issue, daysAgo, "8-a64-sh", "aarch64-port/jdk8u-shenandoah");
                 printed = true;
             }
-            if (affectedReleases.contains(7)) {
-                printHgStatus(true, actions, pw, issue, daysAgo, "7-it-2.6", "icedtea7-forest-2.6");
-                printed = true;
-            }
             if (!printed) {
                 pw.println("      None.");
             }
