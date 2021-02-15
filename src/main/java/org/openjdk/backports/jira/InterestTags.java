@@ -32,40 +32,47 @@ import java.util.List;
 public class InterestTags {
 
     public static String shortTags(Collection<String> labels) {
-        List<String> comps = new ArrayList<>();
+        List<String> tags = new ArrayList<>();
         for (String label : labels) {
-            if (!label.endsWith("-interest")) continue;
-            comps.add(label.substring(0, label.indexOf("-interest")));
+            String tag = shortTagFor(label);
+            if (!tag.isEmpty()) {
+                tags.add(tag);
+            }
         }
 
-        if (comps.isEmpty()) return "";
+        if (tags.isEmpty()) return "";
 
-        Collections.sort(comps);
+        Collections.sort(tags);
 
         StringBuilder sb = new StringBuilder();
         sb.append("[");
-        for (String comp : comps) {
-            sb.append(shortTagFor(comp));
+        for (String tag : tags) {
+            sb.append(tag);
         }
         sb.append("]");
         return sb.toString();
     }
 
-    private static String shortTagFor(String company) {
-        switch (company) {
-            case "redhat":
+    private static String shortTagFor(String label) {
+        switch (label) {
+            case "redhat-interest":
                 return "R";
-            case "sap":
+            case "sap-interest":
                 return "S";
-            case "amazon":
+            case "amazon-interest":
                 return "A";
-            case "google":
+            case "google-interest":
                 return "G";
-            case "azul":
+            case "azul-interest":
                 return "a";
+            case "jdk11u-jvmci-defer":
+                return "C";
             default:
-                return "?";
+                if (label.endsWith("-interest")) {
+                    return "?";
+                } else {
+                    return "";
+                }
         }
     }
-
 }
