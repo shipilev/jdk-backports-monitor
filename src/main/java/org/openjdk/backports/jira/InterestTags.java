@@ -65,6 +65,8 @@ public class InterestTags {
                 return "G";
             case "azul-interest":
                 return "a";
+            case "tencent-interest":
+                return "t";
             case "jdk11u-jvmci-defer":
                 return "C";
             default:
