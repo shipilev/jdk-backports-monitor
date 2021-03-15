@@ -54,7 +54,7 @@ public class ReleaseNotesReport extends AbstractReport {
         out.println("Notes generated: " + new Date());
         out.println();
 
-        Multimap<Issue, Issue> issuesWithBackports = jiraIssues.getIssuesWithBackports("project = JDK" +
+        Multimap<Issue, Issue> issues = jiraIssues.getIssuesWithBackportsFull("project = JDK" +
                 " AND (status in (Closed, Resolved))" +
                 " AND (resolution not in (\"Won't Fix\", Duplicate, \"Cannot Reproduce\", \"Not an Issue\", Withdrawn))" +
                 " AND (labels not in (release-note, testbug, openjdk-na, testbug) OR labels is EMPTY)" +
@@ -76,45 +76,45 @@ public class ReleaseNotesReport extends AbstractReport {
         int majorRelease = Versions.parseMajor(release);
         int minorRelease = Versions.parseMinor(release);
 
-        for (Issue issue : issuesWithBackports.keySet()) {
-            boolean backported = false;
+        for (Issue issue : issues.keySet()) {
+            boolean firstInTrain = false;
 
             // Check the root issue is later than the one we want for the backport
             for (String ver : Accessors.getFixVersions(issue)) {
                 if (Versions.parseMajor(ver) >= majorRelease) {
-                    backported = true;
+                    firstInTrain = true;
                     break;
                 }
             }
 
             // Check the root issue does not fix earlier minor versions in the same major train
-            if (backported) {
+            if (firstInTrain) {
                 for (String ver : Accessors.getFixVersions(issue)) {
                     if (Versions.isOpen(ver) &&
                         Versions.parseMajor(ver) == majorRelease &&
                         Versions.parseMinor(ver) < minorRelease) {
-                        backported = false;
+                        firstInTrain = false;
                         break;
                     }
                 }
             }
 
             // Check there are no backports in earlier minor versions in the same major train
-            if (backported) {
-                for (Issue bp : issuesWithBackports.get(issue)) {
+            if (firstInTrain) {
+                for (Issue bp : issues.get(issue)) {
                     if (!Accessors.isDelivered(bp)) continue;
                     for (String ver : Accessors.getFixVersions(bp)) {
                         if (Versions.isOpen(ver) &&
                             Versions.parseMajor(ver) == majorRelease &&
                             Versions.parseMinor(ver) < minorRelease) {
-                            backported = false;
+                            firstInTrain = false;
                             break;
                         }
                     }
                 }
             }
 
-            if (backported) {
+            if (firstInTrain) {
                 byComponent.put(Accessors.extractComponents(issue), issue);
             } else {
                 // These are parent issues that have "accidental" forward port to requested release.

@@ -80,7 +80,7 @@ public class ParityReport extends AbstractReport {
         out.println();
 
         for (String ver : vers) {
-            Multimap<Issue, Issue> pb = jiraIssues.getIssuesWithBackports("project = JDK" +
+            Multimap<Issue, Issue> pb = jiraIssues.getIssuesWithBackportsOnly("project = JDK" +
                     " AND (status in (Closed, Resolved))" +
                     " AND (labels not in (release-note, openjdk-na, openjdk" + majorVer + "u-WNF) OR labels is EMPTY)" +
                     " AND (issuetype != CSR)" +

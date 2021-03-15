@@ -200,7 +200,7 @@ public class Issues {
         return issues;
     }
 
-    public Multimap<Issue, Issue> getIssuesWithBackports(String query) {
+    private Multimap<Issue, Issue> getIssuesWithBackports(String query, boolean includeOnly) {
         List<Issue> parents = getParentIssues(query);
         int totalSize = parents.size();
 
@@ -229,9 +229,25 @@ public class Issues {
                 out.flush();
             }
         }
+
+        if (!includeOnly) {
+            // Make sure that key mapping exists even for issues without backports.
+            for (Issue parent : parents) {
+                result.put(parent, parent);
+            }
+        }
+
         out.println(" done");
 
         return result;
+    }
+
+    public Multimap<Issue, Issue> getIssuesWithBackportsOnly(String query) {
+        return getIssuesWithBackports(query, true);
+    }
+
+    public Multimap<Issue, Issue> getIssuesWithBackportsFull(String query) {
+        return getIssuesWithBackports(query, false);
     }
 
     public List<Issue> getParentIssues(List<Issue> basics) {
