@@ -99,8 +99,8 @@ public class PushesReport extends AbstractReport {
         printByComponent(out, byComponent);
         out.println();
 
-        out.println("Distribution by email/name:");
-        printByEmailName(out, byCommitter);
+        out.println("Distribution by affiliation:");
+        printByAffiliation(out, byCommitter);
         out.println();
 
         out.println("Chronological push log:");
@@ -134,23 +134,23 @@ public class PushesReport extends AbstractReport {
         }
     }
 
-    protected void printByEmailName(PrintStream out, Multimap<String, Issue> byCommitter) {
-        Multiset<String> byCompany = TreeMultiset.create();
-        Map<String, Multiset<String>> byCompanyAndCommitter = new HashMap<>();
+    protected void printByAffiliation(PrintStream out, Multimap<String, Issue> byCommitter) {
+        Multiset<String> byAffiliation = TreeMultiset.create();
+        Map<String, Multiset<String>> byAffiliationAndCommitter = new HashMap<>();
 
         for (String committer : byCommitter.keySet()) {
-            String company = users.getAffiliation(committer);
-            byCompany.add(company, byCommitter.get(committer).size());
-            Multiset<String> bu = byCompanyAndCommitter.computeIfAbsent(company, k -> HashMultiset.create());
+            String aff = users.getAffiliation(committer);
+            byAffiliation.add(aff, byCommitter.get(committer).size());
+            Multiset<String> bu = byAffiliationAndCommitter.computeIfAbsent(aff, k -> HashMultiset.create());
             bu.add(users.getDisplayName(committer), byCommitter.get(committer).size());
         }
 
         int total = byCommitter.size();
         out.printf("   %3d: <total issues>%n", total);
-        for (String company : Multisets.copyHighestCountFirst(byCompany).elementSet()) {
-            String percCompany = String.format("(%.1f%%)", 100.0 * byCompany.count(company) / total);
-            out.printf("      %3d %7s: %s%n", byCompany.count(company), percCompany, company);
-            Multiset<String> committers = byCompanyAndCommitter.get(company);
+        for (String aff : Multisets.copyHighestCountFirst(byAffiliation).elementSet()) {
+            String percAff = String.format("(%.1f%%)", 100.0 * byAffiliation.count(aff) / total);
+            out.printf("      %3d %7s: %s%n", byAffiliation.count(aff), percAff, aff);
+            Multiset<String> committers = byAffiliationAndCommitter.get(aff);
             for (String committer : Multisets.copyHighestCountFirst(committers).elementSet()) {
                 String percCommitter = String.format("(%.1f%%)", 100.0 * committers.count(committer) / total);
                 out.printf("         %3d %7s: %s%n", committers.count(committer), percCommitter, committer);

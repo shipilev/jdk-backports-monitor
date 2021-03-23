@@ -82,19 +82,109 @@ public class UserCache {
             if (user != null) {
                 // Look up in Census succeeded, pick the email address.
                 String email = user.getEmailAddress();
-                return email.substring(email.indexOf("@"));
+                return generifyAffiliation(user.getDisplayName(), email.substring(email.indexOf("@")));
             } else {
                 // No hits in Census.
                 int email = id.indexOf("@");
                 if (email != -1) {
                     // Looks like email, extract.
-                    return id.substring(email);
+                    return generifyAffiliation(id, id.substring(email));
                 } else {
                     // No dice, report as unknown.
                     return "Unknown";
                 }
             }
         });
+    }
+
+    static final String[] INDEPENDENTS = {
+            "@wambold.com",
+            "@yandex.ru",
+            "@gmail.com",
+            "@freenet.de",
+            "@hollowman.ml",
+            "@ludovic.dev",
+            "@samersoff.net",
+            "@volkhart.com",
+            "@xlate.io",
+            "@apache.org",
+            "@users.noreply.github.com",
+            "@outlook.com",
+            "@j-kuhn.de",
+            "@yahoo.com",
+            "@ckozak.net",
+            "@cs.oswego.edu",
+            "@integralblue.com",
+    };
+
+    static final String[][] COMPANIES = {
+            {"@oracle.com", "Oracle"},
+            {"@redhat.com", "Red Hat"},
+            {"@sap.com", "SAP"},
+            {"@tencent.com", "Tencent"},
+            {"@amazon.com", "Amazon"},
+            {"@huawei.com", "Huawei"},
+            {"@bell-sw.com", "BellSoft"},
+            {"@arm.com", "ARM"},
+            {"@azul.com", "Azul"},
+            {"@intel.com", "Intel"},
+            {"@microsoft.com", "Microsoft"},
+            {"@alibaba-inc.com", "Alibaba"},
+            {"@oss.nttdata.com", "NTT DATA"},
+            {"@microdoc.com", "Microdoc"},
+            {"@os.amperecomputing.com", "Ampere"},
+            {"@datadoghq.com", "DataDog"},
+            {"@google.com", "Google"},
+            {"@skymatic.de", "Skymatic"},
+            {"@gapfruit.com", "GapFruit"},
+            {"@loongson.cn", "Loongson"},
+            {"@tradingscreen.com", "TradingScreen"},
+    };
+
+    static final String[][] SPECIAL_CASES = {
+            {"Thomas Stuefe", "SAP"},
+            {"Martin Buchholz", "Google"},
+            {"Tagir Valeev", "JetBrains"},
+            {"Volker Simonis", "Amazon"},
+    };
+
+    private String generifyAffiliation(String full, String v) {
+        // Pick a company first, if we can
+        for (String[] kv : COMPANIES) {
+            if (v.equals(kv[0])) {
+                return kv[1];
+            }
+        }
+
+        // Lots of prefixes here: @in.ibm.com, @linux.ibm.com etc.
+        if (v.endsWith("ibm.com")) {
+            return "IBM";
+        }
+
+        // Sometimes internal prefixes leak
+        if (v.endsWith("oracle.com")) {
+            return "Oracle";
+        }
+
+        // AWS leak
+        if (v.endsWith("compute.internal")) {
+            return "Amazon";
+        }
+
+        // Special cases for special people
+        for (String[] kv : SPECIAL_CASES) {
+            if (full.equals(kv[0])) {
+                return kv[1];
+            }
+        }
+
+        for (String ind : INDEPENDENTS) {
+            if (v.equals(ind)) {
+                return "Independent";
+            }
+        }
+
+        return v;
     }
 
     public int maxAffiliation() {
