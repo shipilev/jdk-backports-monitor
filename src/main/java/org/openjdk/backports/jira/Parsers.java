@@ -33,7 +33,8 @@ import java.util.regex.Pattern;
 
 public class Parsers {
 
-    static final Pattern USER_ID_PATTERN = Pattern.compile("(.*)<(.*)@openjdk.org>");
+    static final Pattern OPENJDK_USER_ID = Pattern.compile("(.*)<(.*)@openjdk.org>");
+    static final Pattern GENERIC_USER_ID = Pattern.compile("(.*)<(.*)>");
 
     public static String parseURL(String s) {
         for (String l : s.split("\n")) {
@@ -50,9 +51,13 @@ public class Parsers {
                 return l.replaceFirst("User:", "").trim();
             }
             if (l.startsWith("Author")) {
-                Matcher m = USER_ID_PATTERN.matcher(l);
-                if (m.matches()) {
-                    return m.group(2);
+                Matcher m1 = OPENJDK_USER_ID.matcher(l);
+                if (m1.matches()) {
+                    return m1.group(2);
+                }
+                Matcher m2 = GENERIC_USER_ID.matcher(l);
+                if (m2.matches()) {
+                    return m2.group(2);
                 }
             }
         }

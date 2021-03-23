@@ -52,19 +52,48 @@ public class UserCache {
             try {
                 return client.getUser(u).claim();
             } catch (Exception e) {
-                return client.getUser("duke").claim();
+                return null;
             }
         });
     }
 
     public String getDisplayName(String id) {
-        return displayNames.computeIfAbsent(id, u -> getUser(u).getDisplayName());
+        return displayNames.computeIfAbsent(id, u -> {
+            User user = getUser(u);
+            if (user != null) {
+                return user.getDisplayName();
+            } else {
+                // No hits in Census.
+                int email = id.indexOf("@");
+                if (email != -1) {
+                    // Looks like email, extract.
+                    return id.substring(0, email);
+                } else {
+                    // No dice, report verbatim.
+                    return id;
+                }
+            }
+        });
     }
 
     public String getAffiliation(String id) {
         return affiliations.computeIfAbsent(id, u -> {
-            String email = getUser(u).getEmailAddress();
-            return email.substring(email.indexOf("@"));
+            User user = getUser(u);
+            if (user != null) {
+                // Look up in Census succeeded, pick the email address.
+                String email = user.getEmailAddress();
+                return email.substring(email.indexOf("@"));
+            } else {
+                // No hits in Census.
+                int email = id.indexOf("@");
+                if (email != -1) {
+                    // Looks like email, extract.
+                    return id.substring(email);
+                } else {
+                    // No dice, report as unknown.
+                    return "Unknown";
+                }
+            }
         });
     }
 
