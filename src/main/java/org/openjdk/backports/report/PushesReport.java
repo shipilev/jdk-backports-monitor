@@ -49,8 +49,14 @@ public class PushesReport extends AbstractReport {
         out.println("PUSHES REPORT: " + release);
         printMajorDelimiterLine(out);
         out.println();
-        out.println("This report shows who pushed the backports to the given release.");
-        out.println("This usually shows who did the backporting, testing, and review work.");
+        if (directOnly) {
+            out.println("This report shows who pushed the changesets to the given release.");
+            out.println("This usually shows who did the development work, not sponsors/reviewers.");
+
+        } else {
+            out.println("This report shows who pushed the backports to the given release.");
+            out.println("This usually shows who did the backporting, testing, and review work.");
+        }
         out.println();
         out.println("Report generated: " + new Date());
         out.println();
