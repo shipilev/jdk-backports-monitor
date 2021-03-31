@@ -50,7 +50,8 @@ public class Census {
             }
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            System.out.println("ERROR: Cannot read Census");
+            e.printStackTrace();
         }
         return Collections.emptyList();
     }

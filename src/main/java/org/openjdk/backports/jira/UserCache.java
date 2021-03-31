@@ -26,31 +26,60 @@ package org.openjdk.backports.jira;
 
 import com.atlassian.jira.rest.client.api.UserRestClient;
 import com.atlassian.jira.rest.client.api.domain.User;
+import com.atlassian.util.concurrent.Promise;
+import org.openjdk.backports.census.Census;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class UserCache {
     private final UserRestClient client;
     private final Map<String, User> users;
+    private final Map<String, Promise<User>> userPromises;
     private final Map<String, String> displayNames;
     private final Map<String, String> affiliations;
+    private List<String> censusIds;
 
     public UserCache(UserRestClient client) {
         this.client = client;
         this.users = new HashMap<>();
+        this.userPromises = new HashMap<>();
         this.displayNames = new HashMap<>();
         this.affiliations = new HashMap<>();
     }
 
-    public void getUserAsync(String id) {
-        client.getUser(id).done(u -> users.put(id, u));
+    public List<String> resolveCensus() {
+        if (censusIds == null) {
+            censusIds = Census.userIds();
+
+            // Start async resolve for all users
+            for (String uid : censusIds) {
+                userPromises.put(uid, client.getUser(uid));
+            }
+        }
+        return censusIds;
     }
 
-    public User getUser(String id) {
+    private User lookupByEmail(String email) {
+        for (String uid : resolveCensus()) {
+            User u = getUser(uid);
+            if (u != null && u.getEmailAddress().equalsIgnoreCase(email)) {
+                return u;
+            }
+        }
+        return null;
+    }
+
+    private User getUser(String id) {
         return users.computeIfAbsent(id, u -> {
             try {
-                return client.getUser(u).claim();
+                Promise<User> p = userPromises.get(u);
+                if (p == null) {
+                    p = client.getUser(u);
+                    userPromises.put(u, p);
+                }
+                return p.claim();
             } catch (Exception e) {
                 return null;
             }
@@ -60,6 +89,11 @@ public class UserCache {
     public String getDisplayName(String id) {
         return displayNames.computeIfAbsent(id, u -> {
             User user = getUser(u);
+            if (user == null) {
+                // No user with such User ID, try to fuzzy match the email
+                user = lookupByEmail(id);
+            }
+
             if (user != null) {
                 return user.getDisplayName();
             } else {
@@ -79,6 +113,11 @@ public class UserCache {
     public String getAffiliation(String id) {
         return affiliations.computeIfAbsent(id, u -> {
             User user = getUser(u);
+            if (user == null) {
+                // No user with such User ID, try to fuzzy match the email
+                user = lookupByEmail(id);
+            }
+
             if (user != null) {
                 // Look up in Census succeeded, pick the email address.
                 String email = user.getEmailAddress();

@@ -44,12 +44,7 @@ public class AffiliationReport extends AbstractReport {
         out.println("Report generated: " + new Date());
         out.println();
 
-        List<String> userIds = Census.userIds();
-
-        // Start async resolve
-        for (String uid : userIds) {
-            users.getUserAsync(uid);
-        }
+        List<String> userIds = users.resolveCensus();
 
         // Get all data and compute column widths
         int maxUid = 0;
