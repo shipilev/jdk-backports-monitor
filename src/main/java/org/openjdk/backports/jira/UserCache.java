@@ -26,7 +26,7 @@ package org.openjdk.backports.jira;
 
 import com.atlassian.jira.rest.client.api.UserRestClient;
 import com.atlassian.jira.rest.client.api.domain.User;
-import com.atlassian.util.concurrent.Promise;
+import io.atlassian.util.concurrent.Promise;
 import org.openjdk.backports.census.Census;
 
 import java.util.HashMap;

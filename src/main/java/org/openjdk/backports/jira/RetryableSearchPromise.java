@@ -26,7 +26,7 @@ package org.openjdk.backports.jira;
 
 import com.atlassian.jira.rest.client.api.SearchRestClient;
 import com.atlassian.jira.rest.client.api.domain.SearchResult;
-import com.atlassian.util.concurrent.Promise;
+import io.atlassian.util.concurrent.Promise;
 
 import java.util.concurrent.TimeUnit;
 
