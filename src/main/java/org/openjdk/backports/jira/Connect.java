@@ -46,6 +46,8 @@ import java.util.concurrent.TimeUnit;
 public class Connect {
 
     public static JiraRestClient getJiraRestClient(String jiraURL, String user, String pass) throws URISyntaxException {
+        System.setProperty("com.atlassian.httpclient.options.threadWorkQueueLimit", String.valueOf(64*1024));
+
         final URI uri = new URI(jiraURL);
 
         DefaultHttpClientFactory factory = new DefaultHttpClientFactory(
@@ -62,6 +64,7 @@ public class Connect {
         // All this mess is needed to change timeouts:
         opts.setRequestTimeout(2, TimeUnit.MINUTES);
         opts.setSocketTimeout(2, TimeUnit.MINUTES);
+        opts.setLeaseTimeout(TimeUnit.MINUTES.toMillis(30));
 
         HttpClient client = factory.create(opts);
 
