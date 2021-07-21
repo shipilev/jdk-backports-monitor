@@ -22,43 +22,40 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package org.openjdk.backports.report;
+package org.openjdk.backports.report.text;
 
-import com.atlassian.jira.rest.client.api.JiraRestClient;
-import org.openjdk.backports.census.Census;
+import org.openjdk.backports.StringUtils;
+import org.openjdk.backports.report.Common;
 
-import java.util.Date;
-import java.util.List;
+import java.io.IOException;
+import java.io.PrintStream;
 
-public class AffiliationReport extends AbstractReport {
+abstract class AbstractTextReport extends Common {
 
-    public AffiliationReport(JiraRestClient restClient) {
-        super(restClient);
+    protected final PrintStream debugLog;
+    protected final String logPrefix;
+
+    public AbstractTextReport(PrintStream debugLog, String logPrefix) {
+        this.debugLog = debugLog;
+        this.logPrefix = logPrefix;
     }
 
-    @Override
-    public void run() {
-        out.println("AFFILIATION REPORT");
-        printMajorDelimiterLine(out);
-        out.println();
-        out.println("Report generated: " + new Date());
-        out.println();
-
-        List<String> userIds = users.resolveCensus();
-
-        // Get all data and compute column widths
-        int maxUid = 0;
-        for (String uid : userIds) {
-            users.getDisplayName(uid);
-            users.getAffiliation(uid);
-            maxUid = Math.max(maxUid, uid.length());
-        }
-
-        int maxDisplayName = users.maxDisplayName();
-        int maxAffiliation = users.maxAffiliation();
-        for (String uid : userIds) {
-            out.printf("%" + maxUid + "s, %" + maxDisplayName + "s, %" + maxAffiliation + "s%n",
-                    uid, users.getDisplayName(uid), users.getAffiliation(uid));
-        }
+    public final void generate() throws IOException {
+        String fileName = logPrefix + ".txt";
+        PrintStream out = new PrintStream(fileName);
+        debugLog.println("Generating TXT log to " + fileName);
+        doGenerate(out);
+        out.close();
     }
+
+    protected abstract void doGenerate(PrintStream out);
+
+    protected void printMajorDelimiterLine(PrintStream out) {
+        out.println(StringUtils.tabLine('='));
+    }
+
+    protected void printMinorDelimiterLine(PrintStream out) {
+        out.println(StringUtils.tabLine('-'));
+    }
+
 }

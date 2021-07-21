@@ -22,64 +22,54 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package org.openjdk.backports.report;
+package org.openjdk.backports.report.model;
 
 import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.atlassian.jira.rest.client.api.domain.Filter;
 import com.atlassian.jira.rest.client.api.domain.Issue;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.TreeMultimap;
-import org.openjdk.backports.Main;
 import org.openjdk.backports.jira.Accessors;
 
-import java.util.Date;
+import java.io.PrintStream;
 import java.util.List;
 
-public class FilterReport extends AbstractReport {
+public class FilterModel extends AbstractModel {
 
     private final long filterId;
+    private final Multimap<String, Issue> byComponent;
+    private final String name;
+    private final List<Issue> issues;
 
-    public FilterReport(JiraRestClient restClient, long filterId) {
-        super(restClient);
+    public FilterModel(JiraRestClient cli, PrintStream debugOut, long filterId) {
+        super(cli, debugOut);
         this.filterId = filterId;
-    }
 
-    @Override
-    public void run() {
         Filter filter = searchCli.getFilter(filterId).claim();
+        name = filter.getName();
 
-        out.println("FILTER REPORT");
-        printMajorDelimiterLine(out);
-        out.println();
-        out.println("This report shows brief list of issues matching the filter.");
-        out.println();
-        out.println("Report generated: " + new Date());
-        out.println();
-        out.println("Filter: " + filter.getName());
-        out.println("Filter URL: " + Main.JIRA_URL + "issues/?filter=" + filterId);
-        out.println();
-
-        List<Issue> issues = jiraIssues.getBasicIssues(filter.getJql());
-
-        out.println();
-        out.println("Hint: Prefix bug IDs with " + Main.JIRA_URL + "browse/ to reach the relevant JIRA entry.");
-        out.println();
-
+        issues = jiraIssues.getBasicIssues(filter.getJql());
         issues.sort(DEFAULT_ISSUE_SORT);
 
-        Multimap<String, Issue> byComponent = TreeMultimap.create(String::compareTo, DEFAULT_ISSUE_SORT);
-
+        byComponent = TreeMultimap.create(String::compareTo, DEFAULT_ISSUE_SORT);
         for (Issue issue : issues) {
             byComponent.put(Accessors.extractComponents(issue), issue);
         }
+    }
 
-        for (String component : byComponent.keySet()) {
-            out.println(component + ":");
-            for (Issue i : byComponent.get(component)) {
-                out.println("  " + i.getKey() + ": " + i.getSummary());
-            }
-            out.println();
-        }
-        out.println();
+    public long filterId() {
+        return filterId;
+    }
+
+    public Multimap<String, Issue> byComponent() {
+        return byComponent;
+    }
+
+    public String name() {
+        return name;
+    }
+
+    public List<Issue> issues() {
+        return issues;
     }
 }

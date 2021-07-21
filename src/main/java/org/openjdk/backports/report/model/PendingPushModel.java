@@ -22,36 +22,24 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package org.openjdk.backports.report;
+package org.openjdk.backports.report.model;
 
 import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.atlassian.jira.rest.client.api.domain.Issue;
-import org.openjdk.backports.jira.TrackedIssue;
+import org.openjdk.backports.hg.HgDB;
 
-import java.util.Date;
+import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
-public class PendingPushReport extends AbstractIssueReport {
+public class PendingPushModel extends AbstractModel {
 
     private final String release;
+    private final List<IssueModel> models;
 
-    public PendingPushReport(JiraRestClient restClient, String hgRepos, boolean includeDownstream, String release) {
-        super(restClient, hgRepos, includeDownstream);
+    public PendingPushModel(JiraRestClient cli, HgDB hgDB, PrintStream debugOut, String release) {
+        super(cli, debugOut);
         this.release = release;
-    }
-
-    @Override
-    public void run() {
-        out.println("PENDING PUSH REPORT: " + release);
-        printMajorDelimiterLine(out);
-        out.println();
-        out.println("This report shows backports that were approved, but not yet pushed.");
-        out.println("Some of them are true orphans with original backport requesters never got sponsored.");
-        out.println();
-        out.println("Report generated: " + new Date());
-        out.println();
 
         String query = "labels = jdk" + release + "u-fix-yes AND labels != openjdk-na AND fixVersion !~ '" + release + ".*'";
 
@@ -65,17 +53,19 @@ public class PendingPushReport extends AbstractIssueReport {
         }
 
         List<Issue> found = jiraIssues.getIssues(query, false);
+        found.sort(DEFAULT_ISSUE_SORT);
 
-        SortedSet<TrackedIssue> issues = new TreeSet<>();
+        models = new ArrayList<>();
         for (Issue i : found) {
-            issues.add(parseIssue(i));
+            models.add(new IssueModel(cli, hgDB, debugOut, i));
         }
+    }
 
-        out.println();
-        printDelimiterLine(out);
-        for (TrackedIssue i : issues) {
-            out.println(i.getOutput());
-            printDelimiterLine(out);
-        }
+    public String release() {
+        return release;
+    }
+
+    public List<IssueModel> models() {
+        return models;
     }
 }

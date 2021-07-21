@@ -22,44 +22,27 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package org.openjdk.backports.report;
+package org.openjdk.backports.report.csv;
 
-import com.atlassian.jira.rest.client.api.JiraRestClient;
-import com.atlassian.jira.rest.client.api.domain.Issue;
-import org.openjdk.backports.jira.TrackedIssue;
+import org.openjdk.backports.report.model.IssueModel;
+import org.openjdk.backports.report.model.LabelModel;
 
-import java.util.Date;
+import java.io.PrintStream;
 
-public class IssueReport extends AbstractIssueReport {
+public class LabelCSVReport extends AbstractCSVReport {
 
-    private final String issueId;
-    private final boolean doCSV;
+    private final LabelModel model;
 
-    public IssueReport(JiraRestClient restClient, String hgRepos, boolean includeDownstream, String issueId, boolean doCSV) {
-        super(restClient, hgRepos, includeDownstream);
-        this.issueId = issueId;
-        this.doCSV = doCSV;
+    public LabelCSVReport(LabelModel model, PrintStream debugLog, String logPrefix) {
+        super(debugLog, logPrefix);
+        this.model = model;
     }
 
     @Override
-    public void run() {
-        out.println("ISSUE REPORT: " + issueId);
-        printMajorDelimiterLine(out);
-        out.println();
-        out.println("This report shows a single issue status.");
-        out.println();
-        out.println("Report generated: " + new Date());
-        out.println();
-
-        Issue issue = issueCli.getIssue(issueId).claim();
-
-        TrackedIssue trackedIssue = parseIssue(issue);
-
-        if (doCSV) {
-            out.println(trackedIssue.getShortOutput());
-        } else {
-            printDelimiterLine(out);
-            out.println(trackedIssue.getOutput());
+    protected void doGenerate(PrintStream out) {
+        for (IssueModel im : model.issues()) {
+            new IssueCSVReport(im, debugLog, logPrefix).generateSimple(out);
         }
     }
+
 }

@@ -25,11 +25,17 @@
 package org.openjdk.backports;
 
 import com.atlassian.jira.rest.client.api.JiraRestClient;
+import org.openjdk.backports.hg.HgDB;
 import org.openjdk.backports.jira.Connect;
+import org.openjdk.backports.report.csv.*;
+import org.openjdk.backports.report.html.*;
+import org.openjdk.backports.report.model.*;
 import org.openjdk.backports.report.*;
+import org.openjdk.backports.report.text.*;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.Properties;
 
 public class Main {
@@ -56,43 +62,75 @@ public class Main {
                 }
 
                 try (JiraRestClient cli = Connect.getJiraRestClient(JIRA_URL, user, pass)) {
+                    PrintStream debugLog = System.out;
+                    String logPrefix = options.getLogPrefix();
+
+                    HgDB hgDB = new HgDB();
+                    if (options.getHgRepos() != null) {
+                        hgDB.load(options.getHgRepos());
+                    }
+
                     if (options.getLabelReport() != null) {
-                        new LabelReport(cli, options.getHgRepos(), options.includeDownstream(),
-                                options.getLabelReport(), options.getMinLevel(), options.doCSV()).run();
+                        LabelModel m = new LabelModel(cli, hgDB, debugLog, options.getMinLevel(), options.getLabelReport());
+                        new LabelTextReport(m, debugLog, logPrefix).generate();
+                        new LabelCSVReport (m, debugLog, logPrefix).generate();
+                        new LabelHTMLReport(m, debugLog, logPrefix).generate();
                     }
 
                     if (options.getLabelHistoryReport() != null) {
-                        new LabelHistoryReport(cli, options.getLabelHistoryReport()).run();
+                        LabelHistoryModel m = new LabelHistoryModel(cli, debugLog, options.getLabelHistoryReport());
+                        new LabelHistoryTextReport(m, debugLog, logPrefix).generate();
+                        new LabelHistoryCSVReport (m, debugLog, logPrefix).generate();
+                        new LabelHistoryHTMLReport(m, debugLog, logPrefix).generate();
                     }
 
                     if (options.getPendingPushReport() != null) {
-                        new PendingPushReport(cli, options.getHgRepos(), options.includeDownstream(),
-                                options.getPendingPushReport()).run();
+                        PendingPushModel m = new PendingPushModel(cli, hgDB, debugLog, options.getPendingPushReport());
+                        new PendingPushTextReport(m, debugLog, logPrefix).generate();
+                        new PendingPushCSVReport (m, debugLog, logPrefix).generate();
+                        new PendingPushHTMLReport(m, debugLog, logPrefix).generate();
                     }
 
                     if (options.getIssueReport() != null) {
-                        new IssueReport(cli, options.getHgRepos(), options.includeDownstream(),
-                                options.getIssueReport(), options.doCSV()).run();
+                        IssueModel m = new IssueModel(cli, hgDB, debugLog, options.getIssueReport());
+                        new IssueTextReport(m, debugLog, logPrefix).generate();
+                        new IssueCSVReport (m, debugLog, logPrefix).generate();
+                        new IssueHTMLReport(m, debugLog, logPrefix).generate();
                     }
 
                     if (options.getPushesReport() != null) {
-                        new PushesReport(cli, options.directOnly(), options.getPushesReport()).run();
+                        PushesModel m = new PushesModel(cli, debugLog, options.directOnly(), options.getPushesReport());
+                        new PushesTextReport(m, debugLog, logPrefix).generate();
+                        new PushesCSVReport (m, debugLog, logPrefix).generate();
+                        new PushesHTMLReport(m, debugLog, logPrefix).generate();
                     }
 
                     if (options.getReleaseNotesReport() != null) {
-                        new ReleaseNotesReport(cli, options.getReleaseNotesReport(), options.includeCarryovers()).run();
+                        ReleaseNotesModel m = new ReleaseNotesModel(cli, debugLog, options.includeCarryovers(), options.getReleaseNotesReport());
+                        new ReleaseNotesTextReport(m, debugLog, logPrefix).generate();
+                        // No CSV report for this, it is not supposed to be machine-readable
+                        new ReleaseNotesHTMLReport(m, debugLog, logPrefix).generate();
                     }
 
                     if (options.getFilterReport() != null) {
-                        new FilterReport(cli, options.getFilterReport()).run();
+                        FilterModel m = new FilterModel(cli, debugLog, options.getFilterReport());
+                        new FilterTextReport(m, debugLog, logPrefix).generate();
+                        new FilterCSVReport (m, debugLog, logPrefix).generate();
+                        new FilterHTMLReport(m, debugLog, logPrefix).generate();
                     }
 
                     if (options.getAffiliationReport() != null) {
-                        new AffiliationReport(cli).run();
+                        AffiliationModel m = new AffiliationModel(cli, debugLog);
+                        new AffiliationTextReport(m, debugLog, logPrefix).generate();
+                        new AffiliationCSVReport (m, debugLog, logPrefix).generate();
+                        new AffiliationHTMLReport(m, debugLog, logPrefix).generate();
                     }
 
                     if (options.getParityReport() != null) {
-                        new ParityReport(cli, options.getParityReport()).run();
+                        ParityModel m = new ParityModel(cli, debugLog, options.getParityReport());
+                        new ParityTextReport(m, debugLog, logPrefix).generate();
+                        new ParityCSVReport (m, debugLog, logPrefix).generate();
+                        new ParityHTMLReport(m, debugLog, logPrefix).generate();
                     }
                 }
             }

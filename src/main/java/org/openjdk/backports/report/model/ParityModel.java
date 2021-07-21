@@ -22,7 +22,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package org.openjdk.backports.report;
+package org.openjdk.backports.report.model;
 
 import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.atlassian.jira.rest.client.api.domain.Issue;
@@ -35,36 +35,31 @@ import org.openjdk.backports.jira.Accessors;
 import org.openjdk.backports.jira.InterestTags;
 import org.openjdk.backports.jira.Versions;
 
+import java.io.PrintStream;
 import java.time.LocalDateTime;
 import java.util.*;
 
-public class ParityReport extends AbstractReport {
+public class ParityModel extends AbstractModel {
 
-    private final JiraRestClient restClient;
     private final int majorVer;
+    private final SortedMap<Issue, String> exactOpenFirst;
+    private final SortedMap<Issue, String> exactOracleFirst;
+    private final SortedMap<Issue, String> exactUnknown;
+    private final SortedMap<Issue, String> lateOpenFirst;
+    private final SortedMap<Issue, String> lateOracleFirst;
+    private final Map<String, Map<Issue, String>> onlyOpen;
+    private final Map<String, Map<Issue, String>> onlyOracle;
 
-    public ParityReport(JiraRestClient restClient, int majorVer) {
-        super(restClient);
-        this.restClient = restClient;
+    public ParityModel(JiraRestClient cli, PrintStream debugOut, int majorVer) {
+        super(cli, debugOut);
         this.majorVer = majorVer;
-    }
-
-    @Override
-    public void run() {
-        out.println("PARITY REPORT FOR JDK: " + majorVer);
-        printMajorDelimiterLine(out);
-        out.println();
-        out.println("This report shows the bird-eye view of parity between OpenJDK and Oracle JDK.");
-        out.println();
-        out.println("Report generated: " + new Date());
-        out.println();
 
         Multimap<Issue, Issue> mp = HashMultimap.create();
 
         List<String> vers = new ArrayList<>();
         int versLen = 0;
 
-        Project proj = restClient.getProjectClient().getProject("JDK").claim();
+        Project proj = cli.getProjectClient().getProject("JDK").claim();
         for (Version ver : proj.getVersions()) {
             String v = ver.getName();
             if (Versions.parseMajor(v) != majorVer) continue;
@@ -73,11 +68,11 @@ public class ParityReport extends AbstractReport {
             versLen = Math.max(versLen, v.length());
         }
 
-        out.println("Auto-detected versions:");
+        debugOut.println("Auto-detected versions:");
         for (String ver : vers) {
-            out.println("  " + ver);
+            debugOut.println("  " + ver);
         }
-        out.println();
+        debugOut.println();
 
         for (String ver : vers) {
             Multimap<Issue, Issue> pb = jiraIssues.getIssuesWithBackportsOnly("project = JDK" +
@@ -110,21 +105,18 @@ public class ParityReport extends AbstractReport {
                     }
                 }
             }
-
-            out.println();
         }
 
-        out.println("Discovered " + mp.size() + " issues.");
-        out.println();
+        debugOut.println("Discovered " + mp.size() + " issues.");
 
-        Map<String, Map<Issue, String>> onlyOpen = new TreeMap<>();
-        Map<String, Map<Issue, String>> onlyOracle = new TreeMap<>();
+        onlyOpen = new TreeMap<>();
+        onlyOracle = new TreeMap<>();
 
-        SortedMap<Issue, String> exactOpenFirst = new TreeMap<>(DEFAULT_ISSUE_SORT);
-        SortedMap<Issue, String> exactOracleFirst = new TreeMap<>(DEFAULT_ISSUE_SORT);
-        SortedMap<Issue, String> exactUnknown = new TreeMap<>(DEFAULT_ISSUE_SORT);
-        SortedMap<Issue, String> lateOpenFirst = new TreeMap<>(DEFAULT_ISSUE_SORT);
-        SortedMap<Issue, String> lateOracleFirst = new TreeMap<>(DEFAULT_ISSUE_SORT);
+        exactOpenFirst = new TreeMap<>(DEFAULT_ISSUE_SORT);
+        exactOracleFirst = new TreeMap<>(DEFAULT_ISSUE_SORT);
+        exactUnknown = new TreeMap<>(DEFAULT_ISSUE_SORT);
+        lateOpenFirst = new TreeMap<>(DEFAULT_ISSUE_SORT);
+        lateOracleFirst = new TreeMap<>(DEFAULT_ISSUE_SORT);
 
         for (Issue p : mp.keySet()) {
             boolean isShared = false;
@@ -229,88 +221,37 @@ public class ParityReport extends AbstractReport {
                         firstOracleRaw, firstOpenRaw, p.getKey(), p.getSummary()));
             }
         }
-
-        out.println("=== EXCLUSIVE: ONLY IN ORACLE JDK");
-        out.println();
-        out.println("This is where Oracle JDK is ahead of OpenJDK.");
-        out.println("No relevant backports are detected in OpenJDK.");
-        out.println("This misses the future backporting work.");
-        out.println("[...] marks the interest tags.");
-        out.println("(*) marks the backporting work in progress.");
-        out.println();
-        printWithVersion(onlyOracle);
-        out.println();
-
-        out.println("=== EXCLUSIVE: ONLY IN OPENJDK");
-        out.println();
-        out.println("This is where OpenJDK is ahead of Oracle JDK.");
-        out.println("No relevant backports are detected in Oracle JDK yet.");
-        out.println("This misses the ongoing backporting work.");
-        out.println();
-        printWithVersion(onlyOpen);
-        out.println();
-
-        out.println("=== LATE PARITY: ORACLE JDK FOLLOWS OPENJDK IN LATER RELEASES");
-        out.println();
-        out.println("This is where OpenJDK used to be ahead, and then Oracle JDK caught up in future releases.");
-        out.println();
-        printSimple(lateOpenFirst);
-        out.println();
-
-        out.println("=== LATE PARITY: OPENJDK FOLLOWS ORACLE JDK IN LATER RELEASES");
-        out.println();
-        out.println("This is where Oracle JDK used to be ahead, and then OpenJDK caught up in future releases.");
-        out.println();
-        printSimple(lateOracleFirst);
-        out.println();
-
-        out.println("=== EXACT PARITY: ORACLE JDK FOLLOWS OPENJDK");
-        out.println();
-        out.println("This is where OpenJDK made the first backport in the release, and then Oracle JDK followed.");
-        out.println("No difference in the final release detected.");
-        out.println();
-        printSimple(exactOpenFirst);
-        out.println();
-
-        out.println("=== EXACT PARITY: OPENJDK FOLLOWS ORACLE JDK");
-        out.println();
-        out.println("This is where Oracle JDK made the first backport in the release, and then OpenJDK followed.");
-        out.println("No difference in the final release detected.");
-        out.println();
-        printSimple(exactOracleFirst);
-        out.println();
-
-        out.println("=== EXACT PARITY: UNKNOWN TIMING");
-        out.println();
-        out.println("This is where the difference in time within the release was not identified reliably.");
-        out.println("No difference in the final release detected.");
-        out.println();
-        printSimple(exactUnknown);
-        out.println();
     }
 
-    void printWithVersion(Map<String, Map<Issue, String>> issues) {
-        int size = 0;
-        for (Map.Entry<String, Map<Issue, String>> kv : issues.entrySet()) {
-            size += kv.getValue().size();
-        }
-        out.println(size + " issues in total");
-        out.println();
-
-        for (Map.Entry<String, Map<Issue, String>> kv : issues.entrySet()) {
-            out.println(kv.getKey() + " (" + kv.getValue().size() + " issues):");
-            for (Map.Entry<Issue, String> kv2 : kv.getValue().entrySet()) {
-                out.println(kv2.getValue());
-            }
-            out.println();
-        }
+    public int majorVer() {
+        return majorVer;
     }
 
-    void printSimple(Map<Issue, String> issues) {
-        out.println(issues.size() + " issues:");
-        for (Map.Entry<Issue,String> kv : issues.entrySet()) {
-            out.println(kv.getValue());
-        }
-        out.println();
+    public Map<String, Map<Issue, String>> onlyOpen() {
+        return onlyOpen;
+    }
+
+    public Map<String, Map<Issue, String>> onlyOracle() {
+        return onlyOracle;
+    }
+
+    public SortedMap<Issue, String> exactOpenFirst() {
+        return exactOpenFirst;
+    }
+
+    public SortedMap<Issue, String> exactOracleFirst() {
+        return exactOracleFirst;
+    }
+
+    public SortedMap<Issue, String> exactUnknown() {
+        return exactUnknown;
+    }
+
+    public SortedMap<Issue, String> lateOpenFirst() {
+        return lateOpenFirst;
+    }
+
+    public SortedMap<Issue, String> lateOracleFirst() {
+        return lateOracleFirst;
     }
 }

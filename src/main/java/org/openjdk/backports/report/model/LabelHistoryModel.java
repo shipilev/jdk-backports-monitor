@@ -22,55 +22,38 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package org.openjdk.backports.report;
+package org.openjdk.backports.report.model;
 
 import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.atlassian.jira.rest.client.api.domain.ChangelogGroup;
 import com.atlassian.jira.rest.client.api.domain.ChangelogItem;
 import com.atlassian.jira.rest.client.api.domain.Issue;
 import org.joda.time.DateTime;
+import org.openjdk.backports.jira.UserCache;
 
-import java.util.Date;
+import java.io.PrintStream;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-public class LabelHistoryReport extends AbstractReport {
+public class LabelHistoryModel extends AbstractModel {
 
     private final String label;
+    private final SortedSet<Record> set;
 
-    public LabelHistoryReport(JiraRestClient restClient, String label) {
-        super(restClient);
+    public LabelHistoryModel(JiraRestClient restClient, PrintStream debugOut, String label) {
+        super(restClient, debugOut);
         this.label = label;
-    }
-
-    @Override
-    public void run() {
-        out.println("LABEL HISTORY REPORT: " + label);
-        printMajorDelimiterLine(out);
-        out.println();
-        out.println("This report shows when the given label was added.");
-        out.println();
-        out.println("Report generated: " + new Date());
-        out.println();
 
         List<Issue> found = jiraIssues.getIssues("labels = " + label +
                 " AND type != Backport", true);
-        out.println();
 
-        SortedSet<Record> set = new TreeSet<>();
+        set = new TreeSet<>();
         for (Issue i : found) {
             Record rd = findUpdate(i);
             if (rd != null) {
                 set.add(rd);
-            } else {
-                out.println("Cannot find label data for " + i.getKey());
             }
-        }
-
-        for (Record r : set) {
-            out.printf("%10s, %" + users.maxDisplayName() + "s, %s: %s%n",
-                    r.date.toLocalDate().toString(), r.user, r.issue.getKey(), r.issue.getSummary());
         }
     }
 
@@ -98,10 +81,22 @@ public class LabelHistoryReport extends AbstractReport {
         return null;
     }
 
-    private static class Record implements Comparable<Record> {
-        private final String user;
-        private final DateTime date;
-        private final Issue issue;
+    public String label() {
+        return label;
+    }
+
+    public SortedSet<Record> records() {
+        return set;
+    }
+
+    public UserCache users() {
+        return users;
+    }
+
+    public static class Record implements Comparable<Record> {
+        public final String user;
+        public final DateTime date;
+        public final Issue issue;
 
         private Record(String user, DateTime date, Issue issue) {
             this.user = user;

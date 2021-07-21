@@ -22,75 +22,58 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package org.openjdk.backports.report;
+package org.openjdk.backports.report.model;
 
 import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.atlassian.jira.rest.client.api.domain.Issue;
 import org.openjdk.backports.Actionable;
-import org.openjdk.backports.jira.TrackedIssue;
+import org.openjdk.backports.hg.HgDB;
 
-import java.util.Date;
+import java.io.PrintStream;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class LabelReport extends AbstractIssueReport {
+public class LabelModel extends AbstractModel {
 
     private final String label;
     private final Actionable minLevel;
-    private final boolean doCSV;
+    private final List<IssueModel> models;
 
-    public LabelReport(JiraRestClient restClient, String hgRepos, boolean includeDownstream, String label, Actionable minLevel, boolean doCSV) {
-        super(restClient, hgRepos, includeDownstream);
+    public LabelModel(JiraRestClient cli, HgDB hgDB, PrintStream debugOut, Actionable minLevel, String label) {
+        super(cli, debugOut);
         this.label = label;
         this.minLevel = minLevel;
-        this.doCSV = doCSV;
-    }
-
-    @Override
-    public void run() {
-        out.println("LABEL REPORT: " + label);
-        printMajorDelimiterLine(out);
-        out.println();
-        out.println("This report shows bugs with the given label, along with their backporting status.");
-        out.println();
-        out.println("Report generated: " + new Date());
-        out.println();
-        out.println("Minimal actionable level to display: " + minLevel);
-        out.println();
-        out.println("For actionable issues, search for these strings:");
-        out.println("  \"" + MSG_MISSING + "\"");
-        out.println("  \"" + MSG_APPROVED + "\"");
-        out.println("  \"" + MSG_WARNING + "\"");
-        out.println();
-        out.println("For lingering issues, search for these strings:");
-        out.println("  \"" + MSG_BAKING + "\"");
-        out.println();
 
         List<Issue> found = jiraIssues.getIssues("labels = " + label +
                 " AND (status in (Closed, Resolved))" +
                 " AND (resolution not in (\"Won't Fix\", Duplicate, \"Cannot Reproduce\", \"Not an Issue\", Withdrawn, Other))" +
                 " AND type != Backport",
                 false);
-        out.println();
 
-        List<TrackedIssue> issues = found
-                .parallelStream()
-                .map(this::parseIssue)
-                .filter(ti -> ti.getActions().getActionable().ordinal() >= minLevel.ordinal())
-                .sorted()
+        Comparator<IssueModel> comparator = Comparator
+                .comparing(IssueModel::actions)
+                .thenComparing(IssueModel::components)
+                .thenComparing(IssueModel::priority)
+                .thenComparing(Comparator.comparing(IssueModel::daysAgo).reversed())
+                .thenComparing(IssueModel::issueKey);
+
+        models = found.parallelStream()
+                .map(i -> new IssueModel(cli, hgDB, debugOut, i))
+                .filter(im -> im.actions().getActionable().ordinal() >= minLevel.ordinal())
+                .sorted(comparator)
                 .collect(Collectors.toList());
+   }
 
-        printDelimiterLine(out);
-        for (TrackedIssue i : issues) {
-            if (doCSV) {
-                out.println(i.getShortOutput());
-            } else {
-                out.println(i.getOutput());
-                printDelimiterLine(out);
-            }
-        }
+    public List<IssueModel> issues() {
+        return models;
+    }
 
-        out.println();
-        out.println("" + issues.size() + " issues shown.");
+    public String label() {
+        return label;
+    }
+
+    public Actionable minLevel() {
+        return minLevel;
     }
 }

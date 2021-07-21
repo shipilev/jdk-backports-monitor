@@ -24,23 +24,69 @@
  */
 package org.openjdk.backports.report;
 
-import com.atlassian.jira.rest.client.api.IssueRestClient;
-import com.atlassian.jira.rest.client.api.JiraRestClient;
-import com.atlassian.jira.rest.client.api.SearchRestClient;
 import com.atlassian.jira.rest.client.api.domain.Issue;
-import org.openjdk.backports.StringUtils;
-import org.openjdk.backports.jira.Issues;
-import org.openjdk.backports.jira.UserCache;
 
-import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Set;
 
-public abstract class AbstractReport {
+public class Common {
 
+    // JDK versions we care for in backports
+    protected static final int[] VERSIONS_TO_CARE_FOR = {17, 11, 8};
+
+    // Issue bake time before backport is considered
+    protected static final int ISSUE_BAKE_TIME_DAYS = 10;
+
+    // Backport importances
+    protected static int importanceMerge() {
+        return 5;
+    }
+
+    protected static int importanceDefault(int release) {
+        switch (release) {
+            case 7:
+            case 8:
+            case 11:
+            case 17:
+                return 10;
+            case 13:
+            case 15:
+                return 1;
+            default:
+                return 1;
+        }
+    }
+
+    protected static int importanceCritical(int release) {
+        switch (release) {
+            case 7:
+            case 8:
+            case 11:
+            case 17:
+                return 50;
+            case 13:
+            case 15:
+                return 20;
+            default:
+                return 15;
+        }
+    }
+
+    protected static int importanceOracle(int release) {
+        switch (release) {
+            case 7:
+            case 8:
+            case 11:
+            case 17:
+                return 30;
+            case 13:
+            case 15:
+                return 10;
+            default:
+                return 5;
+        }
+    }
+
+    // Useful issue messages
     protected static final String MSG_NOT_AFFECTED = "Not affected";
     protected static final String MSG_INHERITED = "Inherited";
     protected static final String MSG_BAKING = "WAITING for patch to bake a little";
@@ -54,49 +100,5 @@ public abstract class AbstractReport {
     // Sort issues by synopsis, alphabetically. This would cluster similar issues
     // together, even when they are separated by large difference in IDs.
     protected static final Comparator<Issue> DEFAULT_ISSUE_SORT = Comparator.comparing(i -> i.getSummary().trim().toLowerCase());
-
-    protected final UserCache users;
-    protected final SearchRestClient searchCli;
-    protected final IssueRestClient issueCli;
-    protected final PrintStream out;
-    protected final Issues jiraIssues;
-
-    public AbstractReport(JiraRestClient restClient) {
-        this.out = System.out;
-        this.searchCli = restClient.getSearchClient();
-        this.issueCli = restClient.getIssueClient();
-        this.jiraIssues = new Issues(out, searchCli, issueCli);
-        this.users = new UserCache(restClient.getUserClient());
-    }
-
-    public abstract void run();
-
-    protected void printReleaseNotes(PrintStream ps, Collection<Issue> relNotes) {
-        PrintWriter pw = new PrintWriter(ps);
-        printReleaseNotes(pw, relNotes);
-        pw.flush();
-    }
-
-    protected void printReleaseNotes(PrintWriter pw, Collection<Issue> relNotes) {
-        Set<String> dup = new HashSet<>();
-        for (Issue rn : relNotes) {
-            String summary = StringUtils.leftPad(rn.getKey() + ": " + rn.getSummary().replaceFirst("Release Note: ", ""), 2);
-            String descr = StringUtils.leftPad(StringUtils.rewrap(StringUtils.stripNull(rn.getDescription()), StringUtils.DEFAULT_WIDTH - 6), 6);
-            if (dup.add(descr)) {
-                pw.println(summary);
-                pw.println();
-                pw.println(descr);
-                pw.println();
-            }
-        }
-    }
-
-    protected void printDelimiterLine(PrintStream pw) {
-        pw.println(StringUtils.tabLine('-'));
-    }
-
-    protected void printMajorDelimiterLine(PrintStream pw) {
-        pw.println(StringUtils.tabLine('='));
-    }
 
 }

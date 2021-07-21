@@ -42,12 +42,11 @@ public class Options {
     private String affiliationReport;
     private String issueReport;
     private Long filterReport;
+    private String logPrefix;
     private String hgRepos;
     private Actionable minLevel;
-    private boolean includeDownstream;
     private boolean directOnly;
     private Integer parityReport;
-    private boolean doCSV;
     private boolean includeCarryovers;
 
     public Options(String[] args) {
@@ -84,15 +83,14 @@ public class Options {
         OptionSpec<String> optReleaseNotesReport = parser.accepts("release-notes", "Generates release notes for a given release")
                 .withRequiredArg().ofType(String.class).describedAs("release");
 
+        OptionSpec<String> optLogPrefix = parser.accepts("output-prefix", "Use this output file prefix")
+                .withRequiredArg().ofType(String.class).describedAs("output prefix").defaultsTo("output");
+
         OptionSpec<String> optUpdateHgDB = parser.accepts("hg-repos", "Use these repositories for Mercurial metadata")
                 .withRequiredArg().ofType(String.class).describedAs("paths-to-local-hg");
 
         OptionSpec<Actionable> optMinLevel = parser.accepts("min-level", "Minimal actionable level to print")
                 .withRequiredArg().ofType(Actionable.class).describedAs("level").defaultsTo(Actionable.NONE);
-
-        OptionSpec<Void> optIncludeDownstream = parser.accepts("include-downstream", "Include downstream repos in reports");
-
-        OptionSpec<Void> optCSV = parser.accepts("csv", "Machine-readable CSV output (some reports only)");
 
         OptionSpec<Void> optAffiliationReport = parser.accepts("affiliation", "Create affiliation report");
 
@@ -127,11 +125,12 @@ public class Options {
         parityReport = optParityReport.value(set);
         releaseNotesReport = optReleaseNotesReport.value(set);
         affiliationReport = set.has(optAffiliationReport) ? "yes" : null;
+
+        logPrefix = optLogPrefix.value(set);
+
         hgRepos = optUpdateHgDB.value(set);
         minLevel = optMinLevel.value(set);
-        includeDownstream = set.has(optIncludeDownstream);
         directOnly = set.has(optDirectOnly);
-        doCSV = set.has(optCSV);
         includeCarryovers = set.has(optIncludeCarryovers);
 
         return true;
@@ -181,12 +180,11 @@ public class Options {
 
     public Actionable getMinLevel() { return minLevel; }
 
-    public boolean includeDownstream() { return includeDownstream; }
-
     public boolean directOnly() { return directOnly; }
-
-    public boolean doCSV() { return doCSV; }
 
     public boolean includeCarryovers() { return includeCarryovers; }
 
+    public String getLogPrefix() {
+        return logPrefix;
+    }
 }

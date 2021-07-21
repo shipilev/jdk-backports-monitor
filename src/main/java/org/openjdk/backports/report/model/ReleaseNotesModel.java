@@ -22,37 +22,32 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package org.openjdk.backports.report;
+package org.openjdk.backports.report.model;
 
 import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.atlassian.jira.rest.client.api.domain.Issue;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.TreeMultimap;
-import org.openjdk.backports.Main;
-import org.openjdk.backports.StringUtils;
 import org.openjdk.backports.jira.Accessors;
 import org.openjdk.backports.jira.Versions;
 
+import java.io.PrintStream;
 import java.util.*;
 
-public class ReleaseNotesReport extends AbstractReport {
+public class ReleaseNotesModel extends AbstractModel {
 
     private final String release;
     private final boolean includeCarryovers;
+    private final List<Issue> jepIssues;
+    private final Map<String, Multimap<Issue, Issue>> relNotes;
+    private final Multimap<String, Issue> byComponent;
+    private final SortedSet<Issue> carriedOver;
 
-    public ReleaseNotesReport(JiraRestClient restClient, String release, boolean includeCarryovers) {
-        super(restClient);
+    public ReleaseNotesModel(JiraRestClient restClient, PrintStream debugOut, boolean includeCarryovers, String release) {
+        super(restClient, debugOut);
         this.release = release;
         this.includeCarryovers = includeCarryovers;
-    }
-
-    @Override
-    public void run() {
-        out.println("RELEASE NOTES FOR: " + release);
-        printMajorDelimiterLine(out);
-        out.println();
-        out.println("Notes generated: " + new Date());
-        out.println();
 
         Multimap<Issue, Issue> issues = jiraIssues.getIssuesWithBackportsFull("project = JDK" +
                 " AND (status in (Closed, Resolved))" +
@@ -63,15 +58,13 @@ public class ReleaseNotesReport extends AbstractReport {
                 " AND (issuetype != CSR)" +
                 " AND fixVersion = " + release);
 
-        out.println();
-
-        List<Issue> jepIssues = jiraIssues.getParentIssues("project = JDK AND issuetype = JEP" +
+        jepIssues = jiraIssues.getParentIssues("project = JDK AND issuetype = JEP" +
                 " AND fixVersion = " + release + "" +
                 " ORDER BY summary ASC");
 
-        Multimap<String, Issue> byComponent = TreeMultimap.create(String::compareTo, DEFAULT_ISSUE_SORT);
+        byComponent = TreeMultimap.create(String::compareTo, DEFAULT_ISSUE_SORT);
 
-        SortedSet<Issue> carriedOver = new TreeSet<>(DEFAULT_ISSUE_SORT);
+        carriedOver = new TreeSet<>(DEFAULT_ISSUE_SORT);
 
         int majorRelease = Versions.parseMajor(release);
         int minorRelease = Versions.parseMinor(release);
@@ -123,91 +116,43 @@ public class ReleaseNotesReport extends AbstractReport {
             }
         }
 
-        out.println();
-        out.println("Filtered " + carriedOver.size() + " issues carried over, " + byComponent.size() + " pushes left.");
-        out.println();
+        debugOut.println("Filtered " + carriedOver.size() + " issues carried over, " + byComponent.size() + " pushes left.");
 
-        out.println("Hint: Prefix bug IDs with " + Main.JIRA_URL + "browse/ to reach the relevant JIRA entry.");
-        out.println();
-
-        out.println("JAVA ENHANCEMENT PROPOSALS (JEP):");
-        out.println();
-
-        if (jepIssues.isEmpty()) {
-            out.println("  None.");
-        }
-
-        for (Issue i : jepIssues) {
-            out.println("  " + i.getSummary());
-            out.println();
-
-            String[] par = StringUtils.paragraphs(i.getDescription());
-            if (par.length > 2) {
-                // Second one is summary
-                out.println(StringUtils.leftPad(StringUtils.rewrap(par[1], 100, 2), 6));
-            } else {
-                out.println(StringUtils.leftPad("No description.", 6));
-            }
-            out.println();
-        }
-        out.println();
-
-        out.println("RELEASE NOTES, BY COMPONENT:");
-        out.println();
-
-        boolean haveRelNotes = false;
-        for (String component : byComponent.keySet()) {
-            boolean printed = false;
-            for (Issue i : byComponent.get(component)) {
-                Collection<Issue> relNotes = jiraIssues.getReleaseNotes(i);
-                if (relNotes.isEmpty()) continue;
-                haveRelNotes = true;
-
-                if (!printed) {
-                    out.println(component + ":");
-                    out.println();
-                    printed = true;
-                }
-
-                printReleaseNotes(out, relNotes);
-            }
-        }
-        if (!haveRelNotes) {
-            out.println("  None.");
-        }
-        out.println();
-
-        out.println("ALL FIXED ISSUES, BY COMPONENT AND PRIORITY:");
-        out.println();
+        relNotes = new HashMap<>();
 
         for (String component : byComponent.keySet()) {
-            out.println(component + ":");
-            Multimap<String, Issue> byPriority = TreeMultimap.create(String::compareTo, DEFAULT_ISSUE_SORT);
+            Multimap<Issue, Issue> m = HashMultimap.create();
+            relNotes.put(component, m);
             for (Issue i : byComponent.get(component)) {
-                byPriority.put(i.getPriority().getName(), i);
-            }
-            for (String prio : byPriority.keySet()) {
-                for (Issue i : byPriority.get(prio)) {
-                    out.printf("  (%s) %s: %s%n", prio, i.getKey(), i.getSummary());
+                Collection<Issue> rns = jiraIssues.getReleaseNotes(i);
+                if (!rns.isEmpty()) {
+                    m.putAll(i, rns);
                 }
             }
-            out.println();
         }
-        out.println();
+    }
 
-        if (includeCarryovers) {
-            out.println("CARRIED OVER FROM PREVIOUS RELEASES:");
-            out.println("  These have fixes for the given release, but they are also fixed in the previous");
-            out.println("  minor version of the same major release.");
-            out.println();
-            if (carriedOver.isEmpty()) {
-                out.println("  None.");
-            }
+    public boolean includeCarryovers() {
+        return includeCarryovers;
+    }
 
-            for (Issue i : carriedOver) {
-                out.printf("  (%s) %s: %s%n", i.getPriority().getName(), i.getKey(), i.getSummary());
-            }
-            out.println();
-        }
+    public String release() {
+        return release;
+    }
+
+    public List<Issue> jeps() {
+        return jepIssues;
+    }
+
+    public Map<String, Multimap<Issue, Issue>> relNotes() {
+        return relNotes;
+    }
+
+    public Multimap<String, Issue> byComponent() {
+        return byComponent;
+    }
+
+    public SortedSet<Issue> carriedOver() {
+        return carriedOver;
     }
 }
