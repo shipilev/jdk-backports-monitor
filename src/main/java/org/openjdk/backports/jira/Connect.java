@@ -66,6 +66,10 @@ public class Connect {
         opts.setSocketTimeout(2, TimeUnit.MINUTES);
         opts.setLeaseTimeout(TimeUnit.MINUTES.toMillis(30));
 
+        // And configure the cache as well. 5K x 100K = 500M cache "should be enough".
+        opts.setMaxCacheEntries(5_000);
+        opts.setMaxCacheObjectSize(100_000);
+
         HttpClient client = factory.create(opts);
 
         DisposableHttpClient dispClient = new AtlassianHttpClientDecorator(
