@@ -159,7 +159,7 @@ public class ReleaseNotesReport extends AbstractReport {
         for (String component : byComponent.keySet()) {
             boolean printed = false;
             for (Issue i : byComponent.get(component)) {
-                Collection<Issue> relNotes = Accessors.getReleaseNotes(issueCli, i);
+                Collection<Issue> relNotes = jiraIssues.getReleaseNotes(i);
                 if (relNotes.isEmpty()) continue;
                 haveRelNotes = true;
 

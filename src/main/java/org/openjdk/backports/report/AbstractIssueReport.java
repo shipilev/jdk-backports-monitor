@@ -302,7 +302,7 @@ public abstract class AbstractIssueReport extends AbstractReport {
             }
         }
 
-        Collection<Issue> relNotes = Accessors.getReleaseNotes(issueCli, issue);
+        Collection<Issue> relNotes = jiraIssues.getReleaseNotes(issue);
         if (!relNotes.isEmpty()) {
             pw.println();
             pw.println("  Release Notes:");

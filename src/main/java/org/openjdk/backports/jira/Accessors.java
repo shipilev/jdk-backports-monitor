@@ -202,37 +202,4 @@ public class Accessors {
                 && isDelivered(issue);
     }
 
-    public static Collection<Issue> getReleaseNotes(IssueRestClient cli, Issue start) {
-        List<RetryableIssuePromise> relnotes = new ArrayList<>();
-        Set<Issue> releaseNotes = new HashSet<>();
-
-        // Direct hit?
-        if (isReleaseNote(start)) {
-            releaseNotes.add(start);
-        }
-
-        // Search in sub-tasks
-        for (Subtask link : start.getSubtasks()) {
-            String linkKey = link.getIssueKey();
-            relnotes.add(new RetryableIssuePromise(null, cli, linkKey));
-        }
-
-        // Search in related issues
-        for (IssueLink link : start.getIssueLinks()) {
-            if (link.getIssueLinkType().getName().equals("Relates")) {
-                String linkKey = link.getTargetIssueKey();
-                relnotes.add(new RetryableIssuePromise(null, cli, linkKey));
-            }
-        }
-
-        for (RetryableIssuePromise p : relnotes) {
-            Issue i = p.claim();
-            if (isReleaseNote(i)) {
-                releaseNotes.add(i);
-            }
-        }
-
-        return releaseNotes;
-    }
-
 }

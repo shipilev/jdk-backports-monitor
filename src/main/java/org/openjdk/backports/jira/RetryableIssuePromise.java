@@ -38,10 +38,6 @@ public class RetryableIssuePromise implements IssuePromise {
     private final boolean full;
     private Promise<Issue> cur;
 
-    public RetryableIssuePromise(Issues issues, IssueRestClient cli, String key) {
-        this(issues, cli, key, false);
-    }
-
     public RetryableIssuePromise(Issues issues, IssueRestClient cli, String key, boolean full) {
         this.issues = issues;
         this.cli = cli;

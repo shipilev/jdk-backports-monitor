@@ -26,20 +26,16 @@ package org.openjdk.backports.jira;
 
 import com.atlassian.jira.rest.client.api.IssueRestClient;
 import com.atlassian.jira.rest.client.api.SearchRestClient;
-import com.atlassian.jira.rest.client.api.domain.Issue;
-import com.atlassian.jira.rest.client.api.domain.IssueLink;
-import com.atlassian.jira.rest.client.api.domain.IssueLinkType;
-import com.atlassian.jira.rest.client.api.domain.SearchResult;
+import com.atlassian.jira.rest.client.api.domain.*;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.lang3.text.WordUtils;
 import org.openjdk.backports.StringUtils;
 
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class Issues {
 
@@ -48,7 +44,7 @@ public class Issues {
     private final PrintStream out;
     private final SearchRestClient searchCli;
     private final IssueRestClient issueCli;
-    private final Map<String, IssuePromise> issueCache;
+    private final ConcurrentMap<String, IssuePromise> issueCache;
 
     public Issues(PrintStream out, SearchRestClient searchCli, IssueRestClient issueCli) {
         this.out = out;
@@ -62,11 +58,6 @@ public class Issues {
     }
 
     public IssuePromise getIssue(String key, boolean full) {
-        IssuePromise i = issueCache.get(key);
-        if (i != null) {
-            return i;
-        }
-
         return issueCache.computeIfAbsent(key,
                 k -> new RetryableIssuePromise(this, issueCli, k, full));
     }
@@ -214,7 +205,6 @@ public class Issues {
                     }
                 }
             }
-
         }
 
         int c1 = 0;
@@ -247,7 +237,69 @@ public class Issues {
     }
 
     public Multimap<Issue, Issue> getIssuesWithBackportsFull(String query) {
-        return getIssuesWithBackports(query, false);
+        Multimap<Issue, Issue> res = getIssuesWithBackports(query, false);
+
+        // Resolve the related issues and subtasks
+        Multimap<Issue, IssuePromise> promises = HashMultimap.create();
+        for (Issue parent : res.keySet()) {
+            if (parent.getIssueLinks() != null) {
+                for (IssueLink link : parent.getIssueLinks()) {
+                    promises.put(parent, getIssue(link.getTargetIssueKey()));
+                }
+            }
+            if (parent.getSubtasks() != null) {
+                for (Subtask subtask : parent.getSubtasks()) {
+                    promises.put(parent, getIssue(subtask.getIssueKey()));
+                }
+            }
+        }
+
+        int c1 = 0;
+        out.print("Resolving related/subtasks (" + res.keySet().size() + " total): ");
+        Multimap<Issue, Issue> result = HashMultimap.create();
+        for (Issue parent : res.keySet()) {
+            for (IssuePromise ip : promises.get(parent)) {
+                result.put(parent, ip.claim());
+            }
+            if ((++c1 % PAGE_SIZE) == 0) {
+                out.print(".");
+                out.flush();
+            }
+        }
+        out.println(" done");
+
+        return res;
+    }
+
+    public Collection<Issue> getReleaseNotes(Issue start) {
+        List<IssuePromise> relnotes = new ArrayList<>();
+        Set<Issue> releaseNotes = new HashSet<>();
+
+        // Direct hit?
+        if (Accessors.isReleaseNote(start)) {
+            releaseNotes.add(start);
+        }
+
+        // Search in sub-tasks
+        for (Subtask link : start.getSubtasks()) {
+            relnotes.add(getIssue(link.getIssueKey()));
+        }
+
+        // Search in related issues
+        for (IssueLink link : start.getIssueLinks()) {
+            if (link.getIssueLinkType().getName().equals("Relates")) {
+                relnotes.add(getIssue(link.getTargetIssueKey()));
+            }
+        }
+
+        for (IssuePromise p : relnotes) {
+            Issue i = p.claim();
+            if (Accessors.isReleaseNote(i)) {
+                releaseNotes.add(i);
+            }
+        }
+
+        return releaseNotes;
     }
 
     public List<Issue> getParentIssues(List<Issue> basics) {
