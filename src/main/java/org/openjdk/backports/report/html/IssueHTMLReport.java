@@ -28,6 +28,7 @@ import com.atlassian.jira.rest.client.api.domain.Issue;
 import org.openjdk.backports.Main;
 import org.openjdk.backports.StringUtils;
 import org.openjdk.backports.jira.Accessors;
+import org.openjdk.backports.report.BackportStatus;
 import org.openjdk.backports.report.model.IssueModel;
 
 import java.io.PrintStream;
@@ -55,21 +56,47 @@ public class IssueHTMLReport extends AbstractHTMLReport {
         generateSimple(out);
     }
 
-    public void generateSimple(PrintStream out) {
-        out.println();
-        out.println(issue.getKey() + ": " + issue.getSummary());
-        out.println();
-        out.println("  Original Bug:");
-        out.println("    URL: " + Main.JIRA_URL + "browse/" + issue.getKey());
-        out.println("    Reporter: " + (issue.getReporter() != null ? issue.getReporter().getDisplayName() : "None"));
-        out.println("    Assignee: " + (issue.getAssignee() != null ? issue.getAssignee().getDisplayName() : "None"));
-        out.println("    Priority: " + issue.getPriority().getName());
-        out.println("    Components: " + model.components());
-        out.println();
+    public void generateTableLine(PrintStream out) {
+        out.println("<tr>");
+        out.println("<td nowrap><a href=\"" + Main.JIRA_URL + "browse/" + issue.getKey() + "\">" + issue.getKey() + "</a></td>");
+        out.println("<td>" + issue.getSummary() + "</td>");
+        out.println("<td>" + issue.getPriority().getName() + "</td>");
+        out.println("<td nowrap>" + model.components() + "</td>");
+        out.println("<td><a href=\"\">" + model.fixVersion() + "</a></td>");
 
-        out.println("  Original Fix:");
-        out.printf("    %2d: %s%n", model.fixVersion(), shortIssueLine(issue));
-        out.println();
+        for (int release : IssueModel.VERSIONS_TO_CARE_FOR) {
+            List<Issue> issues = model.existingPorts().get(release);
+            out.println("<td>");
+            if (issues != null) {
+                for (Issue i : issues) {
+                    out.println(shortIssueHTMLLine(i, release == model.fixVersion()));
+                }
+            } else {
+                BackportStatus status = model.pendingPorts().get(release);
+                out.println(shortStatusHTMLLine(status));
+            }
+            out.println("</td>");
+        }
+
+        SortedMap<Integer, BackportStatus> shBackports = model.shenandoahPorts();
+        if (!shBackports.isEmpty()) {
+            out.println("<td>");
+            for (Map.Entry<Integer, BackportStatus> e : shBackports.entrySet()) {
+                out.println(shortStatusHTMLLine(e.getValue()));
+            }
+            out.println("</td>");
+        }
+        out.println("</tr>");
+    }
+
+    public void generateSimple(PrintStream out) {
+        out.println("<td><a href=\"" + Main.JIRA_URL + "browse/" + issue.getKey() + "\">" + issue.getKey() + "</a></td>");
+        out.println("<td>" + issue.getSummary() + "</td>");
+        out.println("<td>" + (issue.getReporter() != null ? issue.getReporter().getDisplayName() : "None") + "</td>");
+        out.println("<td>" + (issue.getAssignee() != null ? issue.getAssignee().getDisplayName() : "None") + "</td>");
+        out.println("<td>" + issue.getPriority().getName() + "</td>");
+        out.println("<td>" + model.components() + "</td>");
+        out.println("<td><a href=\"\">" + model.fixVersion() + "</a></td>");
 
         out.println("  Backports and Forwardports:");
 
@@ -81,17 +108,19 @@ public class IssueHTMLReport extends AbstractHTMLReport {
                     out.printf("    %2d: %s%n", release, shortIssueLine(i));
                 }
             } else {
-                String status = model.pendingPorts().get(release);
-                out.printf("    %2d: %s%n", release, status);
+                BackportStatus status = model.pendingPorts().get(release);
+                String details = model.pendingPortsDetails().get(release);
+                out.printf("    %2d: %s%s%n", release, (details.isEmpty() ? "" : ": " + details), status);
             }
         }
         out.println();
 
-        SortedMap<Integer, String> shBackports = model.shenandoahPorts();
+        SortedMap<Integer, BackportStatus> shBackports = model.shenandoahPorts();
         if (!shBackports.isEmpty()) {
             out.println("  Shenandoah Backports:");
-            for (Map.Entry<Integer, String> e : shBackports.entrySet()) {
-                out.printf("    %2d: %s", e.getKey(), e.getValue());
+            for (Map.Entry<Integer, BackportStatus> e : shBackports.entrySet()) {
+                String details = model.pendingPortsDetails().get(e.getKey());
+                out.printf("    %2d: %s%s", e.getKey(), e.getValue(), (details.isEmpty() ? "" : ": " + details));
             }
             out.println();
         }
@@ -112,6 +141,36 @@ public class IssueHTMLReport extends AbstractHTMLReport {
                 issue.getKey(),
                 Accessors.getPushURL(issue),
                 Accessors.getPushDate(issue));
+    }
+
+    private static String shortIssueHTMLLine(Issue issue, boolean original) {
+        return String.format("<a href=\"%s\">" + (original ? "\u2741" : "\u2714") + "</a>",
+                Main.JIRA_URL + "browse/" + issue.getKey());
+    }
+
+    private static String shortStatusHTMLLine(BackportStatus status) {
+        switch (status) {
+            case BAKING:
+                return "\u22EF";
+            case INHERITED:
+                return "\u2727";
+            case MISSING:
+                return "<font color=red><b>!</b></font>";
+            case MISSING_ORACLE:
+                return "<font color=red><b>!!</b></font>";
+            case NOT_AFFECTED:
+                return "<font color=gray>\u2716</font>";
+            case REJECTED:
+                return "<font color=red>\u2716</font>";
+            case REQUESTED:
+                return "\u270B";
+            case APPROVED:
+                return "\u270C";
+            case WARNING:
+                return "\u2757";
+            default:
+                throw new IllegalStateException("Unhandled status");
+        }
     }
 
     protected static void printReleaseNotes(PrintStream out, Collection<Issue> relNotes) {

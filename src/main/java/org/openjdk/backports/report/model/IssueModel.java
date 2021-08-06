@@ -35,6 +35,7 @@ import org.openjdk.backports.hg.HgRecord;
 import org.openjdk.backports.jira.Accessors;
 import org.openjdk.backports.jira.IssuePromise;
 import org.openjdk.backports.jira.Versions;
+import org.openjdk.backports.report.BackportStatus;
 
 import java.io.PrintStream;
 import java.util.*;
@@ -44,8 +45,10 @@ public class IssueModel extends AbstractModel {
     private final HgDB hgDB;
 
     private final SortedMap<Integer, List<Issue>> existingPorts = new TreeMap<>();
-    private final SortedMap<Integer, String> pendingPorts =  new TreeMap<>();
-    private final SortedMap<Integer, String> shenandoahPorts = new TreeMap<>();
+    private final SortedMap<Integer, BackportStatus> pendingPorts =  new TreeMap<>();
+    private final SortedMap<Integer, String> pendingPortsDetails =  new TreeMap<>();
+    private final SortedMap<Integer, BackportStatus> shenandoahPorts = new TreeMap<>();
+    private final SortedMap<Integer, String> shenandoahPortsDetails = new TreeMap<>();
 
     private Collection<Issue> relNotes;
     private Issue issue;
@@ -134,73 +137,81 @@ public class IssueModel extends AbstractModel {
         for (int release : VERSIONS_TO_CARE_FOR) {
             if (existingPorts.containsKey(release)) continue;
 
-            String msg;
+            BackportStatus status;
+            String msg = "";
             if (issue.getLabels().contains("jdk" + release + "u-critical-yes")) {
                 actions.update(Actionable.PUSHABLE, importanceCritical(release));
-                msg = MSG_APPROVED + ": jdk" + release + "u-critical-yes is set";
+                msg = "jdk" + release + "u-critical-yes is set";
+                status = BackportStatus.APPROVED;
             } else if (issue.getLabels().contains("jdk" + release + "u-fix-yes")) {
                 actions.update(Actionable.PUSHABLE, importanceDefault(release));
-                msg = MSG_APPROVED + ": jdk" + release + "u-fix-yes is set";
+                msg = "jdk" + release + "u-fix-yes is set";
+                status = BackportStatus.APPROVED;
             } else if (issue.getLabels().contains("jdk" + release + "u-fix-no")) {
-                msg = MSG_REJECTED + ": jdk" + release + "u-fix-no is set";
+                msg = "jdk" + release + "u-fix-no is set";
+                status = BackportStatus.REJECTED;
             } else if (issue.getLabels().contains("jdk" + release + "u-critical-request")) {
                 actions.update(Actionable.REQUESTED);
-                msg = MSG_REQUESTED + ": jdk" + release + "u-critical-request is set";
+                msg = "jdk" + release + "u-critical-request is set";
+                status = BackportStatus.REJECTED;
             } else if (issue.getLabels().contains("jdk" + release + "u-fix-request")) {
                 actions.update(Actionable.REQUESTED);
-                msg = MSG_REQUESTED + ": jdk" + release + "u-fix-request is set";
+                msg = "jdk" + release + "u-fix-request is set";
+                status = BackportStatus.REQUESTED;
             } else if (release > highRel) {
-                msg = MSG_INHERITED;
+                status = BackportStatus.INHERITED;
             } else if (!affectedReleases.contains(release)) {
-                msg = MSG_NOT_AFFECTED;
+                status = BackportStatus.NOT_AFFECTED;
             } else if (daysAgo >= 0 && daysAgo < ISSUE_BAKE_TIME_DAYS) {
                 actions.update(Actionable.WAITING);
-                msg = MSG_BAKING + ": " + (ISSUE_BAKE_TIME_DAYS - daysAgo) + " days more";
+                msg = (ISSUE_BAKE_TIME_DAYS - daysAgo) + " days more";
+                status = BackportStatus.BAKING;
             } else if (oracleBackports.contains(release)) {
                 actions.update(Actionable.MISSING, importanceOracle(release));
-                msg = MSG_MISSING_ORACLE;
+                status = BackportStatus.MISSING_ORACLE;
             } else {
                 actions.update(Actionable.MISSING, importanceDefault(release));
-                msg = MSG_MISSING;
+                status = BackportStatus.MISSING;
             }
-            pendingPorts.put(release, msg);
+            pendingPorts.put(release, status);
+            pendingPortsDetails.put(release, msg);
         }
 
         if (issue.getLabels().contains("gc-shenandoah")) {
-            String msg = printHgStatus(affectedShenandoah.contains(8), actions, issue, daysAgo, "shenandoah/jdk8");
-            shenandoahPorts.put(8, msg);
+            String msg = "";
+            BackportStatus status;
+            if (!affectedShenandoah.contains(8)) {
+                status = BackportStatus.NOT_AFFECTED;
+            } else if (!hgDB.hasRepo("shenandoah/jdk8")) {
+                actions.update(Actionable.CRITICAL);
+                msg = "No Mercurial data available to judge";
+                status = BackportStatus.WARNING;
+            } else {
+                String nonBackport = tryPrintHg("shenandoah/jdk8", issue.getKey().replaceFirst("JDK-", ""));
+                if (nonBackport != null) {
+                    msg = nonBackport;
+                    status = BackportStatus.FIXED;
+                } else {
+                    String backports = tryPrintHg("shenandoah/jdk8", issue.getKey().replaceFirst("JDK-", "[backport] "));
+                    if (backports != null) {
+                        msg = backports;
+                        status = BackportStatus.FIXED;
+                    } else if (daysAgo >= 0 && daysAgo < ISSUE_BAKE_TIME_DAYS) {
+                        actions.update(Actionable.WAITING);
+                        msg = (ISSUE_BAKE_TIME_DAYS - daysAgo) + " days more";
+                        status = BackportStatus.BAKING;
+                    } else {
+                        actions.update(Actionable.MISSING, importanceMerge());
+                        status = BackportStatus.MISSING;
+                    }
+                }
+            }
+
+            shenandoahPorts.put(8, status);
+            shenandoahPortsDetails.put(8, msg);
         }
 
         relNotes = jiraIssues.getReleaseNotes(issue);
-    }
-
-    private String printHgStatus(boolean affected, Actions actions, Issue issue, long daysAgo, String repo) {
-        if (!affected) {
-            return MSG_NOT_AFFECTED;
-        }
-
-        if (!hgDB.hasRepo(repo)) {
-            actions.update(Actionable.CRITICAL);
-            return MSG_WARNING + ": No Mercurial data available to judge";
-        }
-
-        String nonBackport = tryPrintHg(repo, issue.getKey().replaceFirst("JDK-", ""));
-        if (nonBackport != null) {
-            return nonBackport;
-        }
-
-        String backports = tryPrintHg(repo, issue.getKey().replaceFirst("JDK-", "[backport] "));
-        if (backports != null) {
-            return backports;
-        }
-
-        if (daysAgo >= 0 && daysAgo < ISSUE_BAKE_TIME_DAYS) {
-            actions.update(Actionable.WAITING);
-            return MSG_BAKING + ": " + (ISSUE_BAKE_TIME_DAYS - daysAgo) + " days more";
-        }
-
-        actions.update(Actionable.MISSING, importanceMerge());
-        return MSG_MISSING;
     }
 
     private String tryPrintHg(String repo, String synopsis) {
@@ -302,11 +313,19 @@ public class IssueModel extends AbstractModel {
         return existingPorts;
     }
 
-    public SortedMap<Integer, String> pendingPorts() {
+    public SortedMap<Integer, BackportStatus> pendingPorts() {
         return pendingPorts;
     }
 
-    public SortedMap<Integer, String> shenandoahPorts() {
+    public SortedMap<Integer, String> pendingPortsDetails() {
+        return pendingPortsDetails;
+    }
+
+    public SortedMap<Integer, BackportStatus> shenandoahPorts() {
         return shenandoahPorts;
+    }
+
+    public SortedMap<Integer, String> shenandoahPortsDetails() {
+        return shenandoahPortsDetails;
     }
 }

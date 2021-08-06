@@ -28,6 +28,7 @@ import com.atlassian.jira.rest.client.api.domain.Issue;
 import org.openjdk.backports.Main;
 import org.openjdk.backports.StringUtils;
 import org.openjdk.backports.jira.Accessors;
+import org.openjdk.backports.report.BackportStatus;
 import org.openjdk.backports.report.model.IssueModel;
 
 import java.io.PrintStream;
@@ -83,17 +84,18 @@ public class IssueTextReport extends AbstractTextReport {
                     out.printf("    %2d: %s%n", release, shortIssueLine(i));
                 }
             } else {
-                String status = model.pendingPorts().get(release);
-                out.printf("    %2d: %s%n", release, status);
+                BackportStatus status = model.pendingPorts().get(release);
+                out.printf("    %2d: %s%n", release, statusToText(status));
             }
         }
         out.println();
 
-        SortedMap<Integer, String> shBackports = model.shenandoahPorts();
+        SortedMap<Integer, BackportStatus> shBackports = model.shenandoahPorts();
         if (!shBackports.isEmpty()) {
             out.println("  Shenandoah Backports:");
-            for (Map.Entry<Integer, String> e : shBackports.entrySet()) {
-                out.printf("    %2d: %s", e.getKey(), e.getValue());
+            for (Map.Entry<Integer, BackportStatus> e : shBackports.entrySet()) {
+                String details = model.shenandoahPortsDetails().get(e.getKey());
+                out.printf("    %2d: %s%s", e.getKey(), e.getValue(), (details.isEmpty() ? "" : ": " + details));
             }
             out.println();
         }

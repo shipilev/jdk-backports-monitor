@@ -43,7 +43,13 @@ abstract class AbstractHTMLReport extends Common {
         String fileName = logPrefix + ".html";
         PrintStream out = new PrintStream(fileName);
         debugLog.println("Generating HTML log to " + fileName);
+        out.println("<html>");
+        out.println("<head>");
+        out.println("</head>");
+        out.println("<body>");
         doGenerate(out);
+        out.println("</body>");
+        out.println("</html>");
         out.close();
     }
 

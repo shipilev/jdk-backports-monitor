@@ -22,38 +22,20 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package org.openjdk.backports.report.html;
+package org.openjdk.backports.report;
 
-import org.openjdk.backports.report.model.IssueModel;
-import org.openjdk.backports.report.model.PendingPushModel;
+public enum BackportStatus {
 
-import java.io.PrintStream;
-import java.util.Date;
-
-public class PendingPushHTMLReport extends AbstractHTMLReport {
-
-    private final PendingPushModel model;
-
-    public PendingPushHTMLReport(PendingPushModel model, PrintStream debugLog, String logPrefix) {
-        super(debugLog, logPrefix);
-        this.model = model;
-    }
-
-    @Override
-    protected void doGenerate(PrintStream out) {
-        out.println("<h1>PENDING PUSH REPORT: " + model.release() + "</h2>");
-        out.println();
-        out.println("<p>This report shows backports that were approved, but not yet pushed.");
-        out.println("Some of them are true orphans with original backport requesters never got sponsored.</p>");
-        out.println();
-        out.println("<p>Report generated: " + new Date() + "</p>");
-        out.println();
-
-        out.println("<table>");
-        for (IssueModel m : model.models()) {
-            new IssueHTMLReport(m, debugLog, logPrefix).generateTableLine(out);
-        }
-        out.println("</table>");
-    }
+    NOT_AFFECTED,
+    INHERITED,
+    FIXED,
+    BAKING,
+    MISSING,
+    MISSING_ORACLE,
+    APPROVED,
+    REJECTED,
+    REQUESTED,
+    WARNING,
+    ;
 
 }

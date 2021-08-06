@@ -24,6 +24,7 @@
  */
 package org.openjdk.backports.report.text;
 
+import org.openjdk.backports.report.BackportStatus;
 import org.openjdk.backports.report.model.IssueModel;
 import org.openjdk.backports.report.model.LabelModel;
 
@@ -51,12 +52,12 @@ public class LabelTextReport extends AbstractTextReport {
         out.println("Minimal actionable level to display: " + model.minLevel());
         out.println();
         out.println("For actionable issues, search for these strings:");
-        out.println("  \"" + MSG_MISSING + "\"");
-        out.println("  \"" + MSG_APPROVED + "\"");
-        out.println("  \"" + MSG_WARNING + "\"");
+        out.println("  \"" + statusToText(BackportStatus.MISSING) + "\"");
+        out.println("  \"" + statusToText(BackportStatus.APPROVED) + "\"");
+        out.println("  \"" + statusToText(BackportStatus.WARNING) + "\"");
         out.println();
         out.println("For lingering issues, search for these strings:");
-        out.println("  \"" + MSG_BAKING + "\"");
+        out.println("  \"" + statusToText(BackportStatus.BAKING) + "\"");
         out.println();
 
         printMinorDelimiterLine(out);

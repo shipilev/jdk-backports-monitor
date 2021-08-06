@@ -45,22 +45,26 @@ public class LabelHTMLReport extends AbstractHTMLReport {
         out.println();
         out.println("<p>This report shows bugs with the given label, along with their backporting status.</p>");
         out.println();
-        out.println("Report generated: " + new Date());
+        out.println("<p>Report generated: " + new Date() + "</p>");
         out.println();
         out.println("<p>Minimal actionable level to display: " + model.minLevel() + "</p>");
         out.println();
-        out.println("<p>For actionable issues, search for these strings:</p>");
-        out.println("  \"" + MSG_MISSING + "\"");
-        out.println("  \"" + MSG_APPROVED + "\"");
-        out.println("  \"" + MSG_WARNING + "\"");
-        out.println();
-        out.println("<p>For lingering issues, search for these strings:</p>");
-        out.println("  \"" + MSG_BAKING + "\"");
-        out.println();
 
-        for (IssueModel im : model.issues()) {
-            new IssueHTMLReport(im, debugLog, logPrefix).generateSimple(out);
+        out.println("<table>");
+        out.println("<tr>");
+        out.println("<th>Bug</th>");
+        out.println("<th>Synopsis</th>");
+        out.println("<th>Priority</th>");
+        out.println("<th>Component</th>");
+        out.println("<th>Original Fix</th>");
+        for (int release : IssueModel.VERSIONS_TO_CARE_FOR) {
+            out.println("<th>JDK " + release + "</th>");
         }
+        out.println("</tr>");
+        for (IssueModel im : model.issues()) {
+            new IssueHTMLReport(im, debugLog, logPrefix).generateTableLine(out);
+        }
+        out.println("</table>");
 
         out.println("<p>" + model.issues().size() + " issues shown.</p>");
     }

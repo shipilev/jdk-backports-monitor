@@ -86,17 +86,6 @@ public class Common {
         }
     }
 
-    // Useful issue messages
-    protected static final String MSG_NOT_AFFECTED = "Not affected";
-    protected static final String MSG_INHERITED = "Inherited";
-    protected static final String MSG_BAKING = "WAITING for patch to bake a little";
-    protected static final String MSG_MISSING = "MISSING";
-    protected static final String MSG_MISSING_ORACLE = "MISSING (+ on Oracle backport list)";
-    protected static final String MSG_APPROVED = "APPROVED";
-    protected static final String MSG_REJECTED = "Rejected";
-    protected static final String MSG_REQUESTED = "Requested";
-    protected static final String MSG_WARNING = "WARNING";
-
     // Sort issues by synopsis, alphabetically. This would cluster similar issues
     // together, even when they are separated by large difference in IDs.
     protected static final Comparator<Issue> DEFAULT_ISSUE_SORT = Comparator.comparing(i -> i.getSummary().trim().toLowerCase());

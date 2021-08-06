@@ -25,6 +25,7 @@
 package org.openjdk.backports.report.csv;
 
 import com.atlassian.jira.rest.client.api.domain.Issue;
+import org.openjdk.backports.report.BackportStatus;
 import org.openjdk.backports.report.model.IssueModel;
 
 import java.io.PrintStream;
@@ -52,7 +53,7 @@ public class IssueCSVReport extends AbstractCSVReport {
             if (issues != null) {
                 out.print("\"Fixed\", ");
             } else {
-                String status = model.pendingPorts().get(release);
+                BackportStatus status = model.pendingPorts().get(release);
                 out.print("\"" + status + "\", ");
             }
         }
