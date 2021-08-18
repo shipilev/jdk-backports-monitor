@@ -65,6 +65,8 @@ abstract class AbstractTextReport extends Common {
                 return "Not affected";
             case INHERITED:
                 return "Inherited";
+            case FIXED:
+                return "Fixed";
             case BAKING:
                 return "WAITING for patch to bake a little";
             case MISSING:

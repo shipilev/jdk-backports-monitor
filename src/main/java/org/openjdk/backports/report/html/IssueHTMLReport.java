@@ -162,6 +162,7 @@ public class IssueHTMLReport extends AbstractHTMLReport {
             case BAKING:
                 return "\u22EF";
             case INHERITED:
+            case FIXED:
                 return "\u2727";
             case MISSING:
                 return "<font color=red><b>!</b></font>";
