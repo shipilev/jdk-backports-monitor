@@ -85,7 +85,8 @@ public class IssueTextReport extends AbstractTextReport {
                 }
             } else {
                 BackportStatus status = model.pendingPorts().get(release);
-                out.printf("    %2d: %s%n", release, statusToText(status));
+                String details = model.pendingPortsDetails().get(release);
+                out.printf("    %2d: %s%s%n", release, statusToText(status), (details.isEmpty() ? "" : ": " + details));
             }
         }
         out.println();
@@ -95,14 +96,13 @@ public class IssueTextReport extends AbstractTextReport {
             out.println("  Shenandoah Backports:");
             for (Map.Entry<Integer, BackportStatus> e : shBackports.entrySet()) {
                 String details = model.shenandoahPortsDetails().get(e.getKey());
-                out.printf("    %2d: %s%s", e.getKey(), statusToText(e.getValue()), (details.isEmpty() ? "" : ": " + details));
+                out.printf("    %2d: %s%s%n", e.getKey(), statusToText(e.getValue()), (details.isEmpty() ? "" : ": " + details));
             }
             out.println();
         }
 
         Collection<Issue> relNotes = model.releaseNotes();
         if (!relNotes.isEmpty()) {
-            out.println();
             out.println("  Release Notes:");
             out.println();
             printReleaseNotes(out, relNotes);

@@ -120,7 +120,7 @@ public class IssueHTMLReport extends AbstractHTMLReport {
             out.println("  Shenandoah Backports:");
             for (Map.Entry<Integer, BackportStatus> e : shBackports.entrySet()) {
                 String details = model.pendingPortsDetails().get(e.getKey());
-                out.printf("    %2d: %s%s", e.getKey(), e.getValue(), (details.isEmpty() ? "" : ": " + details));
+                out.printf("    %2d: %s%s%n", e.getKey(), e.getValue(), (details.isEmpty() ? "" : ": " + details));
             }
             out.println();
         }
