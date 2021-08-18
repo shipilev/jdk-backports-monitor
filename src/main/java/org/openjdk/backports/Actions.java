@@ -45,11 +45,11 @@ public class Actions implements Comparable<Actions> {
 
     @Override
     public int compareTo(Actions other) {
-        int v1 = Integer.compare(actionable.ordinal(), other.actionable.ordinal());
+        int v1 = Integer.compare(other.actionable.ordinal(), actionable.ordinal());
         if (v1 != 0) {
             return v1;
         }
-        return Integer.compare(importance, other.importance);
+        return Integer.compare(other.importance, importance);
     }
 
     public Actionable getActionable() {

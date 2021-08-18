@@ -57,6 +57,7 @@ public class IssueModel extends AbstractModel {
     private String components;
     private long daysAgo;
     private int priority;
+    private List<String> warnings = new ArrayList<>();
 
     public IssueModel(JiraRestClient restClient, HgDB hgDB, PrintStream debugOut, String issueId) {
         super(restClient, debugOut);
@@ -103,11 +104,13 @@ public class IssueModel extends AbstractModel {
             } else if (verSh > 0) {
                 affectedShenandoah.add(verSh);
             } else {
+                warnings.add("Unknown version: " + ver);
                 actions.update(Actionable.CRITICAL);
             }
         }
 
         if (affectedReleases.isEmpty() && affectedShenandoah.isEmpty()) {
+            warnings.add("Affected versions are not set");
             actions.update(Actionable.CRITICAL);
         }
 
@@ -327,5 +330,9 @@ public class IssueModel extends AbstractModel {
 
     public SortedMap<Integer, String> shenandoahPortsDetails() {
         return shenandoahPortsDetails;
+    }
+
+    public List<String> warnings() {
+        return warnings;
     }
 }

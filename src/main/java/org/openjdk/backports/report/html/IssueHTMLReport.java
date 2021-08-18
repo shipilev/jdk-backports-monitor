@@ -132,6 +132,16 @@ public class IssueHTMLReport extends AbstractHTMLReport {
             out.println();
             printReleaseNotes(out, relNotes);
         }
+
+        List<String> warns = model.warnings();
+        if (!warns.isEmpty()) {
+            out.println();
+            out.println("  WARNINGS:");
+            for (String m : warns) {
+                out.println("    " + m);
+            }
+        }
+
         out.println();
     }
 
@@ -169,7 +179,7 @@ public class IssueHTMLReport extends AbstractHTMLReport {
             case WARNING:
                 return "\u2757";
             default:
-                throw new IllegalStateException("Unhandled status");
+                throw new IllegalStateException("Unhandled status: " + status);
         }
     }
 

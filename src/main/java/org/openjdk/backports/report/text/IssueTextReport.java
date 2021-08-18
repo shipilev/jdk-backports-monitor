@@ -95,7 +95,7 @@ public class IssueTextReport extends AbstractTextReport {
             out.println("  Shenandoah Backports:");
             for (Map.Entry<Integer, BackportStatus> e : shBackports.entrySet()) {
                 String details = model.shenandoahPortsDetails().get(e.getKey());
-                out.printf("    %2d: %s%s", e.getKey(), e.getValue(), (details.isEmpty() ? "" : ": " + details));
+                out.printf("    %2d: %s%s", e.getKey(), statusToText(e.getValue()), (details.isEmpty() ? "" : ": " + details));
             }
             out.println();
         }
@@ -107,6 +107,16 @@ public class IssueTextReport extends AbstractTextReport {
             out.println();
             printReleaseNotes(out, relNotes);
         }
+
+        List<String> warns = model.warnings();
+        if (!warns.isEmpty()) {
+            out.println();
+            out.println("  WARNINGS:");
+            for (String m : warns) {
+                out.println("    " + m);
+            }
+        }
+
         out.println();
     }
 
