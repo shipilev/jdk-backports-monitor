@@ -110,14 +110,12 @@ public class IssueTextReport extends AbstractTextReport {
 
         List<String> warns = model.warnings();
         if (!warns.isEmpty()) {
-            out.println();
             out.println("  WARNINGS:");
             for (String m : warns) {
                 out.println("    " + m);
             }
+            out.println();
         }
-
-        out.println();
     }
 
     private static String shortIssueLine(Issue issue) {
