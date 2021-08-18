@@ -48,7 +48,7 @@ public class LabelModel extends AbstractModel {
         List<Issue> found = jiraIssues.getIssues("labels = " + label +
                 " AND (status in (Closed, Resolved))" +
                 " AND (resolution not in (\"Won't Fix\", Duplicate, \"Cannot Reproduce\", \"Not an Issue\", Withdrawn, Other))" +
-                " AND type != Backport AND fixVersion = 17",
+                " AND type != Backport",
                 false);
 
         Comparator<IssueModel> comparator = Comparator
