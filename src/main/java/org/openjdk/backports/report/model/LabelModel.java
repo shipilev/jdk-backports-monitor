@@ -74,8 +74,15 @@ public class LabelModel extends AbstractModel {
             byComponent.put(m.components(), m);
         }
 
-        maxVersion = models.stream().map(IssueModel::fixVersion).filter(i -> i != -1).reduce(Integer.MIN_VALUE, Math::max);
-        minVersion = models.stream().map(IssueModel::fixVersion).filter(i -> i != -1).reduce(Integer.MAX_VALUE, Math::min);
+        maxVersion = models.stream()
+                .map(IssueModel::fixVersion)
+                .filter(i -> i <= 0)
+                .reduce(Integer.MIN_VALUE, Math::max);
+
+        minVersion = models.stream()
+                .map(IssueModel::fixVersion)
+                .filter(i -> i <= 0)
+                .reduce(Integer.MAX_VALUE, Math::min);
     }
 
     public List<IssueModel> issues() {
