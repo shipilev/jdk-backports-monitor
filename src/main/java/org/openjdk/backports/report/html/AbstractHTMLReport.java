@@ -44,6 +44,7 @@ abstract class AbstractHTMLReport extends Common {
         debugLog.println("Generating HTML log to " + fileName);
         out.println("<html>");
         out.println("<head>");
+        out.println("<meta charset=\"UTF-8\">");
         out.println("<style>");
         try (InputStream is = AbstractHTMLReport.class.getResourceAsStream("/style.css");
              InputStreamReader isr = new InputStreamReader(is);
