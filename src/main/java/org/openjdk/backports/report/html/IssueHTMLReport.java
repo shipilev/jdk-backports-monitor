@@ -56,20 +56,26 @@ public class IssueHTMLReport extends AbstractHTMLReport {
         generateSimple(out);
     }
 
-    public void generateTableLine(PrintStream out) {
+    public void generateTableLine(PrintStream out, int minV, int maxV) {
         out.println("<tr>");
-        out.println("<td nowrap><a href=\"" + Main.JIRA_URL + "browse/" + issue.getKey() + "\">" + issue.getKey() + "</a></td>");
-        out.println("<td>" + issue.getSummary() + "</td>");
-        out.println("<td>" + issue.getPriority().getName() + "</td>");
-        out.println("<td nowrap>" + model.components() + "</td>");
-        out.println("<td><a href=\"\">" + model.fixVersion() + "</a></td>");
 
-        for (int release : IssueModel.VERSIONS_TO_CARE_FOR) {
+        SortedMap<Integer, BackportStatus> shBackports = model.shenandoahPorts();
+        out.println("<td>");
+        if (!shBackports.isEmpty()) {
+            for (Map.Entry<Integer, BackportStatus> e : shBackports.entrySet()) {
+                out.println(shortStatusHTMLLine(e.getValue()));
+            }
+        }
+        out.println("</td>");
+
+        for (int release = minV; release <= maxV; release++) {
             List<Issue> issues = model.existingPorts().get(release);
             out.println("<td>");
             if (issues != null) {
-                for (Issue i : issues) {
-                    out.println(shortIssueHTMLLine(i, release == model.fixVersion()));
+                if (release == model.fixVersion()) {
+                    out.println("<font color=black>\u2741</font>");
+                } else {
+                    out.println("<font color=green>\u2714</font>");
                 }
             } else {
                 BackportStatus status = model.pendingPorts().get(release);
@@ -78,25 +84,19 @@ public class IssueHTMLReport extends AbstractHTMLReport {
             out.println("</td>");
         }
 
-        SortedMap<Integer, BackportStatus> shBackports = model.shenandoahPorts();
-        if (!shBackports.isEmpty()) {
-            out.println("<td>");
-            for (Map.Entry<Integer, BackportStatus> e : shBackports.entrySet()) {
-                out.println(shortStatusHTMLLine(e.getValue()));
-            }
-            out.println("</td>");
-        }
+        out.println("<td nowrap><a href=\"" + Main.JIRA_URL + "browse/" + issue.getKey() + "\">" + issue.getKey() + "</a></td>");
+        out.println("<td width=\"99%\">" + issue.getSummary() + "</td>");
+
         out.println("</tr>");
     }
 
     public void generateSimple(PrintStream out) {
-        out.println("<td><a href=\"" + Main.JIRA_URL + "browse/" + issue.getKey() + "\">" + issue.getKey() + "</a></td>");
-        out.println("<td>" + issue.getSummary() + "</td>");
-        out.println("<td>" + (issue.getReporter() != null ? issue.getReporter().getDisplayName() : "None") + "</td>");
-        out.println("<td>" + (issue.getAssignee() != null ? issue.getAssignee().getDisplayName() : "None") + "</td>");
-        out.println("<td>" + issue.getPriority().getName() + "</td>");
-        out.println("<td>" + model.components() + "</td>");
-        out.println("<td><a href=\"\">" + model.fixVersion() + "</a></td>");
+        out.println("<td nowrap><a href=\"" + Main.JIRA_URL + "browse/" + issue.getKey() + "\">" + issue.getKey() + "</a></td>");
+        out.println("<td width=\"99%\">" + issue.getSummary() + "</td>");
+        out.println("<td nowrap>" + (issue.getReporter() != null ? issue.getReporter().getDisplayName() : "None") + "</td>");
+        out.println("<td nowrap>" + (issue.getAssignee() != null ? issue.getAssignee().getDisplayName() : "None") + "</td>");
+        out.println("<td nowrap>" + issue.getPriority().getName() + "</td>");
+        out.println("<td nowrap>" + model.components() + "</td>");
 
         out.println("  Backports and Forwardports:");
 
@@ -158,16 +158,19 @@ public class IssueHTMLReport extends AbstractHTMLReport {
     }
 
     private static String shortStatusHTMLLine(BackportStatus status) {
+        if (status == null) {
+            return "<font color=white>\u2716</font>";
+        }
         switch (status) {
             case BAKING:
                 return "\u22EF";
             case INHERITED:
+                return "<font color=white>\u2716</font>";
             case FIXED:
-                return "\u2727";
+                return "<font color=green>\u2727</font>";
             case MISSING:
-                return "<font color=red><b>!</b></font>";
             case MISSING_ORACLE:
-                return "<font color=red><b>!!</b></font>";
+                return "<font color=red>\u2716</font>";
             case NOT_AFFECTED:
                 return "<font color=gray>\u2716</font>";
             case REJECTED:
@@ -177,7 +180,7 @@ public class IssueHTMLReport extends AbstractHTMLReport {
             case APPROVED:
                 return "\u270C";
             case WARNING:
-                return "\u2757";
+                return "<font color=red>!</font>";
             default:
                 throw new IllegalStateException("Unhandled status: " + status);
         }

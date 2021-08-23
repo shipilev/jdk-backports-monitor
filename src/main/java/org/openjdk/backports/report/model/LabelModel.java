@@ -26,6 +26,8 @@ package org.openjdk.backports.report.model;
 
 import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.atlassian.jira.rest.client.api.domain.Issue;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.TreeMultimap;
 import org.openjdk.backports.Actionable;
 import org.openjdk.backports.hg.HgDB;
 
@@ -39,6 +41,9 @@ public class LabelModel extends AbstractModel {
     private final String label;
     private final Actionable minLevel;
     private final List<IssueModel> models;
+    private final HashMultimap<String, IssueModel> byComponent;
+    private final Integer maxVersion;
+    private final Integer minVersion;
 
     public LabelModel(JiraRestClient cli, HgDB hgDB, PrintStream debugOut, Actionable minLevel, String label) {
         super(cli, debugOut);
@@ -63,10 +68,22 @@ public class LabelModel extends AbstractModel {
                 .filter(im -> im.actions().getActionable().ordinal() >= minLevel.ordinal())
                 .sorted(comparator)
                 .collect(Collectors.toList());
-   }
+
+        byComponent = HashMultimap.create();
+        for (IssueModel m : models) {
+            byComponent.put(m.components(), m);
+        }
+
+        maxVersion = models.stream().map(IssueModel::fixVersion).filter(i -> i != -1).reduce(Integer.MIN_VALUE, Math::max);
+        minVersion = models.stream().map(IssueModel::fixVersion).filter(i -> i != -1).reduce(Integer.MAX_VALUE, Math::min);
+    }
 
     public List<IssueModel> issues() {
         return models;
+    }
+
+    public HashMultimap<String, IssueModel> byComponent() {
+        return byComponent;
     }
 
     public String label() {
@@ -75,5 +92,13 @@ public class LabelModel extends AbstractModel {
 
     public Actionable minLevel() {
         return minLevel;
+    }
+
+    public int maxVersion() {
+        return maxVersion;
+    }
+
+    public int minVersion() {
+        return minVersion;
     }
 }

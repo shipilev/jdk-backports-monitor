@@ -26,8 +26,7 @@ package org.openjdk.backports.report.html;
 
 import org.openjdk.backports.report.Common;
 
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 
 abstract class AbstractHTMLReport extends Common {
 
@@ -45,7 +44,16 @@ abstract class AbstractHTMLReport extends Common {
         debugLog.println("Generating HTML log to " + fileName);
         out.println("<html>");
         out.println("<head>");
-        out.println("</head>");
+        out.println("<style>");
+        try (InputStream is = AbstractHTMLReport.class.getResourceAsStream("/style.css");
+             InputStreamReader isr = new InputStreamReader(is);
+             BufferedReader br = new BufferedReader(isr)) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                out.println(line);
+            }
+        }
+        out.println("</style>");
         out.println("<body>");
         doGenerate(out);
         out.println("</body>");

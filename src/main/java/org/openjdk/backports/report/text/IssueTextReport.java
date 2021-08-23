@@ -76,7 +76,7 @@ public class IssueTextReport extends AbstractTextReport {
 
         out.println("  Backports and Forwardports:");
 
-        for (int release : IssueModel.VERSIONS_TO_CARE_FOR) {
+        for (int release : IssueModel.VERSIONS_TO_CARE_FOR_REV) {
             if (release == model.fixVersion()) continue;
             List<Issue> issues = model.existingPorts().get(release);
             if (issues != null) {

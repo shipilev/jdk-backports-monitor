@@ -24,6 +24,7 @@
  */
 package org.openjdk.backports.report.html;
 
+import org.openjdk.backports.jira.Versions;
 import org.openjdk.backports.report.model.IssueModel;
 import org.openjdk.backports.report.model.PendingPushModel;
 
@@ -49,9 +50,11 @@ public class PendingPushHTMLReport extends AbstractHTMLReport {
         out.println("<p>Report generated: " + new Date() + "</p>");
         out.println();
 
+        int v = Versions.parseMajor(model.release());
+
         out.println("<table>");
         for (IssueModel m : model.models()) {
-            new IssueHTMLReport(m, debugLog, logPrefix).generateTableLine(out);
+            new IssueHTMLReport(m, debugLog, logPrefix).generateTableLine(out, v, v);
         }
         out.println("</table>");
     }

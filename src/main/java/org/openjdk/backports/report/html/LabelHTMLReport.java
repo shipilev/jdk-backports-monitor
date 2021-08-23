@@ -24,11 +24,14 @@
  */
 package org.openjdk.backports.report.html;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.TreeMultimap;
 import org.openjdk.backports.report.model.IssueModel;
 import org.openjdk.backports.report.model.LabelModel;
 
 import java.io.PrintStream;
 import java.util.Date;
+import java.util.TreeSet;
 
 public class LabelHTMLReport extends AbstractHTMLReport {
 
@@ -50,23 +53,27 @@ public class LabelHTMLReport extends AbstractHTMLReport {
         out.println("<p>Minimal actionable level to display: " + model.minLevel() + "</p>");
         out.println();
 
-        out.println("<table>");
-        out.println("<tr>");
-        out.println("<th>Bug</th>");
-        out.println("<th>Synopsis</th>");
-        out.println("<th>Priority</th>");
-        out.println("<th>Component</th>");
-        out.println("<th>Original Fix</th>");
-        for (int release : IssueModel.VERSIONS_TO_CARE_FOR) {
-            out.println("<th>JDK " + release + "</th>");
-        }
-        out.println("</tr>");
-        for (IssueModel im : model.issues()) {
-            new IssueHTMLReport(im, debugLog, logPrefix).generateTableLine(out);
-        }
-        out.println("</table>");
+        HashMultimap<String, IssueModel> map = model.byComponent();
+        for (String comp : new TreeSet<>(map.keySet())) {
+            out.println("<h3>" + comp + "</h3>");
 
-        out.println("<p>" + model.issues().size() + " issues shown.</p>");
+            out.println("<table>");
+            out.println("<tr>");
+            out.println("<th nowrap>sh/8</th>");
+            int minV = model.minVersion();
+            int maxV = model.maxVersion();
+            for (int r = minV; r <= maxV; r++) {
+                out.println("<th nowrap>" + r + "</th>");
+            }
+            out.println("<th nowrap>Bug</th>");
+            out.println("<th nowrap>Synopsis</th>");
+            out.println("</tr>");
+            for (IssueModel im : map.get(comp)) {
+                new IssueHTMLReport(im, debugLog, logPrefix).generateTableLine(out, minV, maxV);
+            }
+            out.println("</table>");
+
+        }
     }
 
 }
