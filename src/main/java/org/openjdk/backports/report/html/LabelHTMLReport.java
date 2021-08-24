@@ -25,6 +25,7 @@
 package org.openjdk.backports.report.html;
 
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.TreeMultimap;
 import org.openjdk.backports.report.model.IssueModel;
 import org.openjdk.backports.report.model.LabelModel;
@@ -53,20 +54,26 @@ public class LabelHTMLReport extends AbstractHTMLReport {
         out.println("<p>Minimal actionable level to display: " + model.minLevel() + "</p>");
         out.println();
 
-        HashMultimap<String, IssueModel> map = model.byComponent();
+        LinkedListMultimap<String, IssueModel> map = model.byComponent();
         for (String comp : new TreeSet<>(map.keySet())) {
             out.println("<h3>" + comp + "</h3>");
 
-            out.println("<table>");
-            out.println("<tr>");
-            out.println("<th nowrap>sh/8</th>");
             int minV = model.minVersion();
             int maxV = model.maxVersion();
+
+            out.println("<table>");
+            out.println("<tr>");
+            out.println("<th nowrap colspan=" + (maxV - minV + 2) + ">Fix Versions</th>");
+            out.println("<th nowrap>Bug</th>");
+            out.println("<th nowrap>Synopsis</th>");
+            out.println("</tr>");
+            out.println("<tr>");
+            out.println("<th nowrap>sh/8</th>");
             for (int r = minV; r <= maxV; r++) {
                 out.println("<th nowrap>" + r + "</th>");
             }
-            out.println("<th nowrap>Bug</th>");
-            out.println("<th nowrap>Synopsis</th>");
+            out.println("<thnowrap></th>");
+            out.println("<th></th>");
             out.println("</tr>");
             for (IssueModel im : map.get(comp)) {
                 new IssueHTMLReport(im, debugLog, logPrefix).generateTableLine(out, minV, maxV);

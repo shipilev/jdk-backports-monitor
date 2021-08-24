@@ -26,14 +26,14 @@ package org.openjdk.backports.report.model;
 
 import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.atlassian.jira.rest.client.api.domain.Issue;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.TreeMultimap;
+import com.google.common.collect.*;
 import org.openjdk.backports.Actionable;
 import org.openjdk.backports.hg.HgDB;
 
 import java.io.PrintStream;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class LabelModel extends AbstractModel {
@@ -41,7 +41,7 @@ public class LabelModel extends AbstractModel {
     private final String label;
     private final Actionable minLevel;
     private final List<IssueModel> models;
-    private final HashMultimap<String, IssueModel> byComponent;
+    private final LinkedListMultimap<String, IssueModel> byComponent;
     private final Integer maxVersion;
     private final Integer minVersion;
 
@@ -69,19 +69,19 @@ public class LabelModel extends AbstractModel {
                 .sorted(comparator)
                 .collect(Collectors.toList());
 
-        byComponent = HashMultimap.create();
+        byComponent = LinkedListMultimap.create();
         for (IssueModel m : models) {
             byComponent.put(m.components(), m);
         }
 
         maxVersion = models.stream()
                 .map(IssueModel::fixVersion)
-                .filter(i -> i <= 0)
+                .filter(i -> i > 0)
                 .reduce(Integer.MIN_VALUE, Math::max);
 
         minVersion = models.stream()
                 .map(IssueModel::fixVersion)
-                .filter(i -> i <= 0)
+                .filter(i -> i > 0)
                 .reduce(Integer.MAX_VALUE, Math::min);
     }
 
@@ -89,7 +89,7 @@ public class LabelModel extends AbstractModel {
         return models;
     }
 
-    public HashMultimap<String, IssueModel> byComponent() {
+    public LinkedListMultimap<String, IssueModel> byComponent() {
         return byComponent;
     }
 

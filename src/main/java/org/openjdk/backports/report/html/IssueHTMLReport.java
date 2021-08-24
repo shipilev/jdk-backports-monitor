@@ -73,7 +73,7 @@ public class IssueHTMLReport extends AbstractHTMLReport {
             out.println("<td>");
             if (issues != null) {
                 if (release == model.fixVersion()) {
-                    out.println("<font color=black>\u2741</font>");
+                    out.println("<font color=black>\u2749</font>");
                 } else {
                     out.println("<font color=green>\u2714</font>");
                 }
@@ -165,14 +165,14 @@ public class IssueHTMLReport extends AbstractHTMLReport {
             case BAKING:
                 return "\u22EF";
             case INHERITED:
-                return "<font color=white>\u2716</font>";
+                return "<font color=white>\u2727</font>";
             case FIXED:
                 return "<font color=green>\u2727</font>";
             case MISSING:
             case MISSING_ORACLE:
                 return "<font color=red>\u2716</font>";
             case NOT_AFFECTED:
-                return "<font color=gray>\u2716</font>";
+                return "<font color=white>\u2716</font>";
             case REJECTED:
                 return "<font color=red>\u2716</font>";
             case REQUESTED:
@@ -180,7 +180,7 @@ public class IssueHTMLReport extends AbstractHTMLReport {
             case APPROVED:
                 return "\u270C";
             case WARNING:
-                return "<font color=red>!</font>";
+                return "<b><font color=red>\u26A0</font></b>";
             default:
                 throw new IllegalStateException("Unhandled status: " + status);
         }
