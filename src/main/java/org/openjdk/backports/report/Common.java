@@ -91,4 +91,31 @@ public class Common {
     // together, even when they are separated by large difference in IDs.
     protected static final Comparator<Issue> DEFAULT_ISSUE_SORT = Comparator.comparing(i -> i.getSummary().trim().toLowerCase());
 
+    protected static String statusToText(BackportStatus status) {
+        switch (status) {
+            case NOT_AFFECTED:
+                return "Not affected";
+            case INHERITED:
+                return "Inherited";
+            case FIXED:
+                return "Fixed";
+            case BAKING:
+                return "WAITING for patch to bake a little";
+            case MISSING:
+                return "MISSING";
+            case MISSING_ORACLE:
+                return "MISSING (+ on Oracle backport list)";
+            case APPROVED:
+                return "APPROVED";
+            case REJECTED:
+                return "Rejected";
+            case REQUESTED:
+                return "Requested";
+            case WARNING:
+                return "WARNING";
+            default:
+                throw new IllegalStateException("Unknown status: " + status);
+        }
+    }
+
 }

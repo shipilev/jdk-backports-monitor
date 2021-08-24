@@ -31,6 +31,7 @@ import org.openjdk.backports.Actionable;
 import org.openjdk.backports.hg.HgDB;
 
 import java.io.PrintStream;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -77,12 +78,12 @@ public class LabelModel extends AbstractModel {
         maxVersion = models.stream()
                 .map(IssueModel::fixVersion)
                 .filter(i -> i > 0)
-                .reduce(Integer.MIN_VALUE, Math::max);
+                .reduce(Arrays.stream(VERSIONS_TO_CARE_FOR).reduce(Integer.MIN_VALUE, Math::max), Math::max);
 
         minVersion = models.stream()
                 .map(IssueModel::fixVersion)
                 .filter(i -> i > 0)
-                .reduce(Integer.MAX_VALUE, Math::min);
+                .reduce(Arrays.stream(VERSIONS_TO_CARE_FOR).reduce(Integer.MAX_VALUE, Math::min), Math::min);
     }
 
     public List<IssueModel> issues() {

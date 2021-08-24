@@ -63,7 +63,7 @@ public class IssueHTMLReport extends AbstractHTMLReport {
         out.println("<td>");
         if (!shBackports.isEmpty()) {
             for (Map.Entry<Integer, BackportStatus> e : shBackports.entrySet()) {
-                out.println(shortStatusHTMLLine(e.getValue()));
+                out.println(shortStatusHTMLLine(e.getKey(), e.getValue(), model.shenandoahPortsDetails().get(e.getKey())));
             }
         }
         out.println("</td>");
@@ -73,13 +73,18 @@ public class IssueHTMLReport extends AbstractHTMLReport {
             out.println("<td>");
             if (issues != null) {
                 if (release == model.fixVersion()) {
+                    out.println("<span title=\"JDK " + release + ": Fixed in this release\">");
                     out.println("<font color=black>\u2749</font>");
+                    out.println("</span>");
                 } else {
+                    out.println("<span title=\"JDK " + release + ": Ported to this release\">");
                     out.println("<font color=green>\u2714</font>");
+                    out.println("</span>");
                 }
             } else {
                 BackportStatus status = model.pendingPorts().get(release);
-                out.println(shortStatusHTMLLine(status));
+                String details = model.pendingPortsDetails().get(release);
+                out.println(shortStatusHTMLLine(release, status, details));
             }
             out.println("</td>");
         }
@@ -152,38 +157,50 @@ public class IssueHTMLReport extends AbstractHTMLReport {
                 Accessors.getPushDate(issue));
     }
 
-    private static String shortIssueHTMLLine(Issue issue, boolean original) {
-        return String.format("<a href=\"%s\">" + (original ? "\u2741" : "\u2714") + "</a>",
-                Main.JIRA_URL + "browse/" + issue.getKey());
-    }
-
-    private static String shortStatusHTMLLine(BackportStatus status) {
+    private static String shortStatusHTMLLine(int release, BackportStatus status, String details) {
+        StringBuilder sb = new StringBuilder();
         if (status == null) {
-            return "<font color=white>\u2716</font>";
+            sb.append("<font color=white>\u2716</font>");
+        } else {
+            sb.append("<span title=\"JDK ")
+                    .append(release)
+                    .append(": ")
+                    .append(statusToText(status))
+                    .append((details == null || details.isEmpty()) ? "" : ": " + details)
+                    .append("\">");
+            switch (status) {
+                case BAKING:
+                    sb.append("\u2668");
+                    break;
+                case INHERITED:
+                    sb.append("<font color=white>\u2714</font>");
+                    break;
+                case FIXED:
+                    sb.append("<font color=green>\u2714</font>");
+                    break;
+                case MISSING:
+                case MISSING_ORACLE:
+                case REJECTED:
+                    sb.append("<font color=red>\u2716</font>");
+                    break;
+                case NOT_AFFECTED:
+                    sb.append("<font color=white>\u2716</font>");
+                    break;
+                case REQUESTED:
+                    sb.append("\u270B");
+                    break;
+                case APPROVED:
+                    sb.append("\u270C");
+                    break;
+                case WARNING:
+                    sb.append("<b><font color=red>\u26A0</font></b>");
+                    break;
+                default:
+                    throw new IllegalStateException("Unhandled status: " + status);
+            }
+            sb.append("</span>");
         }
-        switch (status) {
-            case BAKING:
-                return "\u22EF";
-            case INHERITED:
-                return "<font color=white>\u2727</font>";
-            case FIXED:
-                return "<font color=green>\u2727</font>";
-            case MISSING:
-            case MISSING_ORACLE:
-                return "<font color=red>\u2716</font>";
-            case NOT_AFFECTED:
-                return "<font color=white>\u2716</font>";
-            case REJECTED:
-                return "<font color=red>\u2716</font>";
-            case REQUESTED:
-                return "\u270B";
-            case APPROVED:
-                return "\u270C";
-            case WARNING:
-                return "<b><font color=red>\u26A0</font></b>";
-            default:
-                throw new IllegalStateException("Unhandled status: " + status);
-        }
+        return sb.toString();
     }
 
     protected static void printReleaseNotes(PrintStream out, Collection<Issue> relNotes) {
