@@ -82,7 +82,7 @@ a.clear, a.clear:link, a.clear:visited {
 table {
     border-collapse: collapse;
     max-width: 100%;
-    margin: 20px auto 0;
+    margin-top: 20px;
 }
 
 tr {

@@ -65,7 +65,7 @@ public class LabelHTMLReport extends AbstractHTMLReport {
             out.println("<tr>");
             out.println("<th nowrap colspan=" + (maxV - minV + 2) + ">Fix Versions</th>");
             out.println("<th nowrap>Bug</th>");
-            out.println("<th nowrap>Synopsis</th>");
+            out.println("<th nowrap width=\"99%\">Synopsis</th>");
             out.println("</tr>");
             out.println("<tr>");
             out.println("<th nowrap>sh/8</th>");

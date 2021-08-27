@@ -49,11 +49,16 @@ public class AffiliationHTMLReport extends AbstractHTMLReport {
         UserCache users = model.users();
 
         out.println("<table>");
+        out.println("<tr>");
+        out.println("<th nowrap>ID</th>");
+        out.println("<th nowrap>Name</th>");
+        out.println("<th nowrap>Organization</th>");
+        out.println("</tr>");
         for (String uid : userIds) {
             out.println("<tr>");
-            out.println("<td>" + uid + "</td>");
-            out.println("<td>" + users.getDisplayName(uid) + "</td>");
-            out.println("<td>" + users.getAffiliation(uid) + "</td>");
+            out.println("<td nowrap><a href='https://openjdk.java.net/census#" + uid + "'>" + uid + "</a></td>");
+            out.println("<td nowrap>" + users.getDisplayName(uid) + "</td>");
+            out.println("<td nowrap>" + users.getAffiliation(uid) + "</td>");
             out.println("</tr>");
         }
         out.println("</table>");
