@@ -44,11 +44,17 @@ public class LabelHistoryHTMLReport extends AbstractHTMLReport {
         out.println("<p>Report generated: " + new Date() + "</p>");
 
         out.println("<table>");
+        out.println("<tr>");
+        out.println("<th nowrap>Date Added</th>");
+        out.println("<th nowrap>Added By</th>");
+        out.println("<th nowrap>Bug</th>");
+        out.println("<th nowrap width=\"99%\">Synopsis</th>");
+        out.println("</tr>");
         for (LabelHistoryModel.Record r : model.records()) {
             out.println("<tr>");
             out.println("<td>" + r.date.toLocalDate().toString() + "</td>");
             out.println("<td>" + r.user + "</td>");
-            out.println("<td>" + r.issue.getKey() + "</td>");
+            out.println("<td>" + issueLink(r.issue) + "</td>");
             out.println("<td>" + r.issue.getSummary() + "</td>");
             out.println("</tr>");
         }
