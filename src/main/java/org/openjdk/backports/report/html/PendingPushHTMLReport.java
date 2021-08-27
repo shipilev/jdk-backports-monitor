@@ -53,6 +53,12 @@ public class PendingPushHTMLReport extends AbstractHTMLReport {
         int v = Versions.parseMajor(model.release());
 
         out.println("<table>");
+        out.println("<tr>");
+        out.println("<th nowrap></th>");
+        out.println("<th nowrap>JDK " + v + "</th>");
+        out.println("<th nowrap>Bug</th>");
+        out.println("<th nowrap width=\"99%\">Synopsis</th>");
+        out.println("</tr>");
         for (IssueModel m : model.models()) {
             new IssueHTMLReport(m, debugLog, logPrefix).generateTableLine(out, v, v);
         }
