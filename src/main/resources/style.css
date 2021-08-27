@@ -41,19 +41,25 @@ thead {
 }
 
 h1 {
-    font-weight: 200;
     text-align: left;
-    font-size: 1.4em;
     padding-bottom: 10px;
 }
 
 h2 {
-    padding-top: 30px;
+    text-align: left;
+    padding-top: 20px;
     padding-bottom: 10px;
 }
 
 h3 {
-    padding-top: 30px;
+    text-align: left;
+    padding-top: 20px;
+    padding-bottom: 10px;
+}
+
+h4 {
+    text-align: left;
+    padding-top: 20px;
     padding-bottom: 10px;
 }
 
@@ -115,5 +121,9 @@ td {
 
 td a {
     display: block;
+}
+
+p.embedded-block {
+    width: 50%;
 }
 

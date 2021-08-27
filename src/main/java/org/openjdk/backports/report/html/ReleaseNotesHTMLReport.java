@@ -25,9 +25,9 @@
 package org.openjdk.backports.report.html;
 
 import com.atlassian.jira.rest.client.api.domain.Issue;
+import com.github.rjeschke.txtmark.Processor;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.TreeMultimap;
-import org.openjdk.backports.Main;
 import org.openjdk.backports.StringUtils;
 import org.openjdk.backports.report.model.ReleaseNotesModel;
 
@@ -46,39 +46,31 @@ public class ReleaseNotesHTMLReport extends AbstractHTMLReport {
 
     @Override
     protected void doGenerate(PrintStream out) {
-        out.println("<h1>RELEASE NOTES FOR: " + model.release() + "</h1>");
-        out.println();
-        out.println("Notes generated: " + new Date());
-        out.println();
-
-        out.println("Hint: Prefix bug IDs with " + Main.JIRA_URL + "browse/ to reach the relevant JIRA entry.");
-        out.println();
+        out.println("<h1>RELEASE NOTES: JDK " + model.release() + "</h1>");
+        out.println("<p>Notes generated: " + new Date() + "<p>");
 
         out.println("<h2>JAVA ENHANCEMENT PROPOSALS (JEP)</h2>");
-        out.println();
 
         List<Issue> jeps = model.jeps();
         if (jeps.isEmpty()) {
-            out.println("  None.");
+            out.println("<p>None.</p>");
         }
 
         for (Issue i : jeps) {
-            out.println("  " + i.getSummary());
+            out.println("<h3>" + i.getSummary() + "</h3>");
             out.println();
 
-            String[] par = StringUtils.paragraphs(i.getDescription());
-            if (par.length > 2) {
-                // Second one is summary
-                out.println(StringUtils.leftPad(StringUtils.rewrap(par[1], 100, 2), 6));
+            out.println("<span class='embedded-block'>");
+            String desc = i.getDescription();
+            if (desc != null && !desc.isEmpty()) {
+                out.println(Processor.process(desc));
             } else {
-                out.println(StringUtils.leftPad("No description.", 6));
+                out.println("<p>No description.</p>");
             }
-            out.println();
+            out.println("</span>");
         }
-        out.println();
 
-        out.println("<h2>RELEASE NOTES, BY COMPONENT:</h2>");
-        out.println();
+        out.println("<h2>RELEASE NOTES, BY COMPONENT</h2>");
 
         Map<String, Multimap<Issue, Issue>> rns = model.relNotes();
 
@@ -90,16 +82,26 @@ public class ReleaseNotesHTMLReport extends AbstractHTMLReport {
                 haveRelNotes = true;
 
                 if (!printed) {
-                    out.println(component + ":");
-                    out.println();
+                    out.println("<h3>" + component + "</h3>");
                     printed = true;
                 }
 
-                printReleaseNotes(out, m.values());
+                Set<String> dup = new HashSet<>();
+                for (Issue rn : m.values()) {
+                    String descr = rn.getDescription();
+                    String summary = rn.getSummary().replaceFirst("Release Note: ", "");
+                    if (dup.add(descr)) {
+                        out.println("<h4>" + issueLink(rn) + ": " + summary + "</h4>");
+                        out.println("<span class='embedded-block'>");
+                        out.println(Processor.process(descr));
+                        out.println("</span>");
+                        out.println();
+                    }
+                }
             }
         }
         if (!haveRelNotes) {
-            out.println("  None.");
+            out.println("<p>None.</p>");
         }
         out.println();
 
@@ -109,56 +111,57 @@ public class ReleaseNotesHTMLReport extends AbstractHTMLReport {
         Multimap<String, Issue> byComponent = model.byComponent();
 
         for (String component : byComponent.keySet()) {
-            out.println(component + ":");
+            out.println("<h3>" + component + "</h3>");
             Multimap<String, Issue> byPriority = TreeMultimap.create(String::compareTo, DEFAULT_ISSUE_SORT);
             for (Issue i : byComponent.get(component)) {
                 byPriority.put(i.getPriority().getName(), i);
             }
+            out.println("<table>");
+            out.println("<tr>");
+            out.println("<th>Priority</th>");
+            out.println("<th>Bug</th>");
+            out.println("<th width='99%'>Summary</th>");
+            out.println("</tr>");
             for (String prio : byPriority.keySet()) {
                 for (Issue i : byPriority.get(prio)) {
-                    out.printf("  (%s) %s: %s%n", prio, i.getKey(), i.getSummary());
+                    out.println("<tr>");
+                    out.println("<td>" + prio + "</td>");
+                    out.println("<td>" + issueLink(i) + "</td>");
+                    out.println("<td>" + i.getSummary() + "</td>");
+                    out.println("</tr>");
                 }
             }
-            out.println();
+            out.println("</table>");
         }
         out.println();
 
         if (model.includeCarryovers()) {
             out.println("<h2>CARRIED OVER FROM PREVIOUS RELEASES</h2>");
-            out.println("  These have fixes for the given release, but they are also fixed in the previous");
-            out.println("  minor version of the same major release.");
+            out.println("<p>These have fixes for the given release, but they are also fixed in the previous");
+            out.println("minor version of the same major release.</p>");
             out.println();
 
             SortedSet<Issue> carriedOver = model.carriedOver();
 
             if (carriedOver.isEmpty()) {
-                out.println("  None.");
+                out.println("<p>None.</p>");
             }
 
+            out.println("<table>");
+            out.println("<tr>");
+            out.println("<th>Priority</th>");
+            out.println("<th>Bug</th>");
+            out.println("<th width='99%'>Summary</th>");
+            out.println("</tr>");
             for (Issue i : carriedOver) {
-                out.printf("  (%s) %s: %s%n", i.getPriority().getName(), i.getKey(), i.getSummary());
+                out.println("<tr>");
+                out.println("<td>" + i.getPriority().getName() + "</td>");
+                out.println("<td>" + issueLink(i) + "</td>");
+                out.println("<td>" + i.getSummary() + "</td>");
+                out.println("</tr>");
             }
-            out.println();
+            out.println("</table>");
         }
     }
 
-    protected void printReleaseNotes(PrintStream ps, Collection<Issue> relNotes) {
-        PrintWriter pw = new PrintWriter(ps);
-        printReleaseNotes(pw, relNotes);
-        pw.flush();
-    }
-
-    protected void printReleaseNotes(PrintWriter pw, Collection<Issue> relNotes) {
-        Set<String> dup = new HashSet<>();
-        for (Issue rn : relNotes) {
-            String summary = StringUtils.leftPad(rn.getKey() + ": " + rn.getSummary().replaceFirst("Release Note: ", ""), 2);
-            String descr = StringUtils.leftPad(StringUtils.rewrap(StringUtils.stripNull(rn.getDescription()), StringUtils.DEFAULT_WIDTH - 6), 6);
-            if (dup.add(descr)) {
-                pw.println(summary);
-                pw.println();
-                pw.println(descr);
-                pw.println();
-            }
-        }
-    }
 }
