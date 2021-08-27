@@ -42,67 +42,67 @@ public class ParityHTMLReport extends AbstractHTMLReport {
 
     @Override
     protected void doGenerate(PrintStream out) {
-        out.println("<h1>PARITY REPORT FOR JDK: " + model.majorVer() + "</h1>");
+        out.println("<h1>PARITY REPORT: JDK " + model.majorVer() + "</h1>");
         out.println();
-        out.println("This report shows the bird-eye view of parity between OpenJDK and Oracle JDK.");
+        out.println("<p>This report shows the bird-eye view of parity between OpenJDK and Oracle JDK.</p>");
         out.println();
-        out.println("Report generated: " + new Date());
+        out.println("<p>Report generated: " + new Date() + "</p>");
         out.println();
 
         out.println("<h2> EXCLUSIVE: ONLY IN ORACLE JDK</h2>");
         out.println();
-        out.println("This is where Oracle JDK is ahead of OpenJDK.");
-        out.println("No relevant backports are detected in OpenJDK.");
-        out.println("This misses the future backporting work.");
-        out.println("[...] marks the interest tags.");
-        out.println("(*) marks the backporting work in progress.");
+        out.println("<p>This is where Oracle JDK is ahead of OpenJDK.</p>");
+        out.println("<p>No relevant backports are detected in OpenJDK.</p>");
+        out.println("<p>This misses the future backporting work.</p>");
+        out.println("<p>[...] marks the interest tags.</p>");
+        out.println("<p>(*) marks the backporting work in progress.</p>");
         out.println();
         printWithVersion(out, model.onlyOracle());
         out.println();
 
         out.println("<h2>EXCLUSIVE: ONLY IN OPENJDK</h2>");
         out.println();
-        out.println("This is where OpenJDK is ahead of Oracle JDK.");
-        out.println("No relevant backports are detected in Oracle JDK yet.");
-        out.println("This misses the ongoing backporting work.");
+        out.println("<p>This is where OpenJDK is ahead of Oracle JDK.</p>");
+        out.println("<p>No relevant backports are detected in Oracle JDK yet.</p>");
+        out.println("<p>This misses the ongoing backporting work.</p>");
         out.println();
         printWithVersion(out, model.onlyOpen());
         out.println();
 
         out.println("<h2>LATE PARITY: ORACLE JDK FOLLOWS OPENJDK IN LATER RELEASES</h2>");
         out.println();
-        out.println("This is where OpenJDK used to be ahead, and then Oracle JDK caught up in future releases.");
+        out.println("<p>This is where OpenJDK used to be ahead, and then Oracle JDK caught up in future releases.</p>");
         out.println();
         printSimple(out, model.lateOpenFirst());
         out.println();
 
         out.println("<h2>LATE PARITY: OPENJDK FOLLOWS ORACLE JDK IN LATER RELEASES</h2>");
         out.println();
-        out.println("This is where Oracle JDK used to be ahead, and then OpenJDK caught up in future releases.");
+        out.println("<p>This is where Oracle JDK used to be ahead, and then OpenJDK caught up in future releases.</p>");
         out.println();
         printSimple(out, model.lateOracleFirst());
         out.println();
 
         out.println("<h2>EXACT PARITY: ORACLE JDK FOLLOWS OPENJDK</h2>");
         out.println();
-        out.println("This is where OpenJDK made the first backport in the release, and then Oracle JDK followed.");
-        out.println("No difference in the final release detected.");
+        out.println("<p>This is where OpenJDK made the first backport in the release, and then Oracle JDK followed.</p>");
+        out.println("<p>No difference in the final release detected.</p>");
         out.println();
         printSimple(out, model.exactOpenFirst());
         out.println();
 
         out.println("<h2>EXACT PARITY: OPENJDK FOLLOWS ORACLE JDK</h2>");
         out.println();
-        out.println("This is where Oracle JDK made the first backport in the release, and then OpenJDK followed.");
-        out.println("No difference in the final release detected.");
+        out.println("<p>This is where Oracle JDK made the first backport in the release, and then OpenJDK followed.</p>");
+        out.println("<p>No difference in the final release detected.</p>");
         out.println();
         printSimple(out, model.exactOracleFirst());
         out.println();
 
         out.println("<h2>EXACT PARITY: UNKNOWN TIMING</h2>");
         out.println();
-        out.println("This is where the difference in time within the release was not identified reliably.");
-        out.println("No difference in the final release detected.");
+        out.println("<p>This is where the difference in time within the release was not identified reliably.</p>");
+        out.println("<p>No difference in the final release detected.</p>");
         out.println();
         printSimple(out, model.exactUnknown());
         out.println();
@@ -113,24 +113,47 @@ public class ParityHTMLReport extends AbstractHTMLReport {
         for (Map.Entry<String, Map<Issue, String>> kv : issues.entrySet()) {
             size += kv.getValue().size();
         }
-        out.println(size + " issues in total");
-        out.println();
+        out.println("<p>" + size + " issues in total</p>");
 
         for (Map.Entry<String, Map<Issue, String>> kv : issues.entrySet()) {
-            out.println(kv.getKey() + " (" + kv.getValue().size() + " issues):");
+            out.println("<h3>" + kv.getKey() + "</h3>");
+            out.println("<p>" + kv.getValue().size() + " issues</p>");
+            out.println("<table>");
+            out.println("<tr>");
+            out.println("<th nowrap>Versions</th>");
+            out.println("<th nowrap>Bug</th>");
+            out.println("<th nowrap width=\"99%\">Synopsis</th>");
+            out.println("</tr>");
             for (Map.Entry<Issue, String> kv2 : kv.getValue().entrySet()) {
-                out.println(kv2.getValue());
+                Issue i = kv2.getKey();
+                out.println("<tr>");
+                out.println("<td nowrap>" + kv2.getValue() + "</td>");
+                out.println("<td nowrap>" + issueLink(i) + "</td>");
+                out.println("<td nowrap width=\"99%\">" + i.getSummary() + "</td>");
+                out.println("</tr>");
             }
-            out.println();
+            out.println("</table>");
         }
     }
 
     void printSimple(PrintStream out, Map<Issue, String> issues) {
-        out.println(issues.size() + " issues:");
+        out.println("<p>" + issues.size() + " issues.</p>");
+
+        out.println("<table>");
+        out.println("<tr>");
+        out.println("<th nowrap>Versions</th>");
+        out.println("<th nowrap>Bug</th>");
+        out.println("<th nowrap width=\"99%\">Synopsis</th>");
+        out.println("</tr>");
         for (Map.Entry<Issue,String> kv : issues.entrySet()) {
-            out.println(kv.getValue());
+            Issue i = kv.getKey();
+            out.println("<tr>");
+            out.println("<td nowrap>" + kv.getValue() + "</td>");
+            out.println("<td nowrap>" + issueLink(i) + "</td>");
+            out.println("<td nowrap width=\"99%\">" + i.getSummary() + "</td>");
+            out.println("</tr>");
         }
-        out.println();
+        out.println("</table>");
     }
 
 }

@@ -120,7 +120,8 @@ public class ParityTextReport extends AbstractTextReport {
         for (Map.Entry<String, Map<Issue, String>> kv : issues.entrySet()) {
             out.println(kv.getKey() + " (" + kv.getValue().size() + " issues):");
             for (Map.Entry<Issue, String> kv2 : kv.getValue().entrySet()) {
-                out.println(kv2.getValue());
+                Issue i = kv2.getKey();
+                out.println(kv2.getValue() + " " + i.getKey() + ": " + i.getSummary());
             }
             out.println();
         }
@@ -129,7 +130,8 @@ public class ParityTextReport extends AbstractTextReport {
     void printSimple(PrintStream out, Map<Issue, String> issues) {
         out.println(issues.size() + " issues:");
         for (Map.Entry<Issue,String> kv : issues.entrySet()) {
-            out.println(kv.getValue());
+            Issue i = kv.getKey();
+            out.println(kv.getValue() + ", " + i.getKey() + ": " + i.getSummary());
         }
         out.println();
     }

@@ -186,39 +186,37 @@ public class ParityModel extends AbstractModel {
                 continue;
             }
 
+            final String uniFormat = "  %-" + versLen + "s";
+            final String biFormat = "  %-" + versLen + "s -> %-" + versLen + "s";
+            final String unknFormat = "  %-" + versLen + "s ... %-" + versLen + "s";
+            final String backFormat = "  %-" + versLen + "s, %7s %3s";
+
             if (firstOracle == null && firstOpen != null) {
                 Map<Issue, String> map = onlyOpen.computeIfAbsent(firstOpen, k -> new TreeMap<>(DEFAULT_ISSUE_SORT));
-                map.put(p, String.format("  %-" + versLen + "s, %s: %s",
-                        firstOpenRaw, p.getKey(), p.getSummary()));
+                map.put(p, String.format(uniFormat, firstOpenRaw));
             }
 
             if (firstOracle != null && firstOpen == null) {
                 Map<Issue, String> map = onlyOracle.computeIfAbsent(firstOracle, k -> new TreeMap<>(DEFAULT_ISSUE_SORT));
-                map.put(p, String.format("  %-" + versLen + "s, %7s %3s %s: %s",
-                        firstOracleRaw, interestTags, backportRequested ? "(*)" : "", p.getKey(), p.getSummary()));
+                map.put(p, String.format(backFormat, firstOracleRaw, interestTags, backportRequested ? "(*)" : ""));
             }
 
             if (firstOracle != null && firstOpen != null && Versions.compare(firstOracleRaw, firstOpen) == 0) {
                 if (timeOpen == null || timeOracle == null) {
-                    exactUnknown.put(p, String.format("  %-" + versLen + "s ... %-" + versLen + "s, %s: %s",
-                            firstOpenRaw, firstOracleRaw, p.getKey(), p.getSummary()));
+                    exactUnknown.put(p, String.format(unknFormat, firstOpenRaw, firstOracleRaw));
                 } else if (timeOpen.compareTo(timeOracle) < 0) {
-                    exactOpenFirst.put(p, String.format("  %-" + versLen + "s -> %-" + versLen + "s, %s: %s",
-                            firstOpenRaw, firstOracleRaw, p.getKey(), p.getSummary()));
+                    exactOpenFirst.put(p, String.format(biFormat, firstOpenRaw, firstOracleRaw));
                 } else {
-                    exactOracleFirst.put(p, String.format("  %-" + versLen + "s -> %-" + versLen + "s, %s: %s",
-                            firstOracleRaw, firstOpenRaw, p.getKey(), p.getSummary()));
+                    exactOracleFirst.put(p, String.format(biFormat, firstOracleRaw, firstOpenRaw));
                 }
             }
 
             if (firstOracle != null && firstOpen != null && Versions.compare(firstOpen, firstOracle) < 0) {
-                lateOpenFirst.put(p, String.format("  %-" + versLen + "s -> %-" + versLen + "s, %s: %s",
-                        firstOpenRaw, firstOracleRaw, p.getKey(), p.getSummary()));
+                lateOpenFirst.put(p, String.format(biFormat, firstOpenRaw, firstOracleRaw));
             }
 
             if (firstOracle != null && firstOpen != null && Versions.compare(firstOpen, firstOracle) > 0) {
-                lateOracleFirst.put(p, String.format("  %-" + versLen + "s -> %-" + versLen + "s, %s: %s",
-                        firstOracleRaw, firstOpenRaw, p.getKey(), p.getSummary()));
+                lateOracleFirst.put(p, String.format(biFormat, firstOracleRaw, firstOpenRaw));
             }
         }
     }
