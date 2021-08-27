@@ -25,6 +25,7 @@
 package org.openjdk.backports.report.html;
 
 import com.atlassian.jira.rest.client.api.domain.Issue;
+import com.google.common.collect.Multimap;
 import org.openjdk.backports.report.model.FilterModel;
 
 import java.io.PrintStream;
@@ -44,13 +45,21 @@ public class FilterHTMLReport extends AbstractHTMLReport {
         out.println("<h1>FILTER REPORT: " + model.name() + "</h1>");
         out.println("<p>Report generated: " + new Date() + "</p>");
 
-        out.println("<table>");
-        for (Issue i : model.issues()) {
+        Multimap<String, Issue> byComponent = model.byComponent();
+        for (String component : byComponent.keySet()) {
+            out.println("<h2>" + component + "</h2>");
+            out.println("<table>");
             out.println("<tr>");
-            out.println("<td>" + i.getKey() + "</td>");
-            out.println("<td>" + i.getSummary() + "</td>");
+            out.println("<th nowrap>Bug</th>");
+            out.println("<th nowrap width=\"99%\">Synopsis</th>");
             out.println("</tr>");
+            for (Issue i : byComponent.get(component)) {
+                 out.println("<tr>");
+                 out.println("<td>" + issueLink(i) + "</td>");
+                 out.println("<td>" + i.getSummary() + "</td>");
+                 out.println("</tr>");
+            }
+            out.println("</table>");
         }
-        out.println("</table>");
     }
 }

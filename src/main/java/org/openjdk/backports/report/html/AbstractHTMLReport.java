@@ -24,6 +24,8 @@
  */
 package org.openjdk.backports.report.html;
 
+import com.atlassian.jira.rest.client.api.domain.Issue;
+import org.openjdk.backports.Main;
 import org.openjdk.backports.report.Common;
 
 import java.io.*;
@@ -63,5 +65,9 @@ abstract class AbstractHTMLReport extends Common {
     }
 
     protected abstract void doGenerate(PrintStream out);
+
+    protected String issueLink(Issue issue) {
+        return "<a href=\"" + Main.JIRA_URL + "browse/" + issue.getKey() + "\">" + issue.getKey() + "</a>";
+    }
 
 }

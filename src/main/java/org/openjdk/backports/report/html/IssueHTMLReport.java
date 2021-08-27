@@ -89,14 +89,14 @@ public class IssueHTMLReport extends AbstractHTMLReport {
             out.println("</td>");
         }
 
-        out.println("<td nowrap><a href=\"" + Main.JIRA_URL + "browse/" + issue.getKey() + "\">" + issue.getKey() + "</a></td>");
+        out.println("<td nowrap>" + issueLink(issue) + "</td>");
         out.println("<td nowrap>" + issue.getSummary() + "</td>");
 
         out.println("</tr>");
     }
 
     public void generateSimple(PrintStream out) {
-        out.println("<td nowrap><a href=\"" + Main.JIRA_URL + "browse/" + issue.getKey() + "\">" + issue.getKey() + "</a></td>");
+        out.println("<td nowrap>" + issueLink(issue) + "</td>");
         out.println("<td nowrap>" + issue.getSummary() + "</td>");
         out.println("<td nowrap>" + (issue.getReporter() != null ? issue.getReporter().getDisplayName() : "None") + "</td>");
         out.println("<td nowrap>" + (issue.getAssignee() != null ? issue.getAssignee().getDisplayName() : "None") + "</td>");
