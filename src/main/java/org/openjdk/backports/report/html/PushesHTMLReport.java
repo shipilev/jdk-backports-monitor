@@ -65,12 +65,27 @@ public class PushesHTMLReport extends AbstractHTMLReport {
         Multiset<String> byComponent = model.byComponent();
 
         out.println("<h2>Distribution by priority</h2>");
+
+        out.println("<table>");
+        out.println("<tr>");
+        out.println("<th>Count</th>");
+        out.println("<th>Priority</th>");
+        out.println("</tr>");
         for (String prio : byPriority.elementSet()) {
-            out.printf("   %3d: %s%n", byPriority.count(prio), prio);
+            out.println("<tr>");
+            out.println("<td>" + byPriority.count(prio) + "</td>");
+            out.println("<td>" + prio + "</td>");
+            out.println("</tr>");
         }
-        out.println();
+        out.println("</table>");
 
         out.println("<h2>Distribution by components</h2>");
+
+        out.println("<table>");
+        out.println("<tr>");
+        out.println("<th colspan=2>Count</th>");
+        out.println("<th>Component</th>");
+        out.println("</tr>");
         {
             Multiset<String> firsts = TreeMultiset.create();
             Map<String, Multiset<String>> seconds = new HashMap<>();
@@ -83,22 +98,42 @@ public class PushesHTMLReport extends AbstractHTMLReport {
             }
 
             int total = byComponent.size();
-            out.printf("   %3d: <total issues>%n", total);
+
+            out.println("<tr>");
+            out.println("<td>" + total + "</td>");
+            out.println("<td></td>");
+            out.println("<td>Total</td>");
+            out.println("</tr>");
+
             for (String first : Multisets.copyHighestCountFirst(firsts).elementSet()) {
                 String percFirst = String.format("(%.1f%%)", 100.0 * firsts.count(first) / total);
-                out.printf("      %3d %7s: %s%n", firsts.count(first), percFirst, first);
+                out.println("<tr>");
+                out.println("<td>" + firsts.count(first) + " " + percFirst + "</td>");
+                out.println("<td></td>");
+                out.println("<td>" + first + "</td>");
+                out.println("</tr>");
                 Multiset<String> ms = seconds.get(first);
                 for (String component : Multisets.copyHighestCountFirst(ms).elementSet()) {
                     String percComponent = String.format("(%.1f%%)", 100.0 * ms.count(component) / total);
-                    out.printf("         %3d %7s: %s%n", ms.count(component), percComponent, component);
+                    out.println("<tr>");
+                    out.println("<td></td>");
+                    out.println("<td>" + ms.count(component) + " " + percComponent + "</td>");
+                    out.println("<td>" + component + "</td>");
+                    out.println("</tr>");
                 }
             }
         }
-        out.println();
+        out.println("</table>");
 
         Multimap<String, Issue> byCommitter = model.byCommitter();
 
         out.println("<h2>Distribution by affiliation</h2>");
+
+        out.println("<table>");
+        out.println("<tr>");
+        out.println("<th colspan=2>Count</th>");
+        out.println("<th>Committer</th>");
+        out.println("</tr>");
         {
             Multiset<String> byAffiliation = TreeMultiset.create();
             Map<String, Multiset<String>> byAffiliationAndCommitter = new HashMap<>();
@@ -111,29 +146,52 @@ public class PushesHTMLReport extends AbstractHTMLReport {
             }
 
             int total = byCommitter.size();
-            out.printf("   %3d: <total issues>%n", total);
+            out.println("<tr>");
+            out.println("<td>" + total + "</td>");
+            out.println("<td></td>");
+            out.println("<td>Total</td>");
+            out.println("</tr>");
+
             for (String aff : Multisets.copyHighestCountFirst(byAffiliation).elementSet()) {
                 String percAff = String.format("(%.1f%%)", 100.0 * byAffiliation.count(aff) / total);
-                out.printf("      %3d %7s: %s%n", byAffiliation.count(aff), percAff, aff);
+
+                out.println("<tr>");
+                out.println("<td>" + byAffiliation.count(aff) + " " + percAff + "</td>");
+                out.println("<td></td>");
+                out.println("<td>" + aff + "</td>");
+                out.println("</tr>");
+
                 Multiset<String> committers = byAffiliationAndCommitter.get(aff);
                 for (String committer : Multisets.copyHighestCountFirst(committers).elementSet()) {
                     String percCommitter = String.format("(%.1f%%)", 100.0 * committers.count(committer) / total);
-                    out.printf("         %3d %7s: %s%n", committers.count(committer), percCommitter, committer);
+                    out.println("<tr>");
+                    out.println("<td></td>");
+                    out.println("<td>" + committers.count(committer) + " " + percCommitter + "</td>");
+                    out.println("<td>" + committer + "</td>");
+                    out.println("</tr>");
                 }
             }
         }
-        out.println();
+        out.println("</table>");
 
         out.println("<h2>Chronological push log:</h2>");
         out.println();
         out.println("<table>");
+        out.println("<tr>");
+        out.println("<th>Days Ago</th>");
+        out.println("<th>Committer</th>");
+        out.println("<th>Affiliation</th>");
+        out.println("<th>Bug</th>");
+        out.println("<th width='99%'>Summary</th>");
+        out.println("</tr>");
+
         for (Issue i : model.byTime()) {
             String pushUser = Accessors.getPushUser(i);
             out.println("<tr>");
             out.println("<td>" + TimeUnit.SECONDS.toDays(Accessors.getPushSecondsAgo(i)) + "</td>");
             out.println("<td>" + users.getDisplayName(pushUser) + "</td>");
             out.println("<td>" + users.getAffiliation(pushUser) + "</td>");
-            out.println("<td><a href=\"https://bugs.openjdk.java.net/browse/" + i.getKey() + "\">" + i.getKey() + "</a></td>");
+            out.println("<td>" + issueLink(i) + "</td>");
             out.println("<td>" + i.getSummary() + "</td>");
             out.println("</tr>");
         }
@@ -144,7 +202,7 @@ public class PushesHTMLReport extends AbstractHTMLReport {
         out.println("<table>");
         for (Issue i : model.noChangesets()) {
             out.println("<tr>");
-            out.println("<td><a href=\"https://bugs.openjdk.java.net/browse/" + i.getKey() + "\">" + i.getKey() + "</a></td>");
+            out.println("<td>" + issueLink(i) + "</td>");
             out.println("<td>" + i.getSummary() + "</td>");
             out.println("</tr>");
         }
@@ -156,9 +214,13 @@ public class PushesHTMLReport extends AbstractHTMLReport {
         for (String committer : byCommitter.keySet()) {
             out.println("<h3>" + users.getDisplayName(committer) + ", " + users.getAffiliation(committer) + "</h3>");
             out.println("<table>");
-            for (Issue i : model.noChangesets()) {
+            out.println("<tr>");
+            out.println("<th>Bug</th>");
+            out.println("<th width='99%'>Summary</th>");
+            out.println("</tr>");
+            for (Issue i : byCommitter.get(committer)) {
                 out.println("<tr>");
-                out.println("<td><a href=\"https://bugs.openjdk.java.net/browse/" + i.getKey() + "\">" + i.getKey() + "</a></td>");
+                out.println("<td>" + issueLink(i) + "</td>");
                 out.println("<td>" + i.getSummary() + "</td>");
                 out.println("</tr>");
             }
