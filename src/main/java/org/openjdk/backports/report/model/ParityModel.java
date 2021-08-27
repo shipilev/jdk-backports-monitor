@@ -109,8 +109,8 @@ public class ParityModel extends AbstractModel {
 
         debugOut.println("Discovered " + mp.size() + " issues.");
 
-        onlyOpen = new TreeMap<>();
-        onlyOracle = new TreeMap<>();
+        onlyOpen = new TreeMap<>(Versions::compare);
+        onlyOracle = new TreeMap<>(Versions::compare);
 
         exactOpenFirst = new TreeMap<>(DEFAULT_ISSUE_SORT);
         exactOracleFirst = new TreeMap<>(DEFAULT_ISSUE_SORT);

@@ -123,19 +123,21 @@ public class VersionsTest {
         Assert.assertTrue(Versions.isShared("13"));
         Assert.assertTrue(Versions.isShared("13.0.1"));
         Assert.assertTrue(Versions.isShared("13.0.2"));
-        Assert.assertTrue(Versions.isShared("13.0.3"));
+        Assert.assertFalse(Versions.isShared("13.0.3"));
         Assert.assertFalse(Versions.isShared("13.0.1-oracle"));
         Assert.assertFalse(Versions.isShared("13.0.2-oracle"));
         Assert.assertFalse(Versions.isShared("13.0.3-oracle"));
         Assert.assertTrue(Versions.isShared("14"));
         Assert.assertTrue(Versions.isShared("14.0.1"));
         Assert.assertTrue(Versions.isShared("14.0.2"));
+        Assert.assertFalse(Versions.isShared("14.0.3"));
         Assert.assertFalse(Versions.isShared("14.0.1-oracle"));
         Assert.assertFalse(Versions.isShared("14.0.2-oracle"));
         Assert.assertFalse(Versions.isShared("14.0.3-oracle"));
         Assert.assertTrue(Versions.isShared("17"));
         Assert.assertTrue(Versions.isShared("17.0.1"));
         Assert.assertTrue(Versions.isShared("17.0.2"));
+        Assert.assertFalse(Versions.isShared("17.0.3"));
         Assert.assertFalse(Versions.isShared("17.0.1-oracle"));
         Assert.assertFalse(Versions.isShared("17.0.2-oracle"));
         Assert.assertFalse(Versions.isShared("17.0.3-oracle"));
@@ -167,6 +169,11 @@ public class VersionsTest {
         Assert.assertEquals(1,  Versions.compare("11.0.3", "11.0.2-oracle"));
         Assert.assertEquals(1,  Versions.compare("11.0.3-oracle", "11.0.2"));
         Assert.assertEquals(1,  Versions.compare("11.0.3-oracle", "11.0.2-oracle"));
+
+        Assert.assertEquals(1,  Versions.compare("11.0.10", "11.0.9"));
+        Assert.assertEquals(1,  Versions.compare("11.0.10", "11.0.9-oracle"));
+        Assert.assertEquals(1,  Versions.compare("11.0.10-oracle", "11.0.9"));
+        Assert.assertEquals(1,  Versions.compare("11.0.10-oracle", "11.0.9-oracle"));
 
         Assert.assertEquals(-1,  Versions.compare("8u212", "8u222"));
         Assert.assertEquals(-1,  Versions.compare("8u212", "openjdk8u222"));

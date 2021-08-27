@@ -168,11 +168,7 @@ public class Versions {
             return false;
         }
 
-        if (parseMajor(version) >= 13) {
-            return true;
-        }
-
-        if (parseMajor(version) == 11 && parseMinor(version) <= 2) {
+        if (parseMajor(version) >= 11 && parseMinor(version) <= 2) {
             return true;
         }
 
@@ -198,13 +194,25 @@ public class Versions {
     public static int compare(String left, String right) {
         String stripLeft = stripVendor(left);
         String stripRight = stripVendor(right);
-        if (parseMajor(stripLeft) == 8 && parseMajor(stripRight) == 8) {
-            if (Math.abs(parseMinor(stripLeft) - parseMinor(stripRight)) <= 1) {
-                return 0;
+
+        int major = Integer.compare(parseMajor(stripLeft), parseMajor(stripRight));
+        if (major != 0) {
+            return major;
+        }
+
+        int minor = Integer.compare(parseMinor(stripLeft), parseMinor(stripRight));
+        if (minor != 0) {
+            if (parseMajor(stripLeft) == 8 && parseMajor(stripRight) == 8) {
+                // Special case: adjacent 8u releases
+                if (Math.abs(parseMinor(stripLeft) - parseMinor(stripRight)) > 1) {
+                    return minor;
+                }
+            } else {
+                return minor;
             }
         }
 
-        return stripLeft.compareTo(stripRight);
+        return 0;
     }
 
 }
