@@ -40,7 +40,8 @@ public class Accessors {
         }
         Version fixVersion = it.next();
         if (it.hasNext()) {
-            throw new IllegalStateException("Multiple fix versions: " + issue.getKey());
+            // TODO: Deal with this properly. See for example JDK-8259847.
+            return "ERROR";
         }
         return fixVersion.getName();
     }
