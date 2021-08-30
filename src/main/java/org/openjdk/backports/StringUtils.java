@@ -83,4 +83,12 @@ public class StringUtils {
     public static String csvEscape(String s) {
         return "\"" + s.replaceAll("\\\"", "'") + "\"";
     }
+
+    public static String cutoff(String s, int limit) {
+        if (s == null) {
+            return s;
+        }
+        return s.substring(0, Math.min(s.length(), limit));
+    }
+
 }

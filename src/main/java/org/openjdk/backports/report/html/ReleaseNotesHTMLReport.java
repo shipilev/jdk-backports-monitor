@@ -28,11 +28,12 @@ import com.atlassian.jira.rest.client.api.domain.Issue;
 import com.github.rjeschke.txtmark.Processor;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.TreeMultimap;
-import org.openjdk.backports.StringUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.openjdk.backports.report.model.ReleaseNotesModel;
 
 import java.io.PrintStream;
-import java.io.PrintWriter;
 import java.util.*;
 
 public class ReleaseNotesHTMLReport extends AbstractHTMLReport {
@@ -49,28 +50,45 @@ public class ReleaseNotesHTMLReport extends AbstractHTMLReport {
         out.println("<h1>RELEASE NOTES: JDK " + model.release() + "</h1>");
         out.println("<p>Notes generated: " + new Date() + "<p>");
 
-        out.println("<h2>JAVA ENHANCEMENT PROPOSALS (JEP)</h2>");
+        out.println("<h2>JEPs</h2>");
 
         List<Issue> jeps = model.jeps();
         if (jeps.isEmpty()) {
             out.println("<p>None.</p>");
-        }
-
-        for (Issue i : jeps) {
-            out.println("<h3>" + i.getSummary() + "</h3>");
-            out.println();
-
-            out.println("<span class='embedded-block'>");
-            String desc = i.getDescription();
-            if (desc != null && !desc.isEmpty()) {
-                out.println(Processor.process(desc));
-            } else {
-                out.println("<p>No description.</p>");
+        } else {
+            out.println("<table>");
+            out.println("<tr>");
+            out.println("<th>Issue</th>");
+            out.println("<th>Description</th>");
+            out.println("</tr>");
+            for (Issue i : jeps) {
+                out.println("<tr>");
+                out.println("<td class='multicell'>" + issueLink(i) + "</td>");
+                out.println("<td><b>" + i.getSummary() + "</b></td>");
+                out.println("</tr>");
+                out.println("<tr>");
+                out.println("<td></td>");
+                out.println("<td class='embedded-block'>");
+                String desc = i.getDescription();
+                if (desc != null && !desc.isEmpty()) {
+                    Document doc = Jsoup.parse(Processor.process(desc));
+                    Element p = doc.body().selectFirst("p");
+                    if (p != null) {
+                        out.println(p.text());
+                    } else {
+                        out.println("Error selecting the description");
+                    }
+                    out.println("<br>");
+                } else {
+                    out.println("<p>No description.</p>");
+                }
+                out.println("</td>");
+                out.println("</tr>");
             }
-            out.println("</span>");
+            out.println("</table>");
         }
 
-        out.println("<h2>RELEASE NOTES, BY COMPONENT</h2>");
+        out.println("<h2>RELEASE NOTES</h2>");
 
         Map<String, Multimap<Issue, Issue>> rns = model.relNotes();
 
@@ -83,29 +101,50 @@ public class ReleaseNotesHTMLReport extends AbstractHTMLReport {
 
                 if (!printed) {
                     out.println("<h3>" + component + "</h3>");
+                    out.println("<table>");
+                    out.println("<tr>");
+                    out.println("<th>Issue</th>");
+                    out.println("<th>Description</th>");
+                    out.println("</tr>");
                     printed = true;
                 }
 
                 Set<String> dup = new HashSet<>();
-                for (Issue rn : m.values()) {
+                boolean firstPrint = true;
+                for (Issue rn : m.get(i)) {
+                    out.println("<tr>");
+
+                    if (firstPrint) {
+                        out.println("<td class='multicell' rowspan='" + m.get(i).size() + "'>" + issueLink(i) + "</td>");
+                        firstPrint = false;
+                    }
+
+                    out.println("<td class='embedded-block'>");
                     String descr = rn.getDescription();
                     String summary = rn.getSummary().replaceFirst("Release Note: ", "");
                     if (dup.add(descr)) {
-                        out.println("<h4>" + issueLink(rn) + ": " + summary + "</h4>");
-                        out.println("<span class='embedded-block'>");
+                        out.println("<p><b>" + summary + "</b></p>");
+                        out.println("<br>");
                         out.println(Processor.process(descr));
-                        out.println("</span>");
-                        out.println();
+                        out.println("<br>");
                     }
+                    out.println("</td>");
+                    out.println("</tr>");
                 }
+
             }
+
+            if (printed) {
+                out.println("</table>");
+            }
+
         }
         if (!haveRelNotes) {
             out.println("<p>None.</p>");
         }
         out.println();
 
-        out.println("<h2>ALL FIXED ISSUES, BY COMPONENT AND PRIORITY</h2>");
+        out.println("<h2>FIXED ISSUES</h2>");
         out.println();
 
         Multimap<String, Issue> byComponent = model.byComponent();

@@ -123,7 +123,11 @@ td a {
     display: block;
 }
 
-p.embedded-block {
-    width: 50%;
+td.multicell {
+    vertical-align: top;
+}
+
+td.embedded-block {
+    white-space: normal;
 }
 
