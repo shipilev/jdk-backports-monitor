@@ -41,10 +41,10 @@ public class ParityCSVReport extends AbstractCSVReport {
 
     @Override
     protected void doGenerate(PrintStream out) {
-        Map<String, Map<Issue, String>> map = model.onlyOracle();
+        Map<String, Map<Issue, ParityModel.SingleVersMetadata>> map = model.onlyOracle();
 
         for (String rel : map.keySet()) {
-            Map<Issue, String> m = map.get(rel);
+            Map<Issue, ParityModel.SingleVersMetadata> m = map.get(rel);
             for (Issue k : m.keySet()) {
                 out.printf("\"%s\", \"%s\", \"%s\"%n",
                         k.getKey(),

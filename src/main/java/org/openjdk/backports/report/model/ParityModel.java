@@ -42,13 +42,14 @@ import java.util.*;
 public class ParityModel extends AbstractModel {
 
     private final int majorVer;
-    private final SortedMap<Issue, String> exactOpenFirst;
-    private final SortedMap<Issue, String> exactOracleFirst;
-    private final SortedMap<Issue, String> exactUnknown;
-    private final SortedMap<Issue, String> lateOpenFirst;
-    private final SortedMap<Issue, String> lateOracleFirst;
-    private final Map<String, Map<Issue, String>> onlyOpen;
-    private final Map<String, Map<Issue, String>> onlyOracle;
+    private final SortedMap<Issue, SingleVers> exactOpenFirst;
+    private final SortedMap<Issue, SingleVers> exactOracleFirst;
+    private final SortedMap<Issue, DoubleVers> exactUnknown;
+    private final SortedMap<Issue, DoubleVers> lateOpenFirst;
+    private final SortedMap<Issue, DoubleVers> lateOracleFirst;
+    private final Map<String, Map<Issue, SingleVers>> onlyOpen;
+    private final Map<String, Map<Issue, SingleVersMetadata>> onlyOracle;
+    private int versLen;
 
     public ParityModel(JiraRestClient cli, PrintStream debugOut, int majorVer) {
         super(cli, debugOut);
@@ -57,7 +58,6 @@ public class ParityModel extends AbstractModel {
         Multimap<Issue, Issue> mp = HashMultimap.create();
 
         List<String> vers = new ArrayList<>();
-        int versLen = 0;
 
         Project proj = cli.getProjectClient().getProject("JDK").claim();
         for (Version ver : proj.getVersions()) {
@@ -186,37 +186,32 @@ public class ParityModel extends AbstractModel {
                 continue;
             }
 
-            final String uniFormat = "  %-" + versLen + "s";
-            final String biFormat = "  %-" + versLen + "s -> %-" + versLen + "s";
-            final String unknFormat = "  %-" + versLen + "s ... %-" + versLen + "s";
-            final String backFormat = "  %-" + versLen + "s, %7s %3s";
-
             if (firstOracle == null && firstOpen != null) {
-                Map<Issue, String> map = onlyOpen.computeIfAbsent(firstOpen, k -> new TreeMap<>(DEFAULT_ISSUE_SORT));
-                map.put(p, String.format(uniFormat, firstOpenRaw));
+                Map<Issue, SingleVers> map = onlyOpen.computeIfAbsent(firstOpen, k -> new TreeMap<>(DEFAULT_ISSUE_SORT));
+                map.put(p, new SingleVers(firstOpenRaw));
             }
 
             if (firstOracle != null && firstOpen == null) {
-                Map<Issue, String> map = onlyOracle.computeIfAbsent(firstOracle, k -> new TreeMap<>(DEFAULT_ISSUE_SORT));
-                map.put(p, String.format(backFormat, firstOracleRaw, interestTags, backportRequested ? "(*)" : ""));
+                Map<Issue, SingleVersMetadata> map = onlyOracle.computeIfAbsent(firstOracle, k -> new TreeMap<>(DEFAULT_ISSUE_SORT));
+                map.put(p, new SingleVersMetadata(firstOracleRaw, interestTags, backportRequested));
             }
 
             if (firstOracle != null && firstOpen != null && Versions.compare(firstOracleRaw, firstOpen) == 0) {
                 if (timeOpen == null || timeOracle == null) {
-                    exactUnknown.put(p, String.format(unknFormat, firstOpenRaw, firstOracleRaw));
+                    exactUnknown.put(p, new DoubleVers(firstOpenRaw, firstOracleRaw));
                 } else if (timeOpen.compareTo(timeOracle) < 0) {
-                    exactOpenFirst.put(p, String.format(biFormat, firstOpenRaw, firstOracleRaw));
+                    exactOpenFirst.put(p, new SingleVers(firstOpenRaw));
                 } else {
-                    exactOracleFirst.put(p, String.format(biFormat, firstOracleRaw, firstOpenRaw));
+                    exactOracleFirst.put(p, new SingleVers(firstOracleRaw));
                 }
             }
 
             if (firstOracle != null && firstOpen != null && Versions.compare(firstOpen, firstOracle) < 0) {
-                lateOpenFirst.put(p, String.format(biFormat, firstOpenRaw, firstOracleRaw));
+                lateOpenFirst.put(p, new DoubleVers(firstOpenRaw, firstOracleRaw));
             }
 
             if (firstOracle != null && firstOpen != null && Versions.compare(firstOpen, firstOracle) > 0) {
-                lateOracleFirst.put(p, String.format(biFormat, firstOracleRaw, firstOpenRaw));
+                lateOracleFirst.put(p, new DoubleVers(firstOracleRaw, firstOpenRaw));
             }
         }
     }
@@ -225,31 +220,86 @@ public class ParityModel extends AbstractModel {
         return majorVer;
     }
 
-    public Map<String, Map<Issue, String>> onlyOpen() {
+    public Map<String, Map<Issue, SingleVers>> onlyOpen() {
         return onlyOpen;
     }
 
-    public Map<String, Map<Issue, String>> onlyOracle() {
+    public Map<String, Map<Issue, SingleVersMetadata>> onlyOracle() {
         return onlyOracle;
     }
 
-    public SortedMap<Issue, String> exactOpenFirst() {
+    public SortedMap<Issue, SingleVers> exactOpenFirst() {
         return exactOpenFirst;
     }
 
-    public SortedMap<Issue, String> exactOracleFirst() {
+    public SortedMap<Issue, SingleVers> exactOracleFirst() {
         return exactOracleFirst;
     }
 
-    public SortedMap<Issue, String> exactUnknown() {
+    public SortedMap<Issue, DoubleVers> exactUnknown() {
         return exactUnknown;
     }
 
-    public SortedMap<Issue, String> lateOpenFirst() {
+    public SortedMap<Issue, DoubleVers> lateOpenFirst() {
         return lateOpenFirst;
     }
 
-    public SortedMap<Issue, String> lateOracleFirst() {
+    public SortedMap<Issue, DoubleVers> lateOracleFirst() {
         return lateOracleFirst;
     }
+
+    public int getVersLen() {
+        return versLen;
+    }
+
+    public static class SingleVers {
+        private final String ver;
+        public SingleVers(String ver) {
+            this.ver = ver;
+        }
+
+        public String version() {
+            return ver;
+        }
+    }
+
+    public static class SingleVersMetadata {
+        private final String ver;
+        private final String interestTags;
+        private final boolean backportRequested;
+
+        public SingleVersMetadata(String ver, String interestTags, boolean backportRequested) {
+            this.ver = ver;
+            this.interestTags = interestTags;
+            this.backportRequested = backportRequested;
+        }
+
+        public String version() {
+            return ver;
+        }
+        public String interestTags() {
+            return interestTags;
+        }
+        public boolean backportRequested() {
+            return backportRequested;
+        }
+    }
+
+    public static class DoubleVers {
+        private final String v1, v2;
+        public DoubleVers(String v1, String v2) {
+            this.v1 = v1;
+            this.v2 = v2;
+        }
+
+        public String version1() {
+            return v1;
+        }
+
+        public String version2() {
+            return v2;
+        }
+    }
+
+
 }

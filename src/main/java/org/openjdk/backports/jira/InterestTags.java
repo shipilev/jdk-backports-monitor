@@ -45,11 +45,9 @@ public class InterestTags {
         Collections.sort(tags);
 
         StringBuilder sb = new StringBuilder();
-        sb.append("[");
         for (String tag : tags) {
             sb.append(tag);
         }
-        sb.append("]");
         return sb.toString();
     }
 

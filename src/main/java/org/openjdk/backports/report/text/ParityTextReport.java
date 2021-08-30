@@ -58,7 +58,7 @@ public class ParityTextReport extends AbstractTextReport {
         out.println("[...] marks the interest tags.");
         out.println("(*) marks the backporting work in progress.");
         out.println();
-        printWithVersion(out, model.onlyOracle());
+        printWithVersionMeta(out, model.onlyOracle());
         out.println();
 
         out.println("=== EXCLUSIVE: ONLY IN OPENJDK");
@@ -74,14 +74,14 @@ public class ParityTextReport extends AbstractTextReport {
         out.println();
         out.println("This is where OpenJDK used to be ahead, and then Oracle JDK caught up in future releases.");
         out.println();
-        printSimple(out, model.lateOpenFirst());
+        printDouble(out, model.lateOpenFirst());
         out.println();
 
         out.println("=== LATE PARITY: OPENJDK FOLLOWS ORACLE JDK IN LATER RELEASES");
         out.println();
         out.println("This is where Oracle JDK used to be ahead, and then OpenJDK caught up in future releases.");
         out.println();
-        printSimple(out, model.lateOracleFirst());
+        printDouble(out, model.lateOracleFirst());
         out.println();
 
         out.println("=== EXACT PARITY: ORACLE JDK FOLLOWS OPENJDK");
@@ -89,7 +89,7 @@ public class ParityTextReport extends AbstractTextReport {
         out.println("This is where OpenJDK made the first backport in the release, and then Oracle JDK followed.");
         out.println("No difference in the final release detected.");
         out.println();
-        printSimple(out, model.exactOpenFirst());
+        printSingle(out, model.exactOpenFirst());
         out.println();
 
         out.println("=== EXACT PARITY: OPENJDK FOLLOWS ORACLE JDK");
@@ -97,7 +97,7 @@ public class ParityTextReport extends AbstractTextReport {
         out.println("This is where Oracle JDK made the first backport in the release, and then OpenJDK followed.");
         out.println("No difference in the final release detected.");
         out.println();
-        printSimple(out, model.exactOracleFirst());
+        printSingle(out, model.exactOracleFirst());
         out.println();
 
         out.println("=== EXACT PARITY: UNKNOWN TIMING");
@@ -105,33 +105,79 @@ public class ParityTextReport extends AbstractTextReport {
         out.println("This is where the difference in time within the release was not identified reliably.");
         out.println("No difference in the final release detected.");
         out.println();
-        printSimple(out, model.exactUnknown());
+        printDouble(out, model.exactUnknown());
         out.println();
     }
 
-    void printWithVersion(PrintStream out, Map<String, Map<Issue, String>> issues) {
+    void printWithVersionMeta(PrintStream out, Map<String, Map<Issue, ParityModel.SingleVersMetadata>> issues) {
         int size = 0;
-        for (Map.Entry<String, Map<Issue, String>> kv : issues.entrySet()) {
+        for (Map.Entry<String, Map<Issue, ParityModel.SingleVersMetadata>> kv : issues.entrySet()) {
             size += kv.getValue().size();
         }
         out.println(size + " issues in total");
         out.println();
 
-        for (Map.Entry<String, Map<Issue, String>> kv : issues.entrySet()) {
+        for (Map.Entry<String, Map<Issue, ParityModel.SingleVersMetadata>> kv : issues.entrySet()) {
             out.println(kv.getKey() + " (" + kv.getValue().size() + " issues):");
-            for (Map.Entry<Issue, String> kv2 : kv.getValue().entrySet()) {
+            for (Map.Entry<Issue, ParityModel.SingleVersMetadata> kv2 : kv.getValue().entrySet()) {
                 Issue i = kv2.getKey();
-                out.println(kv2.getValue() + " " + i.getKey() + ": " + i.getSummary());
+                ParityModel.SingleVersMetadata vers = kv2.getValue();
+                out.printf("%-" + model.getVersLen() + "s, %7s %3s %s: %s%n",
+                        vers.version(),
+                        "[" + vers.interestTags() + "]",
+                        vers.backportRequested() ? "(*)" : "",
+                        i.getKey(),
+                        i.getSummary());
             }
             out.println();
         }
     }
 
-    void printSimple(PrintStream out, Map<Issue, String> issues) {
+    void printWithVersion(PrintStream out, Map<String, Map<Issue, ParityModel.SingleVers>> issues) {
+        int size = 0;
+        for (Map.Entry<String, Map<Issue, ParityModel.SingleVers>> kv : issues.entrySet()) {
+            size += kv.getValue().size();
+        }
+        out.println(size + " issues in total");
+        out.println();
+
+        for (Map.Entry<String, Map<Issue, ParityModel.SingleVers>> kv : issues.entrySet()) {
+            out.println(kv.getKey() + " (" + kv.getValue().size() + " issues):");
+            for (Map.Entry<Issue, ParityModel.SingleVers> kv2 : kv.getValue().entrySet()) {
+                Issue i = kv2.getKey();
+                ParityModel.SingleVers vers = kv2.getValue();
+                out.printf("%-" + model.getVersLen() + "s, %s: %s%n",
+                        vers.version(),
+                        i.getKey(),
+                        i.getSummary());
+            }
+            out.println();
+        }
+    }
+
+    void printSingle(PrintStream out, Map<Issue, ParityModel.SingleVers> issues) {
         out.println(issues.size() + " issues:");
-        for (Map.Entry<Issue,String> kv : issues.entrySet()) {
+        for (Map.Entry<Issue,ParityModel.SingleVers> kv : issues.entrySet()) {
             Issue i = kv.getKey();
-            out.println(kv.getValue() + ", " + i.getKey() + ": " + i.getSummary());
+            ParityModel.SingleVers vers = kv.getValue();
+            out.printf("%-" + model.getVersLen() + "s, %s: %s%n",
+                    vers.version(),
+                    i.getKey(),
+                    i.getSummary());
+        }
+        out.println();
+    }
+
+    void printDouble(PrintStream out, Map<Issue, ParityModel.DoubleVers> issues) {
+        out.println(issues.size() + " issues:");
+        for (Map.Entry<Issue,ParityModel.DoubleVers> kv : issues.entrySet()) {
+            Issue i = kv.getKey();
+            ParityModel.DoubleVers vers = kv.getValue();
+            out.printf("%-" + model.getVersLen() + "s, %-" + model.getVersLen() + "s, %s: %s%n",
+                    vers.version1(),
+                    vers.version2(),
+                    i.getKey(),
+                    i.getSummary());
         }
         out.println();
     }
