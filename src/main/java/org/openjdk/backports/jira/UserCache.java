@@ -240,6 +240,7 @@ public class UserCache {
             {"Marcus Hirt", "DataDog"},
             {"John Paul Adrian Glaubitz", "Debian"},
             {"Lukas Eder", "DataGeekery"},
+            {"Andrew Haley", "Red Hat"},
     };
 
     private String generifyAffiliation(String full, String v) {
