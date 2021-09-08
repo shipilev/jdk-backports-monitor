@@ -84,7 +84,7 @@ public class PushesHTMLReport extends AbstractHTMLReport {
         out.println("<table>");
         out.println("<tr>");
         out.println("<th colspan=2>Count</th>");
-        out.println("<th>Component</th>");
+        out.println("<th colspan=3>Component</th>");
         out.println("</tr>");
         {
             Multiset<String> firsts = TreeMultiset.create();
@@ -100,24 +100,25 @@ public class PushesHTMLReport extends AbstractHTMLReport {
             int total = byComponent.size();
 
             out.println("<tr>");
-            out.println("<td>" + total + "</td>");
-            out.println("<td></td>");
-            out.println("<td>Total</td>");
+            out.println("<td align=right><b>" + total + "</b></td>");
+            out.println("<td align=right><b>100%</b></td>");
+            out.println("<td colspan=3><b>Total</b></td>");
             out.println("</tr>");
 
             for (String first : Multisets.copyHighestCountFirst(firsts).elementSet()) {
-                String percFirst = String.format("(%.1f%%)", 100.0 * firsts.count(first) / total);
+                String percFirst = String.format("%.1f%%", 100.0 * firsts.count(first) / total);
                 out.println("<tr>");
-                out.println("<td>" + firsts.count(first) + " " + percFirst + "</td>");
-                out.println("<td></td>");
-                out.println("<td>" + first + "</td>");
+                out.println("<td align=right><b>" + firsts.count(first) + "</b></td>");
+                out.println("<td align=right><b>" + percFirst + "</b></td>");
+                out.println("<td colspan=3><b>" + first + "</b></td>");
                 out.println("</tr>");
                 Multiset<String> ms = seconds.get(first);
                 for (String component : Multisets.copyHighestCountFirst(ms).elementSet()) {
-                    String percComponent = String.format("(%.1f%%)", 100.0 * ms.count(component) / total);
+                    String percComponent = String.format("%.1f%%", 100.0 * ms.count(component) / total);
                     out.println("<tr>");
-                    out.println("<td></td>");
-                    out.println("<td>" + ms.count(component) + " " + percComponent + "</td>");
+                    out.println("<td colspan=2></td>");
+                    out.println("<td align=right>" + ms.count(component) + "</td>");
+                    out.println("<td align=right>" + percComponent + "</td>");
                     out.println("<td>" + component + "</td>");
                     out.println("</tr>");
                 }
@@ -132,7 +133,7 @@ public class PushesHTMLReport extends AbstractHTMLReport {
         out.println("<table>");
         out.println("<tr>");
         out.println("<th colspan=2>Count</th>");
-        out.println("<th>Committer</th>");
+        out.println("<th colspan=3>Committer</th>");
         out.println("</tr>");
         {
             Multiset<String> byAffiliation = TreeMultiset.create();
@@ -147,26 +148,27 @@ public class PushesHTMLReport extends AbstractHTMLReport {
 
             int total = byCommitter.size();
             out.println("<tr>");
-            out.println("<td>" + total + "</td>");
-            out.println("<td></td>");
-            out.println("<td>Total</td>");
+            out.println("<td align=right><b>" + total + "</b></td>");
+            out.println("<td align=right><b>100%</b></td>");
+            out.println("<td colspan=3><b>Total</b></td>");
             out.println("</tr>");
 
             for (String aff : Multisets.copyHighestCountFirst(byAffiliation).elementSet()) {
-                String percAff = String.format("(%.1f%%)", 100.0 * byAffiliation.count(aff) / total);
+                String percAff = String.format("%.1f%%", 100.0 * byAffiliation.count(aff) / total);
 
                 out.println("<tr>");
-                out.println("<td>" + byAffiliation.count(aff) + " " + percAff + "</td>");
-                out.println("<td></td>");
-                out.println("<td>" + aff + "</td>");
+                out.println("<td align=right><b>" + byAffiliation.count(aff) + "</b></td>");
+                out.println("<td align=right><b>" + percAff + "</b></td>");
+                out.println("<td colspan=3><b>" + aff + "</b></td>");
                 out.println("</tr>");
 
                 Multiset<String> committers = byAffiliationAndCommitter.get(aff);
                 for (String committer : Multisets.copyHighestCountFirst(committers).elementSet()) {
-                    String percCommitter = String.format("(%.1f%%)", 100.0 * committers.count(committer) / total);
+                    String percCommitter = String.format("%.1f%%", 100.0 * committers.count(committer) / total);
                     out.println("<tr>");
-                    out.println("<td></td>");
-                    out.println("<td>" + committers.count(committer) + " " + percCommitter + "</td>");
+                    out.println("<td colspan=2></td>");
+                    out.println("<td align=right>" + committers.count(committer) + "</td>");
+                    out.println("<td align=right>" + percCommitter + "</td>");
                     out.println("<td>" + committer + "</td>");
                     out.println("</tr>");
                 }

@@ -104,8 +104,8 @@ tr:hover td {
 th {
     padding: 5px;
     text-align: left;
-    font-size: .75em;
     border-left: 1px solid #edf1f5;
+    border-bottom: 2px solid #edf1f5;
 }
 
 td {
@@ -117,6 +117,10 @@ td {
     vertical-align: middle;
     text-align: left;
     white-space: nowrap;
+}
+
+th:first-child, td:first-child {
+    border-left: none;
 }
 
 td a {
