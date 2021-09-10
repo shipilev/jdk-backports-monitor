@@ -44,6 +44,7 @@ public class ParityModel extends AbstractModel {
     private final int majorVer;
     private final SortedMap<Issue, SingleVers> exactOpenFirst;
     private final SortedMap<Issue, SingleVers> exactOracleFirst;
+    private final SortedMap<Issue, SingleVers> openRejected;
     private final SortedMap<Issue, DoubleVers> exactUnknown;
     private final SortedMap<Issue, DoubleVers> lateOpenFirst;
     private final SortedMap<Issue, DoubleVers> lateOracleFirst;
@@ -77,20 +78,12 @@ public class ParityModel extends AbstractModel {
         for (String ver : vers) {
             Multimap<Issue, Issue> pb = jiraIssues.getIssuesWithBackportsOnly("project = JDK" +
                     " AND (status in (Closed, Resolved))" +
-                    " AND (labels not in (release-note, openjdk-na, openjdk" + majorVer + "u-WNF) OR labels is EMPTY)" +
+                    " AND (labels not in (release-note) OR labels is EMPTY)" +
                     " AND (issuetype != CSR)" +
                     " AND (resolution not in (\"Won't Fix\", Duplicate, \"Cannot Reproduce\", \"Not an Issue\", Withdrawn, Other))" +
                     " AND fixVersion = " + ver);
 
             for (Issue parent : pb.keySet()) {
-                if (Accessors.isOracleSpecific(parent)) {
-                    // There is no parity with these
-                    continue;
-                }
-                if (Accessors.isOpenJDKWontFix(parent, majorVer)) {
-                    // Determined as won't fix for OpenJDK, skip
-                    continue;
-                }
                 if (majorVer == 8 && Accessors.extractComponents(parent).startsWith("javafx")) {
                     // JavaFX is not the part of OpenJDK 8, no parity.
                     continue;
@@ -111,6 +104,7 @@ public class ParityModel extends AbstractModel {
 
         onlyOpen = new TreeMap<>(Versions::compare);
         onlyOracle = new TreeMap<>(Versions::compare);
+        openRejected = new TreeMap<>(DEFAULT_ISSUE_SORT);
 
         exactOpenFirst = new TreeMap<>(DEFAULT_ISSUE_SORT);
         exactOracleFirst = new TreeMap<>(DEFAULT_ISSUE_SORT);
@@ -186,6 +180,13 @@ public class ParityModel extends AbstractModel {
                 continue;
             }
 
+            if (Accessors.isOracleSpecific(p) ||
+                Accessors.isOpenJDKWontFix(p, majorVer) ||
+                Accessors.ifUpdateReleaseNo(p, majorVer)) {
+                openRejected.put(p, new SingleVers(firstOracle));
+                continue;
+            }
+
             if (firstOracle == null && firstOpen != null) {
                 Map<Issue, SingleVers> map = onlyOpen.computeIfAbsent(firstOpen, k -> new TreeMap<>(DEFAULT_ISSUE_SORT));
                 map.put(p, new SingleVers(firstOpenRaw));
@@ -234,6 +235,10 @@ public class ParityModel extends AbstractModel {
 
     public SortedMap<Issue, SingleVers> exactOracleFirst() {
         return exactOracleFirst;
+    }
+
+    public SortedMap<Issue, SingleVers> openRejected() {
+        return openRejected;
     }
 
     public SortedMap<Issue, DoubleVers> exactUnknown() {

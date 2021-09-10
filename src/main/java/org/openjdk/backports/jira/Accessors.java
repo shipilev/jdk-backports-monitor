@@ -192,6 +192,10 @@ public class Accessors {
         return issue.getLabels().contains("openjdk" + majorVer + "u-WNF");
     }
 
+    public static boolean ifUpdateReleaseNo(Issue issue, int majorVer) {
+        return issue.getLabels().contains("jdk" + majorVer + "u-fix-no");
+    }
+
     public static boolean isReleaseNoteTag(Issue issue) {
         return issue.getLabels().contains("release-note");
     }

@@ -61,6 +61,13 @@ public class ParityTextReport extends AbstractTextReport {
         printWithVersionMeta(out, model.onlyOracle());
         out.println();
 
+        out.println("=== EXCLUSIVE: OPENJDK REJECTED");
+        out.println();
+        out.println("These are the issues that were ruled as either not");
+        out.println("affecting OpenJDK, or otherwise rejected by maintainers.");
+        printSingle(out, model.openRejected());
+        out.println();
+
         out.println("=== EXCLUSIVE: ONLY IN OPENJDK");
         out.println();
         out.println("This is where OpenJDK is ahead of Oracle JDK.");

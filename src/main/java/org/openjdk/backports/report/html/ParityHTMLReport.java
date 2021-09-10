@@ -60,6 +60,13 @@ public class ParityHTMLReport extends AbstractHTMLReport {
         printWithVersionMeta(out, model.onlyOracle());
         out.println();
 
+        out.println("<h2>EXCLUSIVE: OPENJDK REJECTED</h2>");
+        out.println();
+        out.println("<p>These are the issues that were ruled as either not affecting OpenJDK, or otherwise rejected by maintainers.</p>");
+        out.println();
+        printSingle(out, model.openRejected());
+        out.println();
+
         out.println("<h2>EXCLUSIVE: ONLY IN OPENJDK</h2>");
         out.println();
         out.println("<p>This is where OpenJDK is ahead of Oracle JDK.</p>");
