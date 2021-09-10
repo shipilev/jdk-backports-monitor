@@ -190,7 +190,7 @@ public class IssueHTMLReport extends AbstractHTMLReport {
                     sb.append("\u270B");
                     break;
                 case APPROVED:
-                    sb.append("\u270C");
+                    sb.append("\u270A");
                     break;
                 case WARNING:
                     sb.append("<b><font color=red>\u26A0</font></b>");
