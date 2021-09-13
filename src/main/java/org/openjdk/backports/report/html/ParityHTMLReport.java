@@ -64,7 +64,7 @@ public class ParityHTMLReport extends AbstractHTMLReport {
         out.println();
         out.println("<p>These are the issues that were ruled as either not affecting OpenJDK, or otherwise rejected by maintainers.</p>");
         out.println();
-        printSingle(out, model.openRejected());
+        printWithVersion(out, model.openRejected());
         out.println();
 
         out.println("<h2>EXCLUSIVE: ONLY IN OPENJDK</h2>");

@@ -44,11 +44,11 @@ public class ParityModel extends AbstractModel {
     private final int majorVer;
     private final SortedMap<Issue, SingleVers> exactOpenFirst;
     private final SortedMap<Issue, SingleVers> exactOracleFirst;
-    private final SortedMap<Issue, SingleVers> openRejected;
     private final SortedMap<Issue, DoubleVers> exactUnknown;
     private final SortedMap<Issue, DoubleVers> lateOpenFirst;
     private final SortedMap<Issue, DoubleVers> lateOracleFirst;
     private final Map<String, Map<Issue, SingleVers>> onlyOpen;
+    private final Map<String, Map<Issue, SingleVers>> openRejected;
     private final Map<String, Map<Issue, SingleVersMetadata>> onlyOracle;
     private int versLen;
 
@@ -103,8 +103,8 @@ public class ParityModel extends AbstractModel {
         debugOut.println("Discovered " + mp.size() + " issues.");
 
         onlyOpen = new TreeMap<>(Versions::compare);
+        openRejected = new TreeMap<>(Versions::compare);
         onlyOracle = new TreeMap<>(Versions::compare);
-        openRejected = new TreeMap<>(DEFAULT_ISSUE_SORT);
 
         exactOpenFirst = new TreeMap<>(DEFAULT_ISSUE_SORT);
         exactOracleFirst = new TreeMap<>(DEFAULT_ISSUE_SORT);
@@ -183,7 +183,8 @@ public class ParityModel extends AbstractModel {
             if (Accessors.isOracleSpecific(p) ||
                 Accessors.isOpenJDKWontFix(p, majorVer) ||
                 Accessors.ifUpdateReleaseNo(p, majorVer)) {
-                openRejected.put(p, new SingleVers(firstOracle));
+                Map<Issue, SingleVers> map = openRejected.computeIfAbsent(firstOracle, k -> new TreeMap<>(DEFAULT_ISSUE_SORT));
+                map.put(p, new SingleVers(firstOracle));
                 continue;
             }
 
@@ -237,7 +238,7 @@ public class ParityModel extends AbstractModel {
         return exactOracleFirst;
     }
 
-    public SortedMap<Issue, SingleVers> openRejected() {
+    public Map<String, Map<Issue, SingleVers>> openRejected() {
         return openRejected;
     }
 

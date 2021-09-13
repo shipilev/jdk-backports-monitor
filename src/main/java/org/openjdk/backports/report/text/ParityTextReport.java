@@ -65,7 +65,7 @@ public class ParityTextReport extends AbstractTextReport {
         out.println();
         out.println("These are the issues that were ruled as either not");
         out.println("affecting OpenJDK, or otherwise rejected by maintainers.");
-        printSingle(out, model.openRejected());
+        printWithVersion(out, model.openRejected());
         out.println();
 
         out.println("=== EXCLUSIVE: ONLY IN OPENJDK");
