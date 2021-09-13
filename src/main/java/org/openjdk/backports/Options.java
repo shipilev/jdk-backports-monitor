@@ -56,47 +56,62 @@ public class Options {
     public boolean parse() throws IOException {
         OptionParser parser = new OptionParser();
 
-        OptionSpec<String> optAuthProps = parser.accepts("auth", "Property file with user/pass authentication pair")
+        OptionSpec<String> optAuthProps = parser.accepts("auth",
+                "Use this property file with user/pass authentication pair.")
                 .withRequiredArg().ofType(String.class).describedAs("file").defaultsTo("auth.props");
 
-        OptionSpec<String> optLabelReport = parser.accepts("label", "Report status of closed bugs for given label")
+        OptionSpec<String> optLabelReport = parser.accepts("label",
+                "Report the backporting status for a given label.")
                 .withRequiredArg().ofType(String.class).describedAs("tag");
 
-        OptionSpec<String> optLabelHistoryReport = parser.accepts("label-history", "Report the history for a given label.")
+        OptionSpec<String> optLabelHistoryReport = parser.accepts("label-history",
+                "Report the change history for a given label.")
                 .withRequiredArg().ofType(String.class).describedAs("tag");
 
-        OptionSpec<String> optPushesReport = parser.accepts("pushes", "Report backport pushes by release")
+        OptionSpec<String> optPushesReport = parser.accepts("pushes",
+                "Report the backport pushes for a given release.")
                 .withRequiredArg().ofType(String.class).describedAs("release");
 
-        OptionSpec<String> optPendingPushReport = parser.accepts("pending-push", "Report backports that were approved, and pending for push")
+        OptionSpec<String> optPendingPushReport = parser.accepts("pending-push",
+                "Report backports that were approved and are pending for push for a given release.")
                 .withRequiredArg().ofType(String.class).describedAs("release");
 
-        OptionSpec<String> optIssueReport = parser.accepts("issue", "Report issue status (useful for debugging)")
+        OptionSpec<String> optIssueReport = parser.accepts("issue",
+                "Report single issue status.")
                 .withRequiredArg().ofType(String.class).describedAs("bug-id");
 
-        OptionSpec<Long> optFilterReport = parser.accepts("filter", "Report issues matching the filter")
+        OptionSpec<Long> optFilterReport = parser.accepts("filter",
+                "Report issues matching a given filter.")
                 .withRequiredArg().ofType(long.class).describedAs("filter-id");
 
-        OptionSpec<Integer> optParityReport = parser.accepts("parity", "Report parity statistics")
+        OptionSpec<Integer> optParityReport = parser.accepts("parity",
+                "Report parity statistics for a given release.")
                 .withRequiredArg().ofType(Integer.class).describedAs("release-train");
 
-        OptionSpec<String> optReleaseNotesReport = parser.accepts("release-notes", "Generates release notes for a given release")
+        OptionSpec<String> optReleaseNotesReport = parser.accepts("release-notes",
+                "Report release notes for a given release.")
                 .withRequiredArg().ofType(String.class).describedAs("release");
 
-        OptionSpec<String> optLogPrefix = parser.accepts("output-prefix", "Use this output file prefix")
+        OptionSpec<String> optLogPrefix = parser.accepts("output-prefix",
+                "Use this output file prefix")
                 .withRequiredArg().ofType(String.class).describedAs("output prefix").defaultsTo("output");
 
-        OptionSpec<String> optUpdateHgDB = parser.accepts("hg-repos", "Use these repositories for Mercurial metadata")
+        OptionSpec<String> optUpdateHgDB = parser.accepts("hg-repos",
+                "Use these repositories for Mercurial metadata")
                 .withRequiredArg().ofType(String.class).describedAs("paths-to-local-hg");
 
-        OptionSpec<Actionable> optMinLevel = parser.accepts("min-level", "Minimal actionable level to print")
+        OptionSpec<Actionable> optMinLevel = parser.accepts("min-level",
+                "Minimal actionable level to print.")
                 .withRequiredArg().ofType(Actionable.class).describedAs("level").defaultsTo(Actionable.NONE);
 
-        OptionSpec<Void> optAffiliationReport = parser.accepts("affiliation", "Create affiliation report");
+        OptionSpec<Void> optAffiliationReport = parser.accepts("affiliation",
+                "Report contributor affiliations.");
 
-        OptionSpec<Void> optDirectOnly = parser.accepts("direct-only", "For pushes, do direct pushes only");
+        OptionSpec<Void> optDirectOnly = parser.accepts("direct-only",
+                "For push reports, ignore backports and handle direct pushes only.");
 
-        OptionSpec<Void> optIncludeCarryovers = parser.accepts("include-carryovers", "Include carry-over issues in reports");
+        OptionSpec<Void> optIncludeCarryovers = parser.accepts("include-carryovers",
+                "For release reports, include carry-overs from other releases.");
 
         parser.accepts("h", "Print this help.");
 
@@ -105,6 +120,13 @@ public class Options {
             set = parser.parse(args);
         } catch (OptionException e) {
             System.err.println("ERROR: " + e.getMessage());
+            System.err.println();
+            parser.printHelpOn(System.err);
+            return false;
+        }
+
+        if (!set.hasOptions()) {
+            System.err.println("ERROR: Please specify what report to generate.");
             System.err.println();
             parser.printHelpOn(System.err);
             return false;
