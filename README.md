@@ -8,14 +8,14 @@ to forget at times.
 
 This project uses JIRA REST Client to query OpenJDK bug database and produce the reports 
 related to JDK Updates work. Also, there are projects that are either not tracked in the
-OpenJDK bugtracker consistently (for example, because they are not in mainline in some
-releases), or are hosted somewhere else, so the tool is also able to parse Mercurial
+OpenJDK bugtracker consistently (for example, because they are not in mainline for some
+JDK trains), or are hosted somewhere else, so the tool is also able to parse Mercurial
 repositories to cross-match the bug database with it.
  
-This whole thing is really nothing more than a glorified shell script that 
-collates data around the OpenJDK JIRA and Mercurial repos. Which is also why there are
-hardly any tests, and there is this overall feeling of haphazardly put code. But hey,
-you should have seen the Bash version I had before it.
+This whole thing is really nothing more than a glorified shell script that collates data
+from the OpenJDK JIRA, Mercurial and Git repos. Which is also why there are hardly any
+tests, and there is this overall feeling of haphazardly put code. But hey, you should have
+seen the Bash version I had before it.
 
 ## What Do I Need... Wait, Do I Really Need To Run It?
 
@@ -38,30 +38,46 @@ Generated reports from my CI jobs are here:
 
 Build it like a usual Maven project:
 
-       mvn clean install
+       mvn clean verify
+
+This would produce the runnable JAR:
+
+       java -jar target/jdk-backports-monitor.jar -h
 
 Some interesting one-liners:
 
-1) Print the backporting status for all issues with a given label: 
+1) Get the backporting status for all issues with a given label: 
 
        java -jar target/jdk-backports-monitor.jar --label redhat-openjdk
        
-2) Print the pushes stats for a given release
+2) Get the pushes stats for a given release:
 
        java -jar target/jdk-backports-monitor.jar --pushes 11.0.3
        
-3) List issues that were approved, but not yet pushed to a given release
+3) Get the release notes for a given release:
+
+       java -jar target/jdk-backports-monitor.jar --release-notes 11.0.3
+       
+4) Get the parity report for a given major JDK train: 
+
+       java -jar target/jdk-backports-monitor.jar --parity 11
+       
+5) List issues that were approved, but not yet pushed to a given release:
 
        java -jar target/jdk-backports-monitor.jar --pending-push 11
  
-4) Display the issues list for a given filter id
+6) List the issues list for a given filter id:
        
        java -jar target/jdk-backports-monitor.jar --filter 36456
        
-5) Show the report for the individual issue (useful for monitor debugging)
+7) Show the report for the individual issue (useful for monitor debugging):
 
        java -jar target/jdk-backports-monitor.jar --issue JDK-8217597
 
+Most of these reports would generate TXT, HTML, CSV outputs at the same time.
+
 ## I Am Anxious To Contribute!
 
-You don't really want to. Read the source to feel despair. Email me if there are issues.
+You can, but it would be easier if you describe the problem in the Issues first,
+because there might be some weird thing that prevents fixing it. Or, feel free
+to email me if there are issues.
