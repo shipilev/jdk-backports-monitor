@@ -86,7 +86,7 @@ public class IssueModel extends AbstractModel {
         priority = Accessors.getPriority(issue);
 
         fixVersion = Versions.parseMajor(Accessors.getFixVersion(issue));
-        recordIssue(existingPorts, issue);
+        recordExistingStatus(existingPorts, issue);
 
         Set<Integer> affectedReleases = new HashSet<>();
         Set<Integer> affectedShenandoah = new HashSet<>();
@@ -123,7 +123,7 @@ public class IssueModel extends AbstractModel {
         }
         for (IssuePromise p : links) {
             Issue subIssue = p.claim();
-            recordIssue(existingPorts, subIssue);
+            recordExistingStatus(existingPorts, subIssue);
             recordOracleStatus(oracleBackports, subIssue);
         }
 
@@ -233,47 +233,20 @@ public class IssueModel extends AbstractModel {
 
     private void recordOracleStatus(Set<Integer> results, Issue issue) {
         String fixVersion = Accessors.getFixVersion(issue);
-
-        int ver = Versions.parseMajor(fixVersion);
-        switch (ver) {
-            case 8:
-                if (Versions.parseMinor(fixVersion) <= 212) return;
-                break;
-            case 11:
-                if (!fixVersion.contains("-oracle")) return;
-                break;
-            default:
-                return;
+        if (Versions.isOracle(fixVersion)) {
+            results.add(Versions.parseMajor(fixVersion));
         }
-
-        results.add(ver);
     }
 
-    private void recordIssue(Map<Integer, List<Issue>> results, Issue issue) {
+    private void recordExistingStatus(Map<Integer, List<Issue>> results, Issue issue) {
         String fixVersion = Accessors.getFixVersion(issue);
 
-        // This is Oracle-internal push. Ignore.
-        if (fixVersion.contains("-oracle")) return;
+        // Oracle-internal push? Ignore.
+        if (Versions.isOracle(fixVersion)) return;
 
+        // No push recorded? Ignore.
         String pushURL = Accessors.getPushURL(issue);
-
-        if (pushURL.equals("N/A")) {
-            switch (fixVersion) {
-                case "11.0.1":
-                case "12.0.1":
-                case "13.0.1":
-                    // Oh yeah, issues would have these versions set as "fix", but there would
-                    // be no public pushes until CPU releases. Awesome.
-                    pushURL = "<'kinda open, but not quite' backport>";
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        if (pushURL.equals("N/A")) {
-            return;
-        }
+        if (pushURL.equals("N/A")) return;
 
         int ver = Versions.parseMajor(fixVersion);
         List<Issue> list = results.computeIfAbsent(ver, k -> new ArrayList<>());

@@ -65,6 +65,16 @@ public class Accessors {
                 return Parsers.parseURL(c.getBody());
             }
         }
+
+        String fixVersion = getFixVersion(issue);
+        if (Versions.parseMajor(fixVersion) >= 11 &&
+            Versions.parseMinor(fixVersion) == 1) {
+
+            // Oh yeah, issues would have these versions set as "fix", but there would
+            // be no public pushes until CPU releases. Awesome.
+            return "(The push URL is not available until CPU is released)";
+        }
+
         return "N/A";
     }
 
