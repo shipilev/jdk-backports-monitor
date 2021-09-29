@@ -24,16 +24,13 @@
  */
 package org.openjdk.backports.report.model;
 
-import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.atlassian.jira.rest.client.api.domain.Issue;
 import com.atlassian.jira.rest.client.api.domain.IssueField;
 import com.atlassian.jira.rest.client.api.domain.Project;
 import com.atlassian.jira.rest.client.api.domain.Version;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import org.openjdk.backports.jira.Accessors;
-import org.openjdk.backports.jira.InterestTags;
-import org.openjdk.backports.jira.Versions;
+import org.openjdk.backports.jira.*;
 
 import java.io.PrintStream;
 import java.time.LocalDateTime;
@@ -52,15 +49,15 @@ public class ParityModel extends AbstractModel {
     private final Map<String, Map<Issue, SingleVersMetadata>> onlyOracle;
     private int versLen;
 
-    public ParityModel(JiraRestClient cli, PrintStream debugOut, int majorVer) {
-        super(cli, debugOut);
+    public ParityModel(Clients clients, PrintStream debugOut, int majorVer) {
+        super(clients, debugOut);
         this.majorVer = majorVer;
 
         Multimap<Issue, Issue> mp = HashMultimap.create();
 
         List<String> vers = new ArrayList<>();
 
-        Project proj = cli.getProjectClient().getProject("JDK").claim();
+        Project proj = jiraCli.getProjectClient().getProject("JDK").claim();
         for (Version ver : proj.getVersions()) {
             String v = ver.getName();
             if (Versions.parseMajor(v) != majorVer) continue;
@@ -120,9 +117,6 @@ public class ParityModel extends AbstractModel {
             String firstOpenRaw = null;
             LocalDateTime timeOracle = null;
             LocalDateTime timeOpen = null;
-
-            boolean backportRequested = p.getLabels().contains("jdk" + majorVer + "u-fix-request");
-            String interestTags = InterestTags.shortTags(p.getLabels());
 
             // Awkward hack: parent needs to be counted for parity, on the off-chance
             // it has the fix-version after the open/closed split.
@@ -196,7 +190,11 @@ public class ParityModel extends AbstractModel {
 
             if (firstOracle != null && firstOpen == null) {
                 Map<Issue, SingleVersMetadata> map = onlyOracle.computeIfAbsent(firstOracle, k -> new TreeMap<>(DEFAULT_ISSUE_SORT));
-                map.put(p, new SingleVersMetadata(firstOracleRaw, interestTags, backportRequested));
+
+                boolean backportRequested = p.getLabels().contains("jdk" + majorVer + "u-fix-request");
+                String interestTags = InterestTags.shortTags(p.getLabels());
+                Collection<String> reviewLinks = Accessors.getReviewURLs(rawRest, p, majorVer);
+                map.put(p, new SingleVersMetadata(firstOracleRaw, interestTags, backportRequested, reviewLinks));
             }
 
             if (firstOracle != null && firstOpen != null && Versions.compare(firstOracleRaw, firstOpen) == 0) {
@@ -274,11 +272,13 @@ public class ParityModel extends AbstractModel {
         private final String ver;
         private final String interestTags;
         private final boolean backportRequested;
+        private final Collection<String> reviewLinks;
 
-        public SingleVersMetadata(String ver, String interestTags, boolean backportRequested) {
+        public SingleVersMetadata(String ver, String interestTags, boolean backportRequested, Collection<String> reviewLinks) {
             this.ver = ver;
             this.interestTags = interestTags;
             this.backportRequested = backportRequested;
+            this.reviewLinks = reviewLinks;
         }
 
         public String version() {
@@ -289,6 +289,9 @@ public class ParityModel extends AbstractModel {
         }
         public boolean backportRequested() {
             return backportRequested;
+        }
+        public Collection<String> reviewLinks() {
+            return reviewLinks;
         }
     }
 

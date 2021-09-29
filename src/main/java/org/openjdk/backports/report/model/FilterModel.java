@@ -24,12 +24,12 @@
  */
 package org.openjdk.backports.report.model;
 
-import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.atlassian.jira.rest.client.api.domain.Filter;
 import com.atlassian.jira.rest.client.api.domain.Issue;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.TreeMultimap;
 import org.openjdk.backports.jira.Accessors;
+import org.openjdk.backports.jira.Clients;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -41,8 +41,8 @@ public class FilterModel extends AbstractModel {
     private final String name;
     private final List<Issue> issues;
 
-    public FilterModel(JiraRestClient cli, PrintStream debugOut, long filterId) {
-        super(cli, debugOut);
+    public FilterModel(Clients clients, PrintStream debugOut, long filterId) {
+        super(clients, debugOut);
         this.filterId = filterId;
 
         Filter filter = searchCli.getFilter(filterId).claim();

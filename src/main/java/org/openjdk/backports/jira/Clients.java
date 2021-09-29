@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2021, Red Hat, Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,40 +22,29 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package org.openjdk.backports.report.model;
+package org.openjdk.backports.jira;
 
-import org.openjdk.backports.jira.Clients;
-import org.openjdk.backports.jira.UserCache;
+import com.atlassian.jira.rest.client.api.JiraRestClient;
 
-import java.io.PrintStream;
-import java.util.List;
+public class Clients implements AutoCloseable {
+    private final JiraRestClient jiraRest;
+    private final RawRestClient rawRest;
 
-public class AffiliationModel extends AbstractModel {
-
-    private final List<String> userIds;
-
-    public AffiliationModel(Clients clients, PrintStream debugOut) {
-        super(clients, debugOut);
-
-        userIds = users.resolveCensus();
-
-        debugOut.print("Got " + userIds.size() + " users, resolving");
-
-        int cnt = 0;
-        for (String uid : userIds) {
-            if (cnt++ % 50 == 0) debugOut.print(".");
-            users.getDisplayName(uid);
-            users.getAffiliation(uid);
-        }
-        debugOut.println();
-        debugOut.println("Resolved " + userIds.size() + " users.");
+    public Clients(JiraRestClient jiraRest, RawRestClient rawRest) {
+        this.jiraRest = jiraRest;
+        this.rawRest = rawRest;
     }
 
-    public List<String> userIds() {
-        return userIds;
+    public JiraRestClient getJiraRest() {
+        return jiraRest;
     }
 
-    public UserCache users() {
-        return users;
+    public RawRestClient getRawRest() {
+        return rawRest;
+    }
+
+    @Override
+    public void close() throws Exception {
+        jiraRest.close();
     }
 }

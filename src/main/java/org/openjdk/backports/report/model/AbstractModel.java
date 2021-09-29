@@ -27,7 +27,9 @@ package org.openjdk.backports.report.model;
 import com.atlassian.jira.rest.client.api.IssueRestClient;
 import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.atlassian.jira.rest.client.api.SearchRestClient;
+import org.openjdk.backports.jira.Clients;
 import org.openjdk.backports.jira.Issues;
+import org.openjdk.backports.jira.RawRestClient;
 import org.openjdk.backports.jira.UserCache;
 import org.openjdk.backports.report.Common;
 
@@ -40,12 +42,16 @@ abstract class AbstractModel extends Common {
     protected final PrintStream debugOut;
     protected final Issues jiraIssues;
     protected final UserCache users;
+    protected final RawRestClient rawRest;
+    protected final JiraRestClient jiraCli;
 
-    public AbstractModel(JiraRestClient cli, PrintStream debugOut) {
-        this.searchCli = cli.getSearchClient();
-        this.issueCli = cli.getIssueClient();
+    public AbstractModel(Clients clients, PrintStream debugOut) {
+        this.jiraCli = clients.getJiraRest();
+        this.rawRest = clients.getRawRest();
+        this.searchCli = jiraCli.getSearchClient();
+        this.issueCli = jiraCli.getIssueClient();
         this.debugOut = debugOut;
         this.jiraIssues = new Issues(debugOut, searchCli, issueCli);
-        this.users = new UserCache(cli.getUserClient());
+        this.users = new UserCache(jiraCli.getUserClient());
     }
 }

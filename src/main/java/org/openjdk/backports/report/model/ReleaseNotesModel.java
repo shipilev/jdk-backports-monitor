@@ -24,12 +24,12 @@
  */
 package org.openjdk.backports.report.model;
 
-import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.atlassian.jira.rest.client.api.domain.Issue;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.TreeMultimap;
 import org.openjdk.backports.jira.Accessors;
+import org.openjdk.backports.jira.Clients;
 import org.openjdk.backports.jira.Versions;
 
 import java.io.PrintStream;
@@ -44,8 +44,8 @@ public class ReleaseNotesModel extends AbstractModel {
     private final Multimap<String, Issue> byComponent;
     private final SortedSet<Issue> carriedOver;
 
-    public ReleaseNotesModel(JiraRestClient restClient, PrintStream debugOut, boolean includeCarryovers, String release) {
-        super(restClient, debugOut);
+    public ReleaseNotesModel(Clients clients, PrintStream debugOut, boolean includeCarryovers, String release) {
+        super(clients, debugOut);
         this.release = release;
         this.includeCarryovers = includeCarryovers;
 

@@ -24,11 +24,11 @@
  */
 package org.openjdk.backports.report.model;
 
-import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.atlassian.jira.rest.client.api.domain.Issue;
 import com.google.common.collect.*;
 import org.openjdk.backports.Actionable;
 import org.openjdk.backports.hg.HgDB;
+import org.openjdk.backports.jira.Clients;
 
 import java.io.PrintStream;
 import java.util.Arrays;
@@ -46,7 +46,7 @@ public class LabelModel extends AbstractModel {
     private final Integer maxVersion;
     private final Integer minVersion;
 
-    public LabelModel(JiraRestClient cli, HgDB hgDB, PrintStream debugOut, Actionable minLevel, String label) {
+    public LabelModel(Clients cli, HgDB hgDB, PrintStream debugOut, Actionable minLevel, String label) {
         super(cli, debugOut);
         this.label = label;
         this.minLevel = minLevel;

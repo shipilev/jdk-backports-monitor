@@ -24,7 +24,6 @@
  */
 package org.openjdk.backports.report.model;
 
-import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.atlassian.jira.rest.client.api.domain.Issue;
 import com.atlassian.jira.rest.client.api.domain.IssueLink;
 import com.atlassian.jira.rest.client.api.domain.Version;
@@ -33,6 +32,7 @@ import org.openjdk.backports.Actions;
 import org.openjdk.backports.hg.HgDB;
 import org.openjdk.backports.hg.HgRecord;
 import org.openjdk.backports.jira.Accessors;
+import org.openjdk.backports.jira.Clients;
 import org.openjdk.backports.jira.IssuePromise;
 import org.openjdk.backports.jira.Versions;
 import org.openjdk.backports.report.BackportStatus;
@@ -59,14 +59,14 @@ public class IssueModel extends AbstractModel {
     private int priority;
     private List<String> warnings = new ArrayList<>();
 
-    public IssueModel(JiraRestClient restClient, HgDB hgDB, PrintStream debugOut, String issueId) {
-        super(restClient, debugOut);
+    public IssueModel(Clients clients, HgDB hgDB, PrintStream debugOut, String issueId) {
+        super(clients, debugOut);
         this.hgDB = hgDB;
         init(issueCli.getIssue(issueId).claim());
     }
 
-    public IssueModel(JiraRestClient restClient, HgDB hgDB, PrintStream debugOut, Issue issue) {
-        super(restClient, debugOut);
+    public IssueModel(Clients clients, HgDB hgDB, PrintStream debugOut, Issue issue) {
+        super(clients, debugOut);
         this.hgDB = hgDB;
         init(issue);
     }

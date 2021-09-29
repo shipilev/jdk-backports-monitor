@@ -221,4 +221,16 @@ public class Accessors {
                 && isDelivered(issue);
     }
 
+    public static Collection<String> getReviewURLs(RawRestClient raw, Issue issue, int majorVer) {
+        Collection<String> res = new ArrayList<>();
+        for (String link : raw.remoteLinks(issue.getKey())) {
+            if (link.contains("jdk" + majorVer + "/pull/") ||
+                link.contains("jdk" + majorVer + "u/pull/") ||
+                link.contains("jdk" + majorVer + "u-dev/pull/")) {
+                res.add(link);
+            }
+        }
+        return res;
+    }
+
 }

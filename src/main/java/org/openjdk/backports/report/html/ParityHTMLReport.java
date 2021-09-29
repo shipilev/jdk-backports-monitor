@@ -55,6 +55,7 @@ public class ParityHTMLReport extends AbstractHTMLReport {
         out.println("<p>No relevant backports are detected in OpenJDK.</p>");
         out.println("<p>This misses the future backporting work.</p>");
         out.println("<p>[...] marks the interest tags.</p>");
+        out.println("<p>(*) marks the existing pull request.</p>");
         out.println("<p>(*) marks the backporting work in progress.</p>");
         out.println();
         printWithVersionMeta(out, model.onlyOracle());
@@ -158,7 +159,8 @@ public class ParityHTMLReport extends AbstractHTMLReport {
             out.println("<tr>");
             out.println("<th nowrap>Version</th>");
             out.println("<th nowrap>Interest</th>");
-            out.println("<th nowrap>Fix</th>");
+            out.println("<th nowrap>RFR</th>");
+            out.println("<th nowrap>BP</th>");
             out.println("<th nowrap>Bug</th>");
             out.println("<th nowrap width=\"99%\">Synopsis</th>");
             out.println("</tr>");
@@ -168,6 +170,11 @@ public class ParityHTMLReport extends AbstractHTMLReport {
                 out.println("<tr>");
                 out.println("<td nowrap>" + ver.version() + "</td>");
                 out.println("<td nowrap>" + ver.interestTags() + "</td>");
+                out.println("<td nowrap>");
+                for (String link : ver.reviewLinks()) {
+                    out.println("<a href='" + link + "'>RFR</a> ");
+                }
+                out.println("</td>");
                 out.println("<td nowrap>" + (ver.backportRequested() ? "(*)" : "") + "</td>");
                 out.println("<td nowrap>" + issueLink(i) + "</td>");
                 out.println("<td nowrap width=\"99%\">" + i.getSummary() + "</td>");

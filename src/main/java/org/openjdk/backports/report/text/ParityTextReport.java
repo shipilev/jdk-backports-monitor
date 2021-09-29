@@ -56,6 +56,7 @@ public class ParityTextReport extends AbstractTextReport {
         out.println("No relevant backports are detected in OpenJDK.");
         out.println("This misses the future backporting work.");
         out.println("[...] marks the interest tags.");
+        out.println("(!) marks the existing pull request.");
         out.println("(*) marks the backporting work in progress.");
         out.println();
         printWithVersionMeta(out, model.onlyOracle());
@@ -129,9 +130,10 @@ public class ParityTextReport extends AbstractTextReport {
             for (Map.Entry<Issue, ParityModel.SingleVersMetadata> kv2 : kv.getValue().entrySet()) {
                 Issue i = kv2.getKey();
                 ParityModel.SingleVersMetadata vers = kv2.getValue();
-                out.printf("%-" + model.getVersLen() + "s, %7s %3s %s: %s%n",
+                out.printf("%-" + model.getVersLen() + "s, %7s %3s %3s %s: %s%n",
                         vers.version(),
                         "[" + vers.interestTags() + "]",
+                        !vers.reviewLinks().isEmpty() ? "(!)" : "",
                         vers.backportRequested() ? "(*)" : "",
                         i.getKey(),
                         i.getSummary());

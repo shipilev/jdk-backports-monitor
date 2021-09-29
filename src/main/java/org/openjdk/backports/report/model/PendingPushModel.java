@@ -24,9 +24,9 @@
  */
 package org.openjdk.backports.report.model;
 
-import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.atlassian.jira.rest.client.api.domain.Issue;
 import org.openjdk.backports.hg.HgDB;
+import org.openjdk.backports.jira.Clients;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -37,8 +37,8 @@ public class PendingPushModel extends AbstractModel {
     private final String release;
     private final List<IssueModel> models;
 
-    public PendingPushModel(JiraRestClient cli, HgDB hgDB, PrintStream debugOut, String release) {
-        super(cli, debugOut);
+    public PendingPushModel(Clients clients, HgDB hgDB, PrintStream debugOut, String release) {
+        super(clients, debugOut);
         this.release = release;
 
         String query = "labels = jdk" + release + "u-fix-yes AND labels != openjdk-na AND fixVersion !~ '" + release + ".*'";
@@ -57,7 +57,7 @@ public class PendingPushModel extends AbstractModel {
 
         models = new ArrayList<>();
         for (Issue i : found) {
-            models.add(new IssueModel(cli, hgDB, debugOut, i));
+            models.add(new IssueModel(clients, hgDB, debugOut, i));
         }
     }
 

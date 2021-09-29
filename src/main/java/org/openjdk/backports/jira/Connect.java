@@ -46,7 +46,7 @@ import java.util.concurrent.TimeUnit;
 
 public class Connect {
 
-    public static JiraRestClient getJiraRestClient(String jiraURL, String user, String pass) throws URISyntaxException {
+    public static Clients getClients(String jiraURL, String user, String pass) throws URISyntaxException {
         final URI uri = new URI(jiraURL);
 
         DefaultHttpClientFactory factory = new DefaultHttpClientFactory(
@@ -81,7 +81,10 @@ public class Connect {
                     @Override public void destroy() throws Exception { factory.dispose(client); }
         };
 
-        return new AsynchronousJiraRestClient(uri, dispClient);
+        return new Clients(
+                new AsynchronousJiraRestClient(uri, dispClient),
+                new RawRestClient(uri, dispClient)
+        );
     }
 
     private static class MyEventPublisher implements EventPublisher {

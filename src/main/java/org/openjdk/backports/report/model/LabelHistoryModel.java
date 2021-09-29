@@ -24,11 +24,11 @@
  */
 package org.openjdk.backports.report.model;
 
-import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.atlassian.jira.rest.client.api.domain.ChangelogGroup;
 import com.atlassian.jira.rest.client.api.domain.ChangelogItem;
 import com.atlassian.jira.rest.client.api.domain.Issue;
 import org.joda.time.DateTime;
+import org.openjdk.backports.jira.Clients;
 import org.openjdk.backports.jira.UserCache;
 
 import java.io.PrintStream;
@@ -41,8 +41,8 @@ public class LabelHistoryModel extends AbstractModel {
     private final String label;
     private final SortedSet<Record> set;
 
-    public LabelHistoryModel(JiraRestClient restClient, PrintStream debugOut, String label) {
-        super(restClient, debugOut);
+    public LabelHistoryModel(Clients clients, PrintStream debugOut, String label) {
+        super(clients, debugOut);
         this.label = label;
 
         List<Issue> found = jiraIssues.getIssues("labels = " + label +

@@ -24,10 +24,10 @@
  */
 package org.openjdk.backports.report.model;
 
-import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.atlassian.jira.rest.client.api.domain.Issue;
 import com.google.common.collect.*;
 import org.openjdk.backports.jira.Accessors;
+import org.openjdk.backports.jira.Clients;
 import org.openjdk.backports.jira.UserCache;
 
 import java.io.PrintStream;
@@ -44,8 +44,8 @@ public class PushesModel extends AbstractModel {
     private final Set<Issue> byTime;
     private final SortedSet<Issue> noChangesets;
 
-    public PushesModel(JiraRestClient restClient, PrintStream debugOut, boolean directOnly, String release) {
-        super(restClient, debugOut);
+    public PushesModel(Clients clients, PrintStream debugOut, boolean directOnly, String release) {
+        super(clients, debugOut);
         this.directOnly = directOnly;
         this.release = release;
         this.issues = jiraIssues.getIssues("project = JDK" +
