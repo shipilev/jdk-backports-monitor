@@ -206,6 +206,10 @@ public class Accessors {
         return issue.getLabels().contains("jdk" + majorVer + "u-fix-no");
     }
 
+    public static boolean ifUpdateReleaseNA(Issue issue, int majorVer) {
+        return issue.getLabels().contains("jdk" + majorVer + "u-na");
+    }
+
     public static boolean isReleaseNoteTag(Issue issue) {
         return issue.getLabels().contains("release-note");
     }

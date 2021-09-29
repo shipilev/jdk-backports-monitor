@@ -66,12 +66,12 @@ public class ParityModel extends AbstractModel {
             if (Versions.parseMajor(v) != majorVer) continue;
             if (Versions.isShared(v)) continue;
             vers.add(v);
-            versLen = Math.max(versLen, v.length());
         }
 
         debugOut.println("Auto-detected versions:");
         for (String ver : vers) {
             debugOut.println("  " + ver);
+            versLen = Math.max(versLen, ver.length());
         }
         debugOut.println();
 
@@ -182,7 +182,8 @@ public class ParityModel extends AbstractModel {
 
             if (Accessors.isOracleSpecific(p) ||
                 Accessors.isOpenJDKWontFix(p, majorVer) ||
-                Accessors.ifUpdateReleaseNo(p, majorVer)) {
+                Accessors.ifUpdateReleaseNo(p, majorVer) ||
+                Accessors.ifUpdateReleaseNA(p, majorVer)) {
                 Map<Issue, SingleVers> map = openRejected.computeIfAbsent(firstOracle, k -> new TreeMap<>(DEFAULT_ISSUE_SORT));
                 map.put(p, new SingleVers(firstOracle));
                 continue;
