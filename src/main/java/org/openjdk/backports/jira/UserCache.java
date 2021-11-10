@@ -194,6 +194,8 @@ public class UserCache {
             "@javaspecialists.eu",
             "@selskabet.org",
             "@qq.com",
+            "@progrm-jarvis.ru",
+            "@jcornell.net",
     };
 
     static final String[][] COMPANIES = {
@@ -238,6 +240,7 @@ public class UserCache {
             {"@marvell.com", "Marvell"},
             {"@tagtraum.com", "Tagtraum"},
             {"@fb.com", "Facebook"},
+            {"@dynatrace.com", "Dynatrace"},
     };
 
     static final String[][] SPECIAL_CASES = {
