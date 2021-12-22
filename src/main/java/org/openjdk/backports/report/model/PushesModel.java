@@ -78,7 +78,11 @@ public class PushesModel extends AbstractModel {
             }
         }
 
-        debugOut.println("Filtered " + noChangesets.size() + " issues without pushes, " + byPriority.size() + " pushes left.");
+        debugOut.println("Filtered " + noChangesets.size() + " issues without pushes:");
+        for (Issue i : noChangesets) {
+            debugOut.printf(" %s: %s%n", i.getKey(), i.getSummary());
+        }
+        debugOut.println(byPriority.size() + " pushes left.");
     }
 
     public String release() {

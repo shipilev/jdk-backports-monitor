@@ -28,6 +28,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,54 +37,54 @@ public class Parsers {
     static final Pattern OPENJDK_USER_ID = Pattern.compile("(.*)<(.*)@openjdk.org>");
     static final Pattern GENERIC_USER_ID = Pattern.compile("(.*)<(.*)>");
 
-    public static String parseURL(String s) {
+    public static Optional<String> parseURL(String s) {
         for (String l : s.split("\n")) {
             if (l.startsWith("URL")) {
-                return l.replaceFirst("URL:", "").trim();
+                return Optional.of(l.replaceFirst("URL:", "").trim());
             }
         }
-        return "N/A";
+        return Optional.empty();
     }
 
-    public static String parseUser(String s) {
+    public static Optional<String> parseUser(String s) {
         for (String l : s.split("\n")) {
             if (l.startsWith("User")) {
-                return l.replaceFirst("User:", "").trim();
+                return Optional.of(l.replaceFirst("User:", "").trim());
             }
             if (l.startsWith("Author")) {
                 Matcher m1 = OPENJDK_USER_ID.matcher(l);
                 if (m1.matches()) {
-                    return m1.group(2);
+                    return Optional.of(m1.group(2));
                 }
                 Matcher m2 = GENERIC_USER_ID.matcher(l);
                 if (m2.matches()) {
-                    return m2.group(2);
+                    return Optional.of(m2.group(2));
                 }
             }
         }
-        return "N/A";
+        return Optional.empty();
     }
 
-    public static long parseDaysAgo(String s) {
+    public static Optional<Long> parseDaysAgo(String s) {
         for (String l : s.split("\n")) {
             if (l.startsWith("Date")) {
                 String d = l.replaceFirst("Date:", "").trim();
                 final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss Z");
-                return ChronoUnit.DAYS.between(LocalDate.parse(d, formatter), LocalDate.now());
+                return Optional.of(ChronoUnit.DAYS.between(LocalDate.parse(d, formatter), LocalDate.now()));
             }
         }
-        return 0;
+        return Optional.empty();
     }
 
-    public static long parseSecondsAgo(String s) {
+    public static Optional<Long> parseSecondsAgo(String s) {
         for (String l : s.split("\n")) {
             if (l.startsWith("Date")) {
                 String d = l.replaceFirst("Date:", "").trim();
                 final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss Z");
-                return ChronoUnit.SECONDS.between(LocalDateTime.parse(d, formatter), LocalDateTime.now());
+                return Optional.of(ChronoUnit.SECONDS.between(LocalDateTime.parse(d, formatter), LocalDateTime.now()));
             }
         }
-        return 0;
+        return Optional.empty();
     }
 
     public static int parsePriority(String s) {

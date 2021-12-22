@@ -123,7 +123,7 @@ public class IssueTextReport extends AbstractTextReport {
                 Accessors.getFixVersion(issue),
                 issue.getKey(),
                 Accessors.getPushURL(issue),
-                Accessors.getPushDate(issue));
+                Accessors.getPushDaysAgo(issue) + " day(s) ago");
     }
 
     protected static void printReleaseNotes(PrintStream out, Collection<Issue> relNotes) {

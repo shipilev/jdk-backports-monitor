@@ -154,7 +154,7 @@ public class IssueHTMLReport extends AbstractHTMLReport {
                 Accessors.getFixVersion(issue),
                 issue.getKey(),
                 Accessors.getPushURL(issue),
-                Accessors.getPushDate(issue));
+                Accessors.getPushDaysAgo(issue) + " day(s) ago");
     }
 
     private static String shortStatusHTMLLine(int release, BackportStatus status, String details) {

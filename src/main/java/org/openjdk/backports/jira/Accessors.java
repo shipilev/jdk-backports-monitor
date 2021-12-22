@@ -62,7 +62,10 @@ public class Accessors {
     public static String getPushURL(Issue issue) {
         for (Comment c : issue.getComments()) {
             if (isBotComment(c)) {
-                return Parsers.parseURL(c.getBody());
+                Optional<String> opt = Parsers.parseURL(c.getBody());
+                if (opt.isPresent()) {
+                    return opt.get();
+                }
             }
         }
 
@@ -78,19 +81,13 @@ public class Accessors {
         return "N/A";
     }
 
-    public static String getPushDate(Issue issue) {
-        for (Comment c : issue.getComments()) {
-            if (isBotComment(c)) {
-                return Parsers.parseDaysAgo(c.getBody()) + " day(s) ago";
-            }
-        }
-        return "N/A";
-    }
-
     public static String getPushUser(Issue issue) {
         for (Comment c : issue.getComments()) {
             if (isBotComment(c)) {
-                return Parsers.parseUser(c.getBody());
+                Optional<String> opt = Parsers.parseUser(c.getBody());
+                if (opt.isPresent()) {
+                    return opt.get();
+                }
             }
         }
         return "N/A";
@@ -99,7 +96,10 @@ public class Accessors {
     public static long getPushDaysAgo(Issue issue) {
         for (Comment c : issue.getComments()) {
             if (isBotComment(c)) {
-                return Parsers.parseDaysAgo(c.getBody());
+                Optional<Long> opt = Parsers.parseDaysAgo(c.getBody());
+                if (opt.isPresent()) {
+                    return opt.get();
+                }
             }
         }
         return -1;
@@ -108,12 +108,14 @@ public class Accessors {
     public static long getPushSecondsAgo(Issue issue) {
         for (Comment c : issue.getComments()) {
             if (isBotComment(c)) {
-                return Parsers.parseSecondsAgo(c.getBody());
+                Optional<Long> opt = Parsers.parseSecondsAgo(c.getBody());
+                if (opt.isPresent()) {
+                    return opt.get();
+                }
             }
         }
         return -1;
     }
-
 
     public static int getPriority(Issue issue) {
         if (issue.getPriority() != null) {

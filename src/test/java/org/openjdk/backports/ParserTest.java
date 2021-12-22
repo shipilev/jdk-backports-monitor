@@ -14,7 +14,7 @@ public class ParserTest {
     public void parseURL() {
         Assert.assertEquals(
                 "http://hg.openjdk.java.net/jdk/jdk/rev/66f5241da404",
-                Parsers.parseURL(SAMPLE_COMMENT)
+                Parsers.parseURL(SAMPLE_COMMENT).get()
         );
     }
 
@@ -22,18 +22,18 @@ public class ParserTest {
     public void parseUser() {
         Assert.assertEquals(
                 "shade",
-                Parsers.parseUser(SAMPLE_COMMENT)
+                Parsers.parseUser(SAMPLE_COMMENT).get()
         );
     }
 
     @Test
     public void parseDayAgo() {
-        Assert.assertTrue(Parsers.parseDaysAgo(SAMPLE_COMMENT) > 0);
+        Assert.assertTrue(Parsers.parseDaysAgo(SAMPLE_COMMENT).isPresent());
     }
 
     @Test
     public void parseSecondsAgo() {
-        Assert.assertTrue(Parsers.parseSecondsAgo(SAMPLE_COMMENT) > 0);
+        Assert.assertTrue(Parsers.parseSecondsAgo(SAMPLE_COMMENT).isPresent());
     }
 
     @Test
