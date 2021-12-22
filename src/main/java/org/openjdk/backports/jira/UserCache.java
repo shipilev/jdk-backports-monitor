@@ -196,6 +196,9 @@ public class UserCache {
             "@qq.com",
             "@progrm-jarvis.ru",
             "@jcornell.net",
+            "@icus.se",
+            "@prinzing.net",
+            "@utexas.edu",
     };
 
     static final String[][] COMPANIES = {
@@ -253,6 +256,8 @@ public class UserCache {
             {"John Paul Adrian Glaubitz", "Debian"},
             {"Lukas Eder", "DataGeekery"},
             {"Andrew Haley", "Red Hat"},
+            {"Hamlin Li", "Huawei"},
+            {"Wang Huang", "Huawei"},
     };
 
     private String generifyAffiliation(String full, String v) {
