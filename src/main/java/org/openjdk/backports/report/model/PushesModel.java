@@ -39,6 +39,7 @@ public class PushesModel extends AbstractModel {
     private final boolean directOnly;
     private final String release;
     private final List<Issue> issues;
+    private final Map<Issue, Issue> issueToParent;
     private final Multiset<String> byPriority;
     private final Multiset<String> byComponent;
     private final Multimap<String, Issue> byOriginalCommitter;
@@ -59,6 +60,8 @@ public class PushesModel extends AbstractModel {
                 false);
 
         Comparator<Issue> chronologicalCompare = Comparator.comparing(Accessors::getPushSecondsAgo).thenComparing(Comparator.comparing(Issue::getKey).reversed());
+
+        issueToParent = new HashMap<>();
 
         byPriority = TreeMultiset.create();
         byComponent = HashMultiset.create();
@@ -81,6 +84,7 @@ public class PushesModel extends AbstractModel {
                 byComponent.add(Accessors.extractComponents(issue));
                 byCommitter.put(committer, issue);
                 Issue parent = parentIssues.get(i);
+                issueToParent.put(issue, parent);
                 byOriginalCommitter.put(Accessors.getPushUser(parent), issue);
                 byTime.add(issue);
             }
@@ -123,6 +127,10 @@ public class PushesModel extends AbstractModel {
 
     public Multimap<String, Issue> byOriginalCommitter() {
         return byOriginalCommitter;
+    }
+
+    public Map<Issue, Issue> issueToParent() {
+        return issueToParent;
     }
 
     public Set<Issue> byTime() {

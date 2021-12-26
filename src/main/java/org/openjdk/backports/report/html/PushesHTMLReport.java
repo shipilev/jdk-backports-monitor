@@ -135,10 +135,10 @@ public class PushesHTMLReport extends AbstractHTMLReport {
 
         out.println("<tr>");
         out.println("<td>");
-        out.println("<h3>Backports (this release)</h3>");
+        out.println("<h3>This Release Pushes</h3>");
         out.println("</td>");
         out.println("<td>");
-        out.println("<h3>Original patches (e.g. mainline)</h3>");
+        out.println("<h3>Original Pushes</h3>");
         out.println("</td>");
         out.println("</tr>");
 
@@ -158,18 +158,30 @@ public class PushesHTMLReport extends AbstractHTMLReport {
         out.println("<table>");
         out.println("<tr>");
         out.println("<th>Days Ago</th>");
-        out.println("<th>Committer</th>");
-        out.println("<th>Affiliation</th>");
+        out.println("<th colspan=2>This Release Push By</th>");
+        out.println("<th colspan=2>Original Push By</th>");
         out.println("<th>Bug</th>");
         out.println("<th width='99%'>Summary</th>");
         out.println("</tr>");
+        out.println("<tr>");
+        out.println("<th></th>");
+        out.println("<th>Name</th>");
+        out.println("<th>Affiliation</th>");
+        out.println("<th>Name</th>");
+        out.println("<th>Affiliation</th>");
+        out.println("<th></th>");
+        out.println("<th width='99%'></th>");
+        out.println("</tr>");
 
         for (Issue i : model.byTime()) {
-            String pushUser = Accessors.getPushUser(i);
+            String backportUser = Accessors.getPushUser(i);
+            String originalUser = Accessors.getPushUser(model.issueToParent().get(i));
             out.println("<tr>");
             out.println("<td>" + TimeUnit.SECONDS.toDays(Accessors.getPushSecondsAgo(i)) + "</td>");
-            out.println("<td>" + users.getDisplayName(pushUser) + "</td>");
-            out.println("<td>" + users.getAffiliation(pushUser) + "</td>");
+            out.println("<td>" + users.getDisplayName(backportUser) + "</td>");
+            out.println("<td>" + users.getAffiliation(backportUser) + "</td>");
+            out.println("<td>" + users.getDisplayName(originalUser) + "</td>");
+            out.println("<td>" + users.getAffiliation(originalUser) + "</td>");
             out.println("<td>" + issueLink(i) + "</td>");
             out.println("<td>" + i.getSummary() + "</td>");
             out.println("</tr>");
