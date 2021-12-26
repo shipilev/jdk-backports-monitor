@@ -126,10 +126,91 @@ public class PushesHTMLReport extends AbstractHTMLReport {
         }
         out.println("</table>");
 
-        Multimap<String, Issue> byCommitter = model.byCommitter();
-
+        out.println("<table cellpadding=10>");
+        out.println("<tr>");
+        out.println("<td colspan=2>");
         out.println("<h2>Distribution by affiliation</h2>");
+        out.println("</td>");
+        out.println("</tr>");
 
+        out.println("<tr>");
+        out.println("<td>");
+        out.println("<h3>Backports (this release)</h3>");
+        out.println("</td>");
+        out.println("<td>");
+        out.println("<h3>Original patches (e.g. mainline)</h3>");
+        out.println("</td>");
+        out.println("</tr>");
+
+        out.println("<tr>");
+        out.println("<td style='vertical-align: text-top'>");
+        printAffiliation(out, users, model.byCommitter());
+        out.println("</td>");
+        out.println("<td style='vertical-align: text-top'>");
+        printAffiliation(out, users, model.byOriginalCommitter());
+        out.println("</td>");
+        out.println("</tr>");
+
+        out.println("<table>");
+
+        out.println("<h2>Chronological push log:</h2>");
+        out.println();
+        out.println("<table>");
+        out.println("<tr>");
+        out.println("<th>Days Ago</th>");
+        out.println("<th>Committer</th>");
+        out.println("<th>Affiliation</th>");
+        out.println("<th>Bug</th>");
+        out.println("<th width='99%'>Summary</th>");
+        out.println("</tr>");
+
+        for (Issue i : model.byTime()) {
+            String pushUser = Accessors.getPushUser(i);
+            out.println("<tr>");
+            out.println("<td>" + TimeUnit.SECONDS.toDays(Accessors.getPushSecondsAgo(i)) + "</td>");
+            out.println("<td>" + users.getDisplayName(pushUser) + "</td>");
+            out.println("<td>" + users.getAffiliation(pushUser) + "</td>");
+            out.println("<td>" + issueLink(i) + "</td>");
+            out.println("<td>" + i.getSummary() + "</td>");
+            out.println("</tr>");
+        }
+        out.println("</table>");
+
+        out.println("<h2>No changesets log</h2>");
+
+        out.println("<table>");
+        for (Issue i : model.noChangesets()) {
+            out.println("<tr>");
+            out.println("<td>" + issueLink(i) + "</td>");
+            out.println("<td>" + i.getSummary() + "</td>");
+            out.println("</tr>");
+        }
+        out.println("</table>");
+
+        out.println("<h2>Committer push log</h2>");
+        out.println();
+
+        {
+            Multimap<String, Issue> byCommitter = model.byCommitter();
+            for (String committer : byCommitter.keySet()) {
+                out.println("<h3>" + users.getDisplayName(committer) + ", " + users.getAffiliation(committer) + "</h3>");
+                out.println("<table>");
+                out.println("<tr>");
+                out.println("<th>Bug</th>");
+                out.println("<th width='99%'>Summary</th>");
+                out.println("</tr>");
+                for (Issue i : byCommitter.get(committer)) {
+                    out.println("<tr>");
+                    out.println("<td>" + issueLink(i) + "</td>");
+                    out.println("<td>" + i.getSummary() + "</td>");
+                    out.println("</tr>");
+                }
+                out.println("</table>");
+            }
+        }
+    }
+
+    private void printAffiliation(PrintStream out, UserCache users, Multimap<String, Issue> byCommitter) {
         out.println("<table>");
         out.println("<tr>");
         out.println("<th colspan=2>Count</th>");
@@ -175,59 +256,6 @@ public class PushesHTMLReport extends AbstractHTMLReport {
             }
         }
         out.println("</table>");
-
-        out.println("<h2>Chronological push log:</h2>");
-        out.println();
-        out.println("<table>");
-        out.println("<tr>");
-        out.println("<th>Days Ago</th>");
-        out.println("<th>Committer</th>");
-        out.println("<th>Affiliation</th>");
-        out.println("<th>Bug</th>");
-        out.println("<th width='99%'>Summary</th>");
-        out.println("</tr>");
-
-        for (Issue i : model.byTime()) {
-            String pushUser = Accessors.getPushUser(i);
-            out.println("<tr>");
-            out.println("<td>" + TimeUnit.SECONDS.toDays(Accessors.getPushSecondsAgo(i)) + "</td>");
-            out.println("<td>" + users.getDisplayName(pushUser) + "</td>");
-            out.println("<td>" + users.getAffiliation(pushUser) + "</td>");
-            out.println("<td>" + issueLink(i) + "</td>");
-            out.println("<td>" + i.getSummary() + "</td>");
-            out.println("</tr>");
-        }
-        out.println("</table>");
-
-        out.println("<h2>No changesets log</h2>");
-
-        out.println("<table>");
-        for (Issue i : model.noChangesets()) {
-            out.println("<tr>");
-            out.println("<td>" + issueLink(i) + "</td>");
-            out.println("<td>" + i.getSummary() + "</td>");
-            out.println("</tr>");
-        }
-        out.println("</table>");
-
-        out.println("<h2>Committer push log</h2>");
-        out.println();
-
-        for (String committer : byCommitter.keySet()) {
-            out.println("<h3>" + users.getDisplayName(committer) + ", " + users.getAffiliation(committer) + "</h3>");
-            out.println("<table>");
-            out.println("<tr>");
-            out.println("<th>Bug</th>");
-            out.println("<th width='99%'>Summary</th>");
-            out.println("</tr>");
-            for (Issue i : byCommitter.get(committer)) {
-                out.println("<tr>");
-                out.println("<td>" + issueLink(i) + "</td>");
-                out.println("<td>" + i.getSummary() + "</td>");
-                out.println("</tr>");
-            }
-            out.println("</table>");
-        }
     }
 
 }
