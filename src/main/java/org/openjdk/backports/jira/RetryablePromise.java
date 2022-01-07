@@ -25,10 +25,40 @@
 package org.openjdk.backports.jira;
 
 import com.atlassian.jira.rest.client.api.RestClientException;
+import io.atlassian.util.concurrent.Promise;
 
-public abstract class RetryablePromise {
+import java.util.concurrent.TimeUnit;
 
-    protected boolean isValidError(Exception e) {
+public abstract class RetryablePromise<T> {
+
+    private Promise<T> cur;
+
+    protected abstract Promise<T> get();
+
+    protected void init() {
+        cur = get();
+    }
+
+    public T claim() {
+        for (int t = 0; t < 10; t++) {
+            try {
+                return cur.claim();
+            } catch (Exception e) {
+                if (isValidError(e)) {
+                    throw e;
+                }
+                try {
+                    TimeUnit.MILLISECONDS.sleep((1 + t*t)*100);
+                } catch (InterruptedException ie) {
+                    ie.printStackTrace();
+                }
+                cur = get();
+            }
+        }
+        return cur.claim();
+    }
+
+    private boolean isValidError(Exception e) {
         if (e instanceof RestClientException) {
             RestClientException rce = (RestClientException) e;
             Integer errCode = rce.getStatusCode().orNull();

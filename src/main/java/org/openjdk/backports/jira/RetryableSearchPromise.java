@@ -28,40 +28,24 @@ import com.atlassian.jira.rest.client.api.SearchRestClient;
 import com.atlassian.jira.rest.client.api.domain.SearchResult;
 import io.atlassian.util.concurrent.Promise;
 
-import java.util.concurrent.TimeUnit;
-
-public class RetryableSearchPromise extends RetryablePromise {
+public class RetryableSearchPromise extends RetryablePromise<SearchResult> {
 
     private final SearchRestClient searchCli;
     private final String query;
     private final int pageSize;
     private final int cnt;
-    private Promise<SearchResult> cur;
 
     public RetryableSearchPromise(SearchRestClient searchCli, String query, int pageSize, int cnt) {
         this.searchCli = searchCli;
         this.query = query;
         this.pageSize = pageSize;
         this.cnt = cnt;
-        this.cur = searchCli.searchJql(query, pageSize, cnt, null);
+        init();
     }
 
-    public SearchResult claim() {
-        for (int t = 0; t < 10; t++) {
-            try {
-                return cur.claim();
-            } catch (Exception e) {
-                if (isValidError(e)) {
-                    throw e;
-                }
-                try {
-                    TimeUnit.MILLISECONDS.sleep((1 + t*t)*100);
-                } catch (InterruptedException ie) {
-                    ie.printStackTrace();
-                }
-                cur = searchCli.searchJql(query, pageSize, cnt, null);
-            }
-        }
-        return cur.claim();
+    @Override
+    protected Promise<SearchResult> get() {
+        return searchCli.searchJql(query, pageSize, cnt, null);
     }
+
 }

@@ -28,38 +28,20 @@ import com.atlassian.jira.rest.client.api.UserRestClient;
 import com.atlassian.jira.rest.client.api.domain.User;
 import io.atlassian.util.concurrent.Promise;
 
-import java.util.concurrent.TimeUnit;
-
-public class RetryableUserPromise extends RetryablePromise {
+public class RetryableUserPromise extends RetryablePromise<User> {
 
     private final UserRestClient userCli;
     private final String user;
-    private Promise<User> cur;
 
     public RetryableUserPromise(UserRestClient userCli, String user) {
         this.userCli = userCli;
         this.user = user;
-        this.cur = userCli.getUser(user);
+        init();
     }
 
-    public User claim() {
-        for (int t = 0; t < 10; t++) {
-            try {
-                return cur.claim();
-            } catch (Exception e) {
-                if (isValidError(e)) {
-                    throw e;
-                }
-                try {
-                    TimeUnit.MILLISECONDS.sleep((1 + t*t)*100);
-                } catch (InterruptedException ie) {
-                    ie.printStackTrace();
-                }
-                cur = userCli.getUser(user);
-            }
-        }
-        return cur.claim();
+    @Override
+    protected Promise<User> get() {
+        return userCli.getUser(user);
     }
-
 
 }

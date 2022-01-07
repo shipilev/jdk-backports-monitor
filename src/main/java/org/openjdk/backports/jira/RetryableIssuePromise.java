@@ -29,24 +29,22 @@ import com.atlassian.jira.rest.client.api.domain.Issue;
 import io.atlassian.util.concurrent.Promise;
 
 import java.util.Collections;
-import java.util.concurrent.TimeUnit;
 
-public class RetryableIssuePromise extends RetryablePromise implements IssuePromise {
+public class RetryableIssuePromise extends RetryablePromise<Issue> implements IssuePromise {
     private final Issues issues;
     private final IssueRestClient cli;
     private final String key;
     private final boolean full;
-    private Promise<Issue> cur;
 
     public RetryableIssuePromise(Issues issues, IssueRestClient cli, String key, boolean full) {
         this.issues = issues;
         this.cli = cli;
         this.key = key;
         this.full = full;
-        this.cur = get();
+        init();
     }
 
-    private Promise<Issue> get() {
+    protected Promise<Issue> get() {
         if (full) {
             return cli.getIssue(key, Collections.singleton(IssueRestClient.Expandos.CHANGELOG));
         } else {
@@ -55,29 +53,11 @@ public class RetryableIssuePromise extends RetryablePromise implements IssueProm
     }
 
     public Issue claim() {
-        Issue issue = claimDo();
+        Issue issue = super.claim();
         if (issue != null && issues != null) {
             issues.registerIssueCache(key, issue);
         }
         return issue;
     }
 
-    private Issue claimDo() {
-        for (int t = 0; t < 10; t++) {
-            try {
-                return cur.claim();
-            } catch (Exception e) {
-                if (isValidError(e)) {
-                    throw e;
-                }
-                try {
-                    TimeUnit.MILLISECONDS.sleep((1 + t*t)*100);
-                } catch (InterruptedException ie) {
-                    ie.printStackTrace();
-                }
-                cur = get();
-            }
-        }
-        return cur.claim();
-    }
 }
