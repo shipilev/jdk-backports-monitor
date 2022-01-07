@@ -30,7 +30,7 @@ import io.atlassian.util.concurrent.Promise;
 
 import java.util.concurrent.TimeUnit;
 
-public class RetryableSearchPromise {
+public class RetryableSearchPromise extends RetryablePromise {
 
     private final SearchRestClient searchCli;
     private final String query;
@@ -51,6 +51,9 @@ public class RetryableSearchPromise {
             try {
                 return cur.claim();
             } catch (Exception e) {
+                if (isValidError(e)) {
+                    throw e;
+                }
                 try {
                     TimeUnit.MILLISECONDS.sleep((1 + t*t)*100);
                 } catch (InterruptedException ie) {

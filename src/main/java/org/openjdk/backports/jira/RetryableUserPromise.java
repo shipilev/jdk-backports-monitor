@@ -24,45 +24,25 @@
  */
 package org.openjdk.backports.jira;
 
-import com.atlassian.jira.rest.client.api.IssueRestClient;
-import com.atlassian.jira.rest.client.api.domain.Issue;
+import com.atlassian.jira.rest.client.api.UserRestClient;
+import com.atlassian.jira.rest.client.api.domain.User;
 import io.atlassian.util.concurrent.Promise;
 
-import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
-public class RetryableIssuePromise extends RetryablePromise implements IssuePromise {
-    private final Issues issues;
-    private final IssueRestClient cli;
-    private final String key;
-    private final boolean full;
-    private Promise<Issue> cur;
+public class RetryableUserPromise extends RetryablePromise {
 
-    public RetryableIssuePromise(Issues issues, IssueRestClient cli, String key, boolean full) {
-        this.issues = issues;
-        this.cli = cli;
-        this.key = key;
-        this.full = full;
-        this.cur = get();
+    private final UserRestClient userCli;
+    private final String user;
+    private Promise<User> cur;
+
+    public RetryableUserPromise(UserRestClient userCli, String user) {
+        this.userCli = userCli;
+        this.user = user;
+        this.cur = userCli.getUser(user);
     }
 
-    private Promise<Issue> get() {
-        if (full) {
-            return cli.getIssue(key, Collections.singleton(IssueRestClient.Expandos.CHANGELOG));
-        } else {
-            return cli.getIssue(key);
-        }
-    }
-
-    public Issue claim() {
-        Issue issue = claimDo();
-        if (issue != null && issues != null) {
-            issues.registerIssueCache(key, issue);
-        }
-        return issue;
-    }
-
-    private Issue claimDo() {
+    public User claim() {
         for (int t = 0; t < 10; t++) {
             try {
                 return cur.claim();
@@ -75,9 +55,11 @@ public class RetryableIssuePromise extends RetryablePromise implements IssueProm
                 } catch (InterruptedException ie) {
                     ie.printStackTrace();
                 }
-                cur = get();
+                cur = userCli.getUser(user);
             }
         }
         return cur.claim();
     }
+
+
 }

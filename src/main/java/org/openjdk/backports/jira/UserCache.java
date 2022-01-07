@@ -36,7 +36,7 @@ import java.util.Map;
 public class UserCache {
     private final UserRestClient client;
     private final Map<String, User> users;
-    private final Map<String, Promise<User>> userPromises;
+    private final Map<String, RetryableUserPromise> userPromises;
     private final Map<String, String> displayNames;
     private final Map<String, String> affiliations;
     private List<String> censusIds;
@@ -55,7 +55,7 @@ public class UserCache {
 
             // Start async resolve for all users
             for (String uid : censusIds) {
-                userPromises.put(uid, client.getUser(uid));
+                userPromises.put(uid, new RetryableUserPromise(client, uid));
             }
         }
         return censusIds;
@@ -74,9 +74,9 @@ public class UserCache {
     private User getUser(String id) {
         return users.computeIfAbsent(id, u -> {
             try {
-                Promise<User> p = userPromises.get(u);
+                RetryableUserPromise p = userPromises.get(u);
                 if (p == null) {
-                    p = client.getUser(u);
+                    p = new RetryableUserPromise(client, u);
                     userPromises.put(u, p);
                 }
                 return p.claim();
@@ -91,20 +91,20 @@ public class UserCache {
             User user = getUser(u);
             if (user == null) {
                 // No user with such User ID, try to fuzzy match the email
-                user = lookupByEmail(id);
+                user = lookupByEmail(u);
             }
 
             if (user != null) {
                 return user.getDisplayName();
             } else {
                 // No hits in Census.
-                int email = id.indexOf("@");
+                int email = u.indexOf("@");
                 if (email != -1) {
                     // Looks like email, extract.
-                    return id.substring(0, email);
+                    return u.substring(0, email);
                 } else {
                     // No dice, report verbatim.
-                    return id;
+                    return u;
                 }
             }
         });
@@ -115,7 +115,7 @@ public class UserCache {
             User user = getUser(u);
             if (user == null) {
                 // No user with such User ID, try to fuzzy match the email
-                user = lookupByEmail(id);
+                user = lookupByEmail(u);
             }
 
             if (user != null) {
@@ -124,10 +124,10 @@ public class UserCache {
                 return generifyAffiliation(user.getDisplayName(), email.substring(email.indexOf("@")));
             } else {
                 // No hits in Census.
-                int email = id.indexOf("@");
+                int email = u.indexOf("@");
                 if (email != -1) {
                     // Looks like email, extract.
-                    return generifyAffiliation(id, id.substring(email));
+                    return generifyAffiliation(u, u.substring(email));
                 } else {
                     // No dice, report as unknown.
                     return "Unknown";
