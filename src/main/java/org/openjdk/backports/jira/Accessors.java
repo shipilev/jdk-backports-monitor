@@ -54,14 +54,20 @@ public class Accessors {
         return res;
     }
 
-    private static boolean isBotComment(Comment c) {
+    private static boolean isBotPushComment(Comment c) {
         String name = c.getAuthor().getName();
-        return name.equals("hgupdate") || name.equals("roboduke");
+        if (!name.equals("hgupdate") && !name.equals("roboduke")) {
+            return false;
+        }
+        if (c.getBody().contains("A pull request was submitted for review.")) {
+            return false;
+        }
+        return true;
     }
 
     public static String getPushURL(Issue issue) {
         for (Comment c : issue.getComments()) {
-            if (isBotComment(c)) {
+            if (isBotPushComment(c)) {
                 Optional<String> opt = Parsers.parseURL(c.getBody());
                 if (opt.isPresent()) {
                     return opt.get();
@@ -83,7 +89,7 @@ public class Accessors {
 
     public static String getPushUser(Issue issue) {
         for (Comment c : issue.getComments()) {
-            if (isBotComment(c)) {
+            if (isBotPushComment(c)) {
                 Optional<String> opt = Parsers.parseUser(c.getBody());
                 if (opt.isPresent()) {
                     return opt.get();
@@ -95,7 +101,7 @@ public class Accessors {
 
     public static long getPushDaysAgo(Issue issue) {
         for (Comment c : issue.getComments()) {
-            if (isBotComment(c)) {
+            if (isBotPushComment(c)) {
                 Optional<Long> opt = Parsers.parseDaysAgo(c.getBody());
                 if (opt.isPresent()) {
                     return opt.get();
@@ -107,7 +113,7 @@ public class Accessors {
 
     public static long getPushSecondsAgo(Issue issue) {
         for (Comment c : issue.getComments()) {
-            if (isBotComment(c)) {
+            if (isBotPushComment(c)) {
                 Optional<Long> opt = Parsers.parseSecondsAgo(c.getBody());
                 if (opt.isPresent()) {
                     return opt.get();
