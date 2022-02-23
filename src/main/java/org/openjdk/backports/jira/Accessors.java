@@ -56,7 +56,9 @@ public class Accessors {
 
     private static boolean isBotPushComment(Comment c) {
         String name = c.getAuthor().getName();
-        if (!name.equals("hgupdate") && !name.equals("roboduke")) {
+        if (!name.equals("hgupdate") &&
+            !name.equals("roboduke") &&
+            !name.equals("dukebot")) {
             return false;
         }
         if (c.getBody().contains("A pull request was submitted for review.")) {
