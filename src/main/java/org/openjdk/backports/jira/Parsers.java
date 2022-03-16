@@ -24,6 +24,8 @@
  */
 package org.openjdk.backports.jira;
 
+import org.openjdk.backports.StringUtils;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -38,7 +40,7 @@ public class Parsers {
     static final Pattern GENERIC_USER_ID = Pattern.compile("(.*)<(.*)>");
 
     public static Optional<String> parseURL(String s) {
-        for (String l : s.split("\n")) {
+        for (String l : StringUtils.lines(s)) {
             if (l.startsWith("URL")) {
                 return Optional.of(l.replaceFirst("URL:", "").trim());
             }
@@ -47,7 +49,7 @@ public class Parsers {
     }
 
     public static Optional<String> parseUser(String s) {
-        for (String l : s.split("\n")) {
+        for (String l : StringUtils.lines(s)) {
             if (l.startsWith("User")) {
                 return Optional.of(l.replaceFirst("User:", "").trim());
             }
@@ -66,7 +68,7 @@ public class Parsers {
     }
 
     public static Optional<Long> parseDaysAgo(String s) {
-        for (String l : s.split("\n")) {
+        for (String l : StringUtils.lines(s)) {
             if (l.startsWith("Date")) {
                 String d = l.replaceFirst("Date:", "").trim();
                 final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss Z");
@@ -77,7 +79,7 @@ public class Parsers {
     }
 
     public static Optional<Long> parseSecondsAgo(String s) {
-        for (String l : s.split("\n")) {
+        for (String l : StringUtils.lines(s)) {
             if (l.startsWith("Date")) {
                 String d = l.replaceFirst("Date:", "").trim();
                 final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss Z");

@@ -26,6 +26,11 @@ package org.openjdk.backports;
 
 import org.apache.commons.lang3.text.WordUtils;
 
+import java.io.BufferedReader;
+import java.io.StringReader;
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class StringUtils {
 
     public static final int DEFAULT_WIDTH = 100;
@@ -89,6 +94,11 @@ public class StringUtils {
             return s;
         }
         return s.substring(0, Math.min(s.length(), limit));
+    }
+
+    public static List<String> lines(String s) {
+        BufferedReader br = new BufferedReader(new StringReader(s));
+        return br.lines().collect(Collectors.toList());
     }
 
 }
