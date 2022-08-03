@@ -140,7 +140,7 @@ questions.
         <dependency>
             <groupId>com.atlassian.jira</groupId>
             <artifactId>jira-rest-java-client-app</artifactId>
-            <version>5.2.2</version>
+            <version>5.2.4</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>

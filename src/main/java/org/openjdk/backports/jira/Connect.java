@@ -40,7 +40,9 @@ import com.atlassian.sal.api.executor.ThreadLocalContextManager;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.Date;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -142,8 +144,23 @@ public class Connect {
         }
 
         @Override
+        public Optional<Path> getLocalHomeDirectory() {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<Path> getSharedHomeDirectory() {
+            return Optional.empty();
+        }
+
+        @Override
         public String getPropertyValue(final String s) {
             throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public String getApplicationFileEncoding() {
+            return null;
         }
     }
 
