@@ -28,25 +28,25 @@ public class Versions {
 
     public static int parseMajor(String version) {
         if (version.equals("solaris_10u7")) {
-            // Special-case odd issue: https://bugs.openjdk.java.net/browse/JDK-6913047
+            // Special-case odd issue: https://bugs.openjdk.org/browse/JDK-6913047
             return 0;
         }
 
         if (version.startsWith("hs")) {
             // Special case odd issues that reference Hotspot versions:
-            //  https://bugs.openjdk.java.net/browse/JDK-8035493
+            //  https://bugs.openjdk.org/browse/JDK-8035493
             return 0;
         }
 
         if (version.startsWith("emb-")) {
             // Special case odd issues that reference embedded versions:
-            //  https://bugs.openjdk.java.net/browse/JDK-8042557
+            //  https://bugs.openjdk.org/browse/JDK-8042557
             return 0;
         }
 
         if (version.equals("8-aarch64")) {
             // Special case odd issues that reference old pre-integration 8-aarch64 versions:
-            //  https://bugs.openjdk.java.net/browse/JDK-8236179
+            //  https://bugs.openjdk.org/browse/JDK-8236179
             return 0;
         }
 

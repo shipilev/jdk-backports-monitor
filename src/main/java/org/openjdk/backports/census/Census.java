@@ -37,7 +37,7 @@ public class Census {
 
     public static List<String> userIds() {
         try {
-            Document doc = Jsoup.connect("http://openjdk.java.net/census").get();
+            Document doc = Jsoup.connect("http://openjdk.org/census").get();
             for (Element row : doc.body().select("div#main > table > tbody > tr")) {
                 if (row.toString().contains("People")) {
                     Element td = row.select("td").last();

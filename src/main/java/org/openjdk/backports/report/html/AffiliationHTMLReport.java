@@ -56,7 +56,7 @@ public class AffiliationHTMLReport extends AbstractHTMLReport {
         out.println("</tr>");
         for (String uid : userIds) {
             out.println("<tr>");
-            out.println("<td nowrap><a href='https://openjdk.java.net/census#" + uid + "'>" + uid + "</a></td>");
+            out.println("<td nowrap><a href='https://openjdk.org/census#" + uid + "'>" + uid + "</a></td>");
             out.println("<td nowrap>" + users.getDisplayName(uid) + "</td>");
             out.println("<td nowrap>" + users.getAffiliation(uid) + "</td>");
             out.println("</tr>");

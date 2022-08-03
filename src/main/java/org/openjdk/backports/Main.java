@@ -39,7 +39,7 @@ import java.util.Properties;
 
 public class Main {
 
-    public static final String JIRA_URL = "https://bugs.openjdk.java.net/";
+    public static final String JIRA_URL = "https://bugs.openjdk.org/";
 
     public static void main(String[] args) {
         Options options = new Options(args);

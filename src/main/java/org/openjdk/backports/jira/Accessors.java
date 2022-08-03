@@ -226,7 +226,7 @@ public class Accessors {
 
     public static boolean isReleaseNote(Issue issue) {
         // Brilliant, we cannot trust "release-note" tags?
-        //   See: https://mail.openjdk.java.net/pipermail/jdk-dev/2019-July/003083.html
+        //   See: https://mail.openjdk.org/pipermail/jdk-dev/2019-July/003083.html
         return (isReleaseNoteTag(issue) || issue.getSummary().toLowerCase().trim().startsWith("release note"))
                 && isDelivered(issue);
     }
