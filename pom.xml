@@ -139,8 +139,13 @@ questions.
         </dependency>
         <dependency>
             <groupId>com.atlassian.jira</groupId>
-            <artifactId>jira-rest-java-client-app</artifactId>
+            <artifactId>jira-rest-java-client-core</artifactId>
             <version>5.2.4</version>
+        </dependency>
+        <dependency>
+            <groupId>io.atlassian.fugue</groupId>
+            <artifactId>fugue</artifactId>
+            <version>4.7.2</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -161,6 +166,16 @@ questions.
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
             <version>20190722</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.29</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-nop</artifactId>
+            <version>1.7.29</version>
         </dependency>
     </dependencies>
 
