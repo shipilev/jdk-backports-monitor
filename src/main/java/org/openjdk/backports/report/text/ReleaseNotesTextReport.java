@@ -78,7 +78,7 @@ public class ReleaseNotesTextReport extends AbstractTextReport {
         }
         out.println();
 
-        out.println("RELEASE NOTES, BY COMPONENT:");
+        out.println("RELEASE NOTES:");
         out.println();
 
         Map<String, Multimap<Issue, Issue>> rns = model.relNotes();
@@ -96,7 +96,20 @@ public class ReleaseNotesTextReport extends AbstractTextReport {
                     printed = true;
                 }
 
-                printReleaseNotes(out, m.values());
+                PrintWriter pw = new PrintWriter(out);
+
+                Set<String> dup = new HashSet<>();
+                for (Issue rn : m.get(i)) {
+                    String summary = StringUtils.leftPad("  " + i.getKey() + ": " + rn.getSummary().replaceFirst("Release Note: ", ""), 2);
+                    String descr = StringUtils.leftPad(StringUtils.rewrap(StringUtils.stripNull(rn.getDescription()), StringUtils.DEFAULT_WIDTH - 6), 6);
+                    if (dup.add(descr)) {
+                        pw.println(summary);
+                        pw.println();
+                        pw.println(descr);
+                        pw.println();
+                    }
+                }
+                pw.flush();
             }
         }
         if (!haveRelNotes) {
@@ -143,23 +156,4 @@ public class ReleaseNotesTextReport extends AbstractTextReport {
         }
     }
 
-    protected void printReleaseNotes(PrintStream ps, Collection<Issue> relNotes) {
-        PrintWriter pw = new PrintWriter(ps);
-        printReleaseNotes(pw, relNotes);
-        pw.flush();
-    }
-
-    protected void printReleaseNotes(PrintWriter pw, Collection<Issue> relNotes) {
-        Set<String> dup = new HashSet<>();
-        for (Issue rn : relNotes) {
-            String summary = StringUtils.leftPad(rn.getKey() + ": " + rn.getSummary().replaceFirst("Release Note: ", ""), 2);
-            String descr = StringUtils.leftPad(StringUtils.rewrap(StringUtils.stripNull(rn.getDescription()), StringUtils.DEFAULT_WIDTH - 6), 6);
-            if (dup.add(descr)) {
-                pw.println(summary);
-                pw.println();
-                pw.println(descr);
-                pw.println();
-            }
-        }
-    }
 }
