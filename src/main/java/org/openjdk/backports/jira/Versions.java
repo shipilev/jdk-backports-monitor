@@ -159,8 +159,22 @@ public class Versions {
         return false;
     }
 
+    public static boolean isMaintenanceRelease(String version) {
+        // These are 8u MR releases:
+        //   MR1-MR2: 8u40 (technically the part of usual JDK 8 release chain, so excluded here)
+        //   MR3: 8u41
+        //   MR4: 8u42
+        int minor = parseMinor(version);
+        if (parseMajor(version) == 8 &&
+                41 <= minor && minor <= 42) {
+            return true;
+        }
+
+        return false;
+    }
+
     public static boolean isOpen(String version) {
-        return !isOracle(version);
+        return !isOracle(version) && !isMaintenanceRelease(version);
     }
 
     public static boolean isShared(String version) {
