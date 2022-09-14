@@ -46,21 +46,7 @@ public class Main {
 
         try {
             if (options.parse()) {
-                Properties p = new Properties();
-                try (FileInputStream fis = new FileInputStream(options.getAuthProps())){
-                    p.load(fis);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-
-                String user = p.getProperty("user");
-                String pass = p.getProperty("pass");
-
-                if (user == null || pass == null) {
-                    throw new IllegalStateException("user/pass keys are missing in auth file: " + options.getAuthProps());
-                }
-
-                try (Clients cli = Connect.getClients(JIRA_URL, user, pass)) {
+                try (Clients cli = Connect.getClients(JIRA_URL)) {
                     PrintStream debugLog = System.out;
                     String logPrefix = options.getLogPrefix();
 
