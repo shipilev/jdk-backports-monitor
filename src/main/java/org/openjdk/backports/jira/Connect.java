@@ -79,9 +79,11 @@ public class Connect {
 
         HttpClient client = factory.create(opts);
 
-        AuthenticationHandler auth = new AnonymousAuthenticationHandler();
+        AuthenticationHandler auth;
         if (user != null && pass != null) {
             auth = new BasicHttpAuthenticationHandler(user, pass);
+        } else {
+            auth = new AnonymousAuthenticationHandler();
         }
         DisposableHttpClient dispClient = new AtlassianHttpClientDecorator(client, auth) {
             @Override public void destroy() throws Exception { factory.dispose(client); }
