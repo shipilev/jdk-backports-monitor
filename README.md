@@ -20,8 +20,10 @@ seen the Bash version I had before it.
 ## What Do I Need... Wait, Do I Really Need To Run It?
 
 Many queries involve complex JQL statements, which requires authentication to execute. 
-The tool expects the property file with your user/login for OpenJDK bug database
-(comes with a glorious OpenJDK Author role, after some contributions):
+The tool expects the property file with your user/pass login for OpenJDK bug database
+(comes with a glorious OpenJDK Author role, after some contributions).
+By default, application uses a file "auth.props" with user/pass to authenticate.
+Without "auth.props" or an empty "auth.props" both fall back to anonymous authentication.
 
        $ cat auth.props
        user=duke

@@ -32,6 +32,7 @@ import org.openjdk.backports.report.html.*;
 import org.openjdk.backports.report.model.*;
 import org.openjdk.backports.report.text.*;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -46,18 +47,17 @@ public class Main {
 
         try {
             if (options.parse()) {
-                Properties p = new Properties();
-                try (FileInputStream fis = new FileInputStream(options.getAuthProps())){
-                    p.load(fis);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-
-                String user = p.getProperty("user");
-                String pass = p.getProperty("pass");
-
-                if (user == null || pass == null) {
-                    throw new IllegalStateException("user/pass keys are missing in auth file: " + options.getAuthProps());
+                String user = null;
+                String pass = null;
+                if (new File(options.getAuthProps()).exists()) {
+                    Properties p = new Properties();
+                    try (FileInputStream fis = new FileInputStream(options.getAuthProps())){
+                        p.load(fis);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    user = p.getProperty("user");
+                    pass = p.getProperty("pass");
                 }
 
                 try (Clients cli = Connect.getClients(JIRA_URL, user, pass)) {
