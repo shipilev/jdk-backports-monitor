@@ -29,7 +29,8 @@ import com.atlassian.httpclient.apache.httpcomponents.DefaultHttpClientFactory;
 import com.atlassian.httpclient.api.HttpClient;
 import com.atlassian.httpclient.api.factory.HttpClientOptions;
 import com.atlassian.jira.rest.client.api.JiraRestClient;
-import com.atlassian.jira.rest.client.auth.BasicHttpAuthenticationHandler;
+// import com.atlassian.jira.rest.client.auth.BasicHttpAuthenticationHandler;
+import com.atlassian.jira.rest.client.auth.AnonymousAuthenticationHandler;
 import com.atlassian.jira.rest.client.internal.async.AsynchronousJiraRestClient;
 import com.atlassian.jira.rest.client.internal.async.AtlassianHttpClientDecorator;
 import com.atlassian.jira.rest.client.internal.async.DisposableHttpClient;
@@ -48,7 +49,7 @@ import java.util.concurrent.TimeUnit;
 
 public class Connect {
 
-    public static Clients getClients(String jiraURL, String user, String pass) throws URISyntaxException {
+    public static Clients getClients(String jiraURL) throws URISyntaxException {
         final URI uri = new URI(jiraURL);
 
         DefaultHttpClientFactory factory = new DefaultHttpClientFactory(
@@ -79,7 +80,8 @@ public class Connect {
 
         DisposableHttpClient dispClient = new AtlassianHttpClientDecorator(
                 client,
-                new BasicHttpAuthenticationHandler(user, pass)) {
+                // change to use anoymous auth
+                new AnonymousAuthenticationHandler()) {
                     @Override public void destroy() throws Exception { factory.dispose(client); }
         };
 
