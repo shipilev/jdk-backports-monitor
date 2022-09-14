@@ -46,7 +46,17 @@ public class Main {
 
         try {
             if (options.parse()) {
-                try (Clients cli = Connect.getClients(JIRA_URL)) {
+                Properties p = new Properties();
+                try (FileInputStream fis = new FileInputStream(options.getAuthProps())){
+                    p.load(fis);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+                String user = p.getProperty("user");
+                String pass = p.getProperty("pass");
+
+                try (Clients cli = Connect.getClients(JIRA_URL, user, pass)) {
                     PrintStream debugLog = System.out;
                     String logPrefix = options.getLogPrefix();
 

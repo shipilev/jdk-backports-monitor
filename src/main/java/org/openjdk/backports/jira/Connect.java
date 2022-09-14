@@ -29,7 +29,7 @@ import com.atlassian.httpclient.apache.httpcomponents.DefaultHttpClientFactory;
 import com.atlassian.httpclient.api.HttpClient;
 import com.atlassian.httpclient.api.factory.HttpClientOptions;
 import com.atlassian.jira.rest.client.api.JiraRestClient;
-// import com.atlassian.jira.rest.client.auth.BasicHttpAuthenticationHandler;
+import com.atlassian.jira.rest.client.auth.BasicHttpAuthenticationHandler;
 import com.atlassian.jira.rest.client.auth.AnonymousAuthenticationHandler;
 import com.atlassian.jira.rest.client.internal.async.AsynchronousJiraRestClient;
 import com.atlassian.jira.rest.client.internal.async.AtlassianHttpClientDecorator;
@@ -49,7 +49,7 @@ import java.util.concurrent.TimeUnit;
 
 public class Connect {
 
-    public static Clients getClients(String jiraURL) throws URISyntaxException {
+    public static Clients getClients(String jiraURL, String user, String pass) throws URISyntaxException {
         final URI uri = new URI(jiraURL);
 
         DefaultHttpClientFactory factory = new DefaultHttpClientFactory(
@@ -78,17 +78,29 @@ public class Connect {
 
         HttpClient client = factory.create(opts);
 
-        DisposableHttpClient dispClient = new AtlassianHttpClientDecorator(
-                client,
-                // change to use anoymous auth
-                new AnonymousAuthenticationHandler()) {
-                    @Override public void destroy() throws Exception { factory.dispose(client); }
-        };
+        if (user != null && pass != null) {
+            DisposableHttpClient dispClient = new AtlassianHttpClientDecorator(
+                    client,
+                    new BasicHttpAuthenticationHandler(user, pass)) {
+                        @Override public void destroy() throws Exception { factory.dispose(client); }
+            };
 
-        return new Clients(
-                new AsynchronousJiraRestClient(uri, dispClient),
-                new RawRestClient(uri, dispClient)
-        );
+            return new Clients(
+                    new AsynchronousJiraRestClient(uri, dispClient),
+                    new RawRestClient(uri, dispClient)
+            );
+        } else { // change to use anoymous auth
+            DisposableHttpClient dispClient = new AtlassianHttpClientDecorator(
+                    client,
+                    new AnonymousAuthenticationHandler()) {
+                        @Override public void destroy() throws Exception { factory.dispose(client); }
+            };
+
+            return new Clients(
+                    new AsynchronousJiraRestClient(uri, dispClient),
+                    new RawRestClient(uri, dispClient)
+            );
+        }
     }
 
     private static class MyEventPublisher implements EventPublisher {
