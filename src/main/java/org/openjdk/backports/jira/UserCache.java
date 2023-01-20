@@ -208,6 +208,7 @@ public class UserCache {
             {"@tencent.com", "Tencent"},
             {"@amazon.com", "Amazon"},
             {"@amazon.co.uk", "Amazon"},
+            {"@amazon.de", "Amazon"},
             {"@huawei.com", "Huawei"},
             {"@bell-sw.com", "BellSoft"},
             {"@arm.com", "ARM"},
