@@ -58,6 +58,9 @@ public class Main {
                     }
                     user = p.getProperty("user");
                     pass = p.getProperty("pass");
+                } else {
+                    user = System.getenv().getOrDefault("OPENJDK_USER", null);
+                    pass = System.getenv().getOrDefault("OPENJDK_PASSWORD", null);
                 }
 
                 try (Clients cli = Connect.getClients(JIRA_URL, user, pass)) {
