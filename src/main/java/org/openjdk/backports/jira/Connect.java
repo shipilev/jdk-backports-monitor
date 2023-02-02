@@ -51,7 +51,7 @@ import java.util.concurrent.TimeUnit;
 
 public class Connect {
 
-    public static Clients getClients(String jiraURL, Auth auth) throws URISyntaxException {
+    public static Clients getClients(String jiraURL, Auth auth, int maxConnections) throws URISyntaxException {
         final URI uri = new URI(jiraURL);
 
         DefaultHttpClientFactory factory = new DefaultHttpClientFactory(
@@ -73,6 +73,11 @@ public class Connect {
         // And configure the cache as well. 5K x 100K = 500M cache "should be enough".
         opts.setMaxCacheEntries(5_000);
         opts.setMaxCacheObjectSize(100_000);
+
+        // Make sure we do not overwhelm the target with too many concurrent
+        // requests. Limiting the number of connections should do the trick,
+        // assuming similar request rate per connection.
+        opts.setMaxTotalConnections(maxConnections);
 
         // Make sure we have enough threads to process the requests.
         // Choose the most scalable executor availabe.

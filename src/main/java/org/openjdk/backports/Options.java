@@ -48,6 +48,7 @@ public class Options {
     private boolean directOnly;
     private Integer parityReport;
     private boolean includeCarryovers;
+    private int maxConnections;
 
     public Options(String[] args) {
         this.args = args;
@@ -113,6 +114,10 @@ public class Options {
         OptionSpec<Void> optIncludeCarryovers = parser.accepts("include-carryovers",
                 "For release reports, include carry-overs from other releases.");
 
+        OptionSpec<Integer> optMaxConnections = parser.accepts("max-connections",
+                        "Max connections to have to remote JIRA server.")
+                .withRequiredArg().ofType(Integer.class).describedAs("#").defaultsTo(20);
+
         parser.accepts("h", "Print this help.");
 
         OptionSet set;
@@ -154,6 +159,8 @@ public class Options {
         minLevel = optMinLevel.value(set);
         directOnly = set.has(optDirectOnly);
         includeCarryovers = set.has(optIncludeCarryovers);
+
+        maxConnections = set.valueOf(optMaxConnections);
 
         return true;
     }
@@ -208,5 +215,9 @@ public class Options {
 
     public String getLogPrefix() {
         return logPrefix;
+    }
+
+    public int getMaxConnections() {
+        return maxConnections;
     }
 }

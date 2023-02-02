@@ -63,7 +63,7 @@ public class Main {
                     );
                 }
 
-                try (Clients cli = Connect.getClients(JIRA_URL, auth)) {
+                try (Clients cli = Connect.getClients(JIRA_URL, auth, options.getMaxConnections())) {
                     PrintStream debugLog = System.out;
                     String logPrefix = options.getLogPrefix();
 
