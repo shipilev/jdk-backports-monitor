@@ -38,6 +38,7 @@ import com.atlassian.jira.rest.client.internal.async.DisposableHttpClient;
 import com.atlassian.sal.api.ApplicationProperties;
 import com.atlassian.sal.api.UrlMode;
 import com.atlassian.sal.api.executor.ThreadLocalContextManager;
+import org.openjdk.backports.Auth;
 
 import java.io.File;
 import java.net.URI;
@@ -50,7 +51,7 @@ import java.util.concurrent.TimeUnit;
 
 public class Connect {
 
-    public static Clients getClients(String jiraURL, String user, String pass) throws URISyntaxException {
+    public static Clients getClients(String jiraURL, Auth auth) throws URISyntaxException {
         final URI uri = new URI(jiraURL);
 
         DefaultHttpClientFactory factory = new DefaultHttpClientFactory(
@@ -79,13 +80,13 @@ public class Connect {
 
         HttpClient client = factory.create(opts);
 
-        AuthenticationHandler auth;
-        if (user != null && pass != null) {
-            auth = new BasicHttpAuthenticationHandler(user, pass);
+        AuthenticationHandler authHandler;
+        if (auth.isAnonymous()) {
+            authHandler = new AnonymousAuthenticationHandler();
         } else {
-            auth = new AnonymousAuthenticationHandler();
+            authHandler = new BasicHttpAuthenticationHandler(auth.getUser(), auth.getPass());
         }
-        DisposableHttpClient dispClient = new AtlassianHttpClientDecorator(client, auth) {
+        DisposableHttpClient dispClient = new AtlassianHttpClientDecorator(client, authHandler) {
             @Override public void destroy() throws Exception { factory.dispose(client); }
         };
 
