@@ -47,7 +47,7 @@ public class Main {
 
         try {
             if (options.parse()) {
-                Auth auth = new Auth();
+                Auth auth = null;
                 if (new File(options.getAuthProps()).exists()) {
                     Properties p = new Properties();
                     try (FileInputStream fis = new FileInputStream(options.getAuthProps())){
